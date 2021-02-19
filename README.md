@@ -5,7 +5,7 @@ This repo contains Jax-based, sklearn-style implementations of Neural Networ-bas
 
 We implement the SNet-class we introduce in our AISTATS paper, and re-implement a number of NN-based algorithms from existing literature (Shalit et al (2017), Shi et al (2019), Hassanpour & Greiner (2020)). We also consider NN-based instantiations of a number of two-step pseudo-regression estimators, including the DR-learner (Kennedy, 2020) and single-robust propensity-weighted and regression-adjusted learners. 
 
-# Interface
+### Interface
 All learning algorithms are implemented with a sklearn-style wrapper, implementing a ``.fit(X, y, w)`` and a ``.predict(X)`` method, where predict returns CATE by default. 
 
 Example usage:
@@ -33,6 +33,12 @@ cate_pred_s = s.predict(X)
 
 All experiments in the AISTATS paper can be replicated using this repository; the necessary code is in ``catenets.experiments.simulations_AISTATS`` and ``catenets.experiments.ihdp_experiments``. 
 
+### Installing
+The code is setup as a python package and can by installed by cloning the repository (creating a new virtual environment) and running
+```shell
+pip install -r requirements.txt
+python setup.py install
+```
 
 ### Citing 
 
