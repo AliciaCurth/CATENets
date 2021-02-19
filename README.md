@@ -11,11 +11,11 @@ All learning algorithms are implemented with a sklearn-style wrapper, implementi
 Example usage:
 
 ```python
-from catenets.models import TNet
+from catenets.models import TNet, SNet
 from catenets.experiments.simulation_utils import import simulate_treatment_setup
 from catenets.experiments.experiment_utils import eval_root_mse
 
-# simulate some data (here: unconfounded, 10 prognostic variables and 5 predictive variables
+# simulate some data (here: unconfounded, 10 prognostic variables and 5 predictive variables)
 X, y, w, p, cate = simulate_treatment_setup(n=1000, n_o=10, n_t=5, n_c=0)
 
 # estimate CATE using TNet
@@ -30,6 +30,9 @@ s.fit(X, y, w)
 cate_pred_s = s.predict(X)
 
 ```
+
+All experiments in the AISTATS paper can be replicated using this repository; the necessary code is in ``catenets.experiments.simulations_AISTATS`` and ``catenets.experiments.ihdp_experiments``. 
+
 
 ### Citing 
 
