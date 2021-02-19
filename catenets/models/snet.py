@@ -150,8 +150,11 @@ def train_snet(X, y, w, binary_y: bool = False, n_layers_r: int = DEFAULT_LAYERS
                verbose: int = 1, n_iter_print: int = DEFAULT_N_ITER_PRINT,
                seed: int = DEFAULT_SEED, return_val_loss: bool = False,
                reg_diff: bool = False, penalty_diff: float = DEFAULT_PENALTY_L2,
-               nonlin: str = DEFAULT_NONLIN, avg_objective: bool = DEFAULT_AVG_OBJECTIVE):
+               nonlin: str = DEFAULT_NONLIN, avg_objective: bool = DEFAULT_AVG_OBJECTIVE,
+               with_prop: bool = True):
     # function to train a net with 4 representations
+    if not with_prop:
+        raise ValueError('train_snet works only withprop=True')
     y, w = check_shape_1d_data(y), check_shape_1d_data(w)
     d = X.shape[1]
     input_shape = (-1, d)
@@ -428,10 +431,13 @@ def train_snet_noprop(X, y, w, binary_y: bool = False, n_layers_r: int = DEFAULT
                       verbose: int = 1, n_iter_print: int = DEFAULT_N_ITER_PRINT,
                       seed: int = DEFAULT_SEED, return_val_loss: bool = False,
                       reg_diff: bool = False, penalty_diff: float = DEFAULT_PENALTY_L2,
-                      nonlin: str = DEFAULT_NONLIN, avg_objective: bool = DEFAULT_AVG_OBJECTIVE):
+                      nonlin: str = DEFAULT_NONLIN, avg_objective: bool = DEFAULT_AVG_OBJECTIVE,
+                      with_prop: bool = False):
     """
     SNet but without the propensity head
     """
+    if with_prop:
+        raise ValueError('train_snet_noprop works only withprop=False')
     # function to train a net with 3 representations
     y, w = check_shape_1d_data(y), check_shape_1d_data(w)
     d = X.shape[1]

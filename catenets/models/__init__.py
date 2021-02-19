@@ -2,7 +2,7 @@ from catenets.models.twostep_nets import TwoStepNet
 from catenets.models.disentangled_nets import SNet3
 from catenets.models.snet import SNet
 from catenets.models.representation_nets import SNet1, SNet2
-from catenets.models.t_net import TNet
+from catenets.models.tnet import TNet
 
 SNET1_NAME = 'SNet1'
 T_NAME = 'TNet'
