@@ -86,21 +86,6 @@ COMBINED_BEST = {TWOSTEP_NAME + SEP + AIPW_TRANSFORMATION + SEP + S_STRATEGY:
 
 FULL_MODEL_SET = dict(**ALL_MODELS, **COMBINED_BEST)
 
-SNET_ABLATIONS = {SNET3_NAME + SEP + 'noortho': SNet3(n_layers_out=LAYERS_OUT, n_layers_r=LAYERS_R,
-                                                      penalty_l2=PENALTY_L2, penalty_orthogonal=0),
-                  SNET_NAME + SEP + 'noortho': SNet(n_layers_out=LAYERS_OUT, n_layers_r=LAYERS_R,
-                                                    penalty_l2=PENALTY_L2, penalty_orthogonal=0),
-                  SNET_NAME + SEP + 'noprop_noortho': SNet(n_layers_out=LAYERS_OUT,
-                                                           n_layers_r=LAYERS_R,
-                                                           penalty_l2=PENALTY_L2,
-                                                           penalty_orthogonal=0,
-                                                           with_prop=False),
-                  SNET_NAME + SEP + 'noprop': SNet(n_layers_out=LAYERS_OUT, n_layers_r=LAYERS_R,
-                                                   penalty_l2=PENALTY_L2,
-                                                   penalty_orthogonal=PENALTY_ORTHOGONAL,
-                                                   with_prop=False)
-                  }
-
 # some more constants for experiments
 NTRAIN_BASE = 2000
 NTEST_BASE = 500
