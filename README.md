@@ -34,11 +34,13 @@ cate_pred_s = s.predict(X)
 All experiments in the AISTATS paper can be replicated using this repository; the necessary code is in ``catenets.experiments.simulations_AISTATS`` and ``catenets.experiments.ihdp_experiments``. 
 
 ### Installing
-The code is setup as a python package and can by installed by cloning the repository (creating a new virtual environment) and running
+The code is setup as a python package and can by installed by cloning the repository, creating a new virtual environment and running
 ```shell
 pip install -r requirements.txt
 python setup.py install
 ```
+Note: jax is currently only supported on macOS and linux, but can be run from windows using WSL (the windows subsystem for linux). 
+
 
 ### Citing 
 
@@ -50,8 +52,7 @@ If you use this software please cite as follows:
   author={Curth, Alicia and van der Schaar, Mihaela}
     year={2021},
      booktitle={Proceedings of the 24th International Conference on Artificial
-  Intelligence and Statistics (AISTATS)},
-    url={https://arxiv.org/abs/2101.10943}
+  Intelligence and Statistics (AISTATS)}
 }
 ```
 
