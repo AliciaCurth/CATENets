@@ -12,8 +12,7 @@ Example usage:
 
 ```python
 from catenets.models import TNet, SNet
-from catenets.experiments.simulation_utils import import simulate_treatment_setup
-from catenets.experiments.experiment_utils import eval_root_mse
+from catenets.experiments.simulation_utils import simulate_treatment_setup
 
 # simulate some data (here: unconfounded, 10 prognostic variables and 5 predictive variables)
 X, y, w, p, cate = simulate_treatment_setup(n=1000, n_o=10, n_t=5, n_c=0)

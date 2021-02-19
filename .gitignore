@@ -11,4 +11,7 @@
 */.ipynb_checkpoints/
 .pytest_cache
 data/
+build/
+catenets.egg-info/
+dist/
 

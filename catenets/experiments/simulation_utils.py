@@ -172,7 +172,7 @@ def propensity_constant(X, n_c: int = 0, n_w: int = 0, xi: float = 0.5):
     return xi * np.ones(X.shape[0])
 
 
-def mu0_AISTATS(X, n_w: int = 0, n_c: int = 0, n_o: int = 0, scale: bool = True):
+def mu0_AISTATS(X, n_w: int = 0, n_c: int = 0, n_o: int = 0, scale: bool = False):
     if n_c + n_o == 0:
         return np.zeros((X.shape[0]))
     else:
