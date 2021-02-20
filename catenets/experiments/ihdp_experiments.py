@@ -25,7 +25,7 @@ SEP = '_'
 LAYERS_OUT = 2
 LAYERS_R = 3
 PENALTY_L2 = 0.01 / 100
-PENALTY_ORTHOGONAL = 1 / 100
+PENALTY_ORTHOGONAL = 0
 
 
 ALL_MODELS = {T_NAME: TNet(n_layers_r=LAYERS_R, n_layers_out=LAYERS_OUT, penalty_l2=PENALTY_L2),
@@ -33,12 +33,8 @@ ALL_MODELS = {T_NAME: TNet(n_layers_r=LAYERS_R, n_layers_out=LAYERS_OUT, penalty
               SNET2_NAME: SNet2(n_layers_r=LAYERS_R, n_layers_out=LAYERS_OUT, penalty_l2=PENALTY_L2),
               SNET3_NAME: SNet3(n_layers_r=LAYERS_R, n_layers_out=LAYERS_OUT,
                                 penalty_l2=PENALTY_L2, penalty_orthogonal=PENALTY_ORTHOGONAL),
-              SNET3_NAME + '_noortho': SNet3(n_layers_r=LAYERS_R, n_layers_out=LAYERS_OUT,
-                                penalty_l2=PENALTY_L2, penalty_orthogonal=0),
               SNET_NAME: SNet(n_layers_r=LAYERS_R, n_layers_out=LAYERS_OUT,
                                 penalty_l2=PENALTY_L2, penalty_orthogonal=PENALTY_ORTHOGONAL),
-              SNET_NAME + '_noortho': SNet(n_layers_r=LAYERS_R, n_layers_out=LAYERS_OUT,
-                                penalty_l2=PENALTY_L2, penalty_orthogonal=0),
               TWOSTEP_NAME + SEP + AIPW_TRANSFORMATION:
                   TwoStepNet(n_layers_r=LAYERS_R,  n_layers_out=LAYERS_OUT,
                              penalty_l2=PENALTY_L2, n_layers_r_t=LAYERS_R,
@@ -54,6 +50,12 @@ ALL_MODELS = {T_NAME: TNet(n_layers_r=LAYERS_R, n_layers_out=LAYERS_OUT, penalty
                              penalty_l2=PENALTY_L2, n_layers_r_t=LAYERS_R,
                              n_layers_out_t=LAYERS_OUT, penalty_l2_t=PENALTY_L2,
                              transformation=RA_TRANSFORMATION),
+              TWOSTEP_NAME + SEP + RA_TRANSFORMATION + SEP + 'S2':
+                  TwoStepNet(n_layers_r=LAYERS_R, n_layers_out=LAYERS_OUT,
+                             penalty_l2=PENALTY_L2, n_layers_r_t=LAYERS_R,
+                             n_layers_out_t=LAYERS_OUT, penalty_l2_t=PENALTY_L2,
+                             transformation=RA_TRANSFORMATION, first_stage_strategy='S2')
+
               }
 
 

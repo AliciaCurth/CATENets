@@ -16,8 +16,6 @@ from catenets.models.representation_nets import mmd2_lin
 
 DEFAULT_UNITS_R_BIG_S3 = 150
 DEFAULT_UNITS_R_SMALL_S3 = 50
-DEFAULT_UNITS_R_BIG_S4 = 100
-DEFAULT_UNITS_R_SMALL_S4 = 50
 
 
 # helper functions to avoid abstract tracer values in jit

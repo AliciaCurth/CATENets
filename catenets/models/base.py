@@ -265,7 +265,6 @@ def train_output_net_only(X, y, binary_y: bool = False,
     def update(i, state, batch, penalty):
         params = get_params(state)
         g_params = grad(loss)(params, batch, penalty)
-        # g_params = optimizers.clip_grads(g_params, 1.0)
         return opt_update(i, g_params, state)
 
     # initialise states

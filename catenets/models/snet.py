@@ -415,7 +415,7 @@ def predict_snet(X, trained_params, predict_funs, return_po: bool = False,
             return te
 
 
-# SNet-5 --------------------------------------------------------------------------------
+# SNet without propensity head  ----------------------------------------
 def train_snet_noprop(X, y, w, binary_y: bool = False, n_layers_r: int = DEFAULT_LAYERS_R,
                       n_units_r: int = DEFAULT_UNITS_R_BIG_S3,
                       n_units_r_small: int = DEFAULT_UNITS_R_SMALL_S3,
@@ -462,7 +462,7 @@ def train_snet_noprop(X, y, w, binary_y: bool = False, n_layers_r: int = DEFAULT
                                                        n_units_out=n_units_out,
                                                        binary_y=binary_y, nonlin=nonlin)
 
-    def init_fun_snet5(rng, input_shape):
+    def init_fun_snet_noprop(rng, input_shape):
         # chain together the layers
         # param should look like [repr_o, repr_p0, repr_p1, po_0, po_1]
         # initialise representation layers
@@ -503,7 +503,7 @@ def train_snet_noprop(X, y, w, binary_y: bool = False, n_layers_r: int = DEFAULT
 
     # complete loss function for all parts
     @jit
-    def loss_snet5(params, batch, penalty_l2, penalty_orthogonal):
+    def loss_snet_noprop(params, batch, penalty_l2, penalty_orthogonal):
         # params: list[repr_o, repr_p0, repr_p1, po_0, po_1]
         # batch: (X, y, w)
         X, y, w = batch
@@ -548,12 +548,12 @@ def train_snet_noprop(X, y, w, binary_y: bool = False, n_layers_r: int = DEFAULT
     def update(i, state, batch, penalty_l2, penalty_orthogonal):
         # updating function
         params = get_params(state)
-        return opt_update(i, grad(loss_snet5)(
+        return opt_update(i, grad(loss_snet_noprop)(
             params, batch, penalty_l2, penalty_orthogonal),
                           state)
 
     # initialise states
-    _, init_params = init_fun_snet5(rng_key, input_shape)
+    _, init_params = init_fun_snet_noprop(rng_key, input_shape)
     opt_state = opt_init(init_params)
 
     # calculate number of batches per epoch
@@ -576,7 +576,7 @@ def train_snet_noprop(X, y, w, binary_y: bool = False, n_layers_r: int = DEFAULT
 
         if (verbose > 0 and i % n_iter_print == 0) or early_stopping:
             params_curr = get_params(opt_state)
-            l_curr = loss_snet5(params_curr, (X_val, y_val, w_val),
+            l_curr = loss_snet_noprop(params_curr, (X_val, y_val, w_val),
                                 penalty_l2, penalty_orthogonal)
 
         if verbose > 0 and i % n_iter_print == 0:
@@ -598,7 +598,7 @@ def train_snet_noprop(X, y, w, binary_y: bool = False, n_layers_r: int = DEFAULT
             if p_curr > patience:
                 if return_val_loss:
                     # return loss without penalty
-                    l_final = loss_snet5(params_curr, (X_val, y_val, w_val), 0,
+                    l_final = loss_snet_noprop(params_curr, (X_val, y_val, w_val), 0,
                                          0)
                     return params_curr, (predict_fun_repr, predict_fun_head_po), l_final
 
@@ -609,7 +609,7 @@ def train_snet_noprop(X, y, w, binary_y: bool = False, n_layers_r: int = DEFAULT
 
     if return_val_loss:
         # return loss without penalty
-        l_final = loss_snet5(get_params(opt_state), (X_val, y_val, w_val), 0, 0)
+        l_final = loss_snet_noprop(get_params(opt_state), (X_val, y_val, w_val), 0, 0)
         return trained_params, (predict_fun_repr, predict_fun_head_po), l_final
 
     return trained_params, (predict_fun_repr, predict_fun_head_po)

@@ -584,7 +584,8 @@ def _train_and_predict_first_stage_s2(X, y, w, fit_mask, pred_mask, binary_y: bo
     X_fit, y_fit, w_fit = X[fit_mask, :], y[fit_mask], w[fit_mask]
     X_pred = X[pred_mask, :]
 
-    # use dragonnet
+    if verbose > 0:
+        print('Training SNet2')
     params, predict_funs = train_snet2(X_fit, y_fit, w_fit, binary_y=binary_y,
                                        n_layers_r=n_layers_r, n_units_r=n_units_r,
                                        n_layers_out=n_layers_out, n_units_out=n_units_out,
@@ -625,6 +626,8 @@ def _train_and_predict_first_stage_s3(X, y, w, fit_mask, pred_mask, binary_y: bo
     X_pred = X[pred_mask, :]
 
     # use snet3
+    if verbose > 0:
+        print('Training SNet3')
     params, predict_funs = train_snet3(X_fit, y_fit, w_fit, binary_y=binary_y,
                                        n_layers_r=n_layers_r, n_units_r=n_units_r,
                                        n_layers_out=n_layers_out, n_units_out=n_units_out,
@@ -666,7 +669,8 @@ def _train_and_predict_first_stage_s4(X, y, w, fit_mask, pred_mask, binary_y: bo
     X_fit, y_fit, w_fit = X[fit_mask, :], y[fit_mask], w[fit_mask]
     X_pred = X[pred_mask, :]
 
-    # use snet3
+    if verbose > 0:
+        print('Training SNet')
     params, predict_funs = train_snet(X_fit, y_fit, w_fit, binary_y=binary_y,
                                        n_layers_r=n_layers_r, n_units_r=n_units_r,
                                        n_layers_out=n_layers_out, n_units_out=n_units_out,
