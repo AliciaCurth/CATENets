@@ -1,5 +1,5 @@
 # CATENets - Conditional Average Treatment Effect Estimation Using Neural Networks
-Code Author: Alicia Curth
+Code Author: Alicia Curth (amc253@cam.ac.uk)
 
 This repo contains Jax-based, sklearn-style implementations of Neural Network-based Conditional Average Treatment Effect (CATE) Estimators, which were used in the AISTATS 2021 paper 'Nonparametric Estimation of Heterogeneous Treatment Effects: From Theory to Learning Algorithms' (https://arxiv.org/abs/2101.10943).
 
