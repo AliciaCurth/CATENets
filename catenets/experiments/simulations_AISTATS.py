@@ -6,13 +6,11 @@ import os
 import csv
 from sklearn import clone
 
-from catenets.models import T_NAME, SNET1_NAME, SNET2_NAME, SNET3_NAME, \
-    SNET_NAME, TWOSTEP_NAME, TNet, SNet1, SNet2, SNet3, SNet, TwoStepNet
+from catenets.models import TWOSTEP_NAME, TwoStepNet
 from catenets.models.snet import DEFAULT_UNITS_R_BIG_S, DEFAULT_UNITS_R_SMALL_S
 from catenets.models.twostep_nets import S_STRATEGY, S1_STRATEGY
-from catenets.models.transformation_utils import AIPW_TRANSFORMATION, HT_TRANSFORMATION, \
-    RA_TRANSFORMATION
-from catenets.experiments.experiment_utils import eval_root_mse
+from catenets.models.transformation_utils import AIPW_TRANSFORMATION, RA_TRANSFORMATION
+from catenets.experiments.experiment_utils import eval_root_mse, get_model_set
 from catenets.experiments.simulation_utils import simulate_treatment_setup
 
 # some constants
@@ -26,39 +24,15 @@ LAYERS_R = 3
 PENALTY_L2 = 0.01 / 100
 PENALTY_ORTHOGONAL = 1 / 100
 
-# Define model sets for experiments
-ALL_MODELS = {T_NAME: TNet(n_layers_out=LAYERS_OUT, n_layers_r=LAYERS_R, penalty_l2=PENALTY_L2),
-              SNET1_NAME: SNet1(n_layers_out=LAYERS_OUT, n_layers_r=LAYERS_R,
-                                penalty_l2=PENALTY_L2),
-              SNET2_NAME: SNet2(n_layers_out=LAYERS_OUT, n_layers_r=LAYERS_R,
-                                penalty_l2=PENALTY_L2),
-              SNET3_NAME: SNet3(n_layers_out=LAYERS_OUT, n_layers_r=LAYERS_R, penalty_l2=PENALTY_L2,
-                                penalty_orthogonal=PENALTY_ORTHOGONAL),
-              SNET_NAME: SNet(n_layers_out=LAYERS_OUT, n_layers_r=LAYERS_R, penalty_l2=PENALTY_L2,
-                              penalty_orthogonal=PENALTY_ORTHOGONAL),
-              TWOSTEP_NAME + SEP + AIPW_TRANSFORMATION:
-                  TwoStepNet(
-                      transformation=AIPW_TRANSFORMATION, n_layers_out=LAYERS_OUT,
-                      n_layers_r=LAYERS_R,
-                      penalty_l2=PENALTY_L2, n_layers_out_t=LAYERS_OUT,
-                      n_layers_r_t=LAYERS_R, penalty_l2_t=PENALTY_L2),
-              TWOSTEP_NAME + SEP + HT_TRANSFORMATION:
-                  TwoStepNet(
-                      transformation=HT_TRANSFORMATION, n_layers_out=LAYERS_OUT,
-                      n_layers_r=LAYERS_R,
-                      penalty_l2=PENALTY_L2, penalty_l2_t=PENALTY_L2,
-                      n_layers_out_t=LAYERS_OUT, n_layers_r_t=LAYERS_R),
-              TWOSTEP_NAME + SEP + RA_TRANSFORMATION:
-                  TwoStepNet(transformation=RA_TRANSFORMATION,
-                             n_layers_out=LAYERS_OUT,
-                             n_layers_r=LAYERS_R,
-                             penalty_l2_t=PENALTY_L2,
-                             penalty_l2=PENALTY_L2,
-                             n_layers_out_t=LAYERS_OUT,
-                             n_layers_r_t=LAYERS_R)
-              }
+MODEL_PARAMS = {'n_layers_out': LAYERS_OUT, 'n_layers_r': LAYERS_R, 'penalty_l2': PENALTY_L2,
+                'penalty_orthogonal': PENALTY_ORTHOGONAL, 'n_layers_out_t': LAYERS_OUT,
+                'n_layers_r_t': LAYERS_R, 'penalty_l2_t': PENALTY_L2}
 
-COMBINED_BEST = {TWOSTEP_NAME + SEP + AIPW_TRANSFORMATION + SEP + S_STRATEGY:
+# get basic models
+ALL_MODELS = get_model_set(model_selection='all', model_params=MODEL_PARAMS)
+
+# model-twostep combinations
+COMBINED_MODELS = {TWOSTEP_NAME + SEP + AIPW_TRANSFORMATION + SEP + S_STRATEGY:
     TwoStepNet(
         transformation=AIPW_TRANSFORMATION, first_stage_strategy=S_STRATEGY,
         n_units_r=DEFAULT_UNITS_R_BIG_S, n_units_r_small=DEFAULT_UNITS_R_SMALL_S,
@@ -84,7 +58,7 @@ COMBINED_BEST = {TWOSTEP_NAME + SEP + AIPW_TRANSFORMATION + SEP + S_STRATEGY:
             penalty_l2=PENALTY_L2, n_layers_out_t=LAYERS_OUT, n_layers_r_t=LAYERS_R)
 }
 
-FULL_MODEL_SET = dict(**ALL_MODELS, **COMBINED_BEST)
+FULL_MODEL_SET = dict(**ALL_MODELS, ** COMBINED_MODELS)
 
 # some more constants for experiments
 NTRAIN_BASE = 2000
@@ -259,26 +233,30 @@ def one_simulation_experiment(n_train, n_test: int = NTEST_BASE, d: int = D_BASE
     return rmses
 
 
-def main_AISTATS(setting=1, models=None, file_base='results'):
+def main_AISTATS(setting=1, models=None, file_name='res', n_repeats: int = 10):
+    if type(models) is list or type(models) is str:
+        models = get_model_set(models)
     if setting == 1:
         # no treatment effect, with confounding, by n
         simulation_experiment_loop([1000, 2000, 5000, 10000], change_dim='n', n_t=0, n_w=0,
-                                   n_c=5, n_o=5, file_base=file_base, models=models)
+                                   n_c=5, n_o=5, file_base=file_name, models=models,
+                                   n_repeats=n_repeats)
     elif setting == 2:
         # with treatment effect, with confounding, by n
         simulation_experiment_loop([1000, 2000, 5000, 10000], change_dim='n', n_t=5, n_w=0,
-                                   n_c=5, n_o=5, file_base=file_base, models=models)
+                                   n_c=5, n_o=5, file_base=file_name, models=models,
+                                   n_repeats=n_repeats)
     elif setting == 3:
         # Potential outcomes are supported on independent covariates, no confounding, by n
         simulation_experiment_loop([1000, 2000, 5000, 10000], change_dim='n', n_t=10, n_w=0,
-                                   n_c=0, n_o=10, file_base=file_base, models=models, xi=0.5,
-                                   mu_1_model_params={'withbase': False})
+                                   n_c=0, n_o=10, file_base=file_name, models=models, xi=0.5,
+                                   mu_1_model_params={'withbase': False}, n_repeats=n_repeats)
     elif setting == 4:
         # vary number of predictive features at n=2000
         simulation_experiment_loop([0, 1, 3, 5, 7, 10], change_dim=D_T_STRING, n_train=2000, n_c=5,
-                                   n_o=5, file_base=file_base, models=models)
+                                   n_o=5, file_base=file_name, models=models, n_repeats=n_repeats)
     elif setting == 5:
         # vary percentage treated at n=2000
         simulation_experiment_loop([0.1, 0.2, 0.3, 0.4, 0.5], change_dim=TARGET_STRING,
-                                   n_train=2000, n_c=5, n_o=5, n_t=0,
-                                   file_base=file_base, models=models)
+                                   n_train=2000, n_c=5, n_o=5, n_t=0, n_repeats=n_repeats,
+                                   file_base=file_name, models=models)

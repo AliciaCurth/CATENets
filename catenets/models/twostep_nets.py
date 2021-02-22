@@ -240,7 +240,7 @@ def train_twostep_net(X, y, w, p=None, first_stage_strategy: str = T_STRATEGY,
     # get strategy name
     if first_stage_strategy not in ALL_STRATEGIES:
         raise ValueError('Parameter first stage should be in '
-                         'catenets.models.dr_nets.ALL_STRATEGIES. '
+                         'catenets.models.twostep_nets.ALL_STRATEGIES. '
                          'You passed {}'.format(first_stage_strategy))
 
     # split data as wanted

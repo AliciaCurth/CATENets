@@ -8,12 +8,10 @@ import csv
 
 from sklearn import clone
 
-from catenets.experiments.experiment_utils import eval_root_mse
+from catenets.experiments.experiment_utils import eval_root_mse, get_model_set
 
-from catenets.models import T_NAME, SNET1_NAME, SNET2_NAME, SNET3_NAME,\
-    SNET_NAME, TWOSTEP_NAME, TNet, SNet1, SNet2, SNet3, SNet, TwoStepNet
-from catenets.models.transformation_utils import AIPW_TRANSFORMATION, HT_TRANSFORMATION, \
-    RA_TRANSFORMATION
+from catenets.models import TWOSTEP_NAME, TwoStepNet
+from catenets.models.transformation_utils import RA_TRANSFORMATION
 
 # Some constants
 DATA_DIR = 'data/'
@@ -28,50 +26,36 @@ LAYERS_R = 3
 PENALTY_L2 = 0.01 / 100
 PENALTY_ORTHOGONAL = 0
 
+MODEL_PARAMS = {'n_layers_out': LAYERS_OUT, 'n_layers_r': LAYERS_R, 'penalty_l2': PENALTY_L2,
+                'penalty_orthogonal': PENALTY_ORTHOGONAL, 'n_layers_out_t': LAYERS_OUT,
+                'n_layers_r_t': LAYERS_R, 'penalty_l2_t': PENALTY_L2}
 
-ALL_MODELS = {T_NAME: TNet(n_layers_r=LAYERS_R, n_layers_out=LAYERS_OUT, penalty_l2=PENALTY_L2),
-              SNET1_NAME: SNet1(n_layers_r=LAYERS_R, n_layers_out=LAYERS_OUT, penalty_l2=PENALTY_L2),
-              SNET2_NAME: SNet2(n_layers_r=LAYERS_R, n_layers_out=LAYERS_OUT, penalty_l2=PENALTY_L2),
-              SNET3_NAME: SNet3(n_layers_r=LAYERS_R, n_layers_out=LAYERS_OUT,
-                                penalty_l2=PENALTY_L2, penalty_orthogonal=PENALTY_ORTHOGONAL),
-              SNET_NAME: SNet(n_layers_r=LAYERS_R, n_layers_out=LAYERS_OUT,
-                                penalty_l2=PENALTY_L2, penalty_orthogonal=PENALTY_ORTHOGONAL),
-              TWOSTEP_NAME + SEP + AIPW_TRANSFORMATION:
-                  TwoStepNet(n_layers_r=LAYERS_R,  n_layers_out=LAYERS_OUT,
-                             penalty_l2=PENALTY_L2, n_layers_r_t=LAYERS_R,
-                             n_layers_out_t=LAYERS_OUT, penalty_l2_t=PENALTY_L2,
-                             transformation=AIPW_TRANSFORMATION),
-              TWOSTEP_NAME + SEP + HT_TRANSFORMATION:
-                  TwoStepNet(n_layers_r=LAYERS_R,  n_layers_out=LAYERS_OUT,
-                             penalty_l2=PENALTY_L2, n_layers_r_t=LAYERS_R,
-                             n_layers_out_t=LAYERS_OUT, penalty_l2_t=PENALTY_L2,
-                             transformation=HT_TRANSFORMATION),
-              TWOSTEP_NAME + SEP + RA_TRANSFORMATION:
-                  TwoStepNet(n_layers_r=LAYERS_R,  n_layers_out=LAYERS_OUT,
-                             penalty_l2=PENALTY_L2, n_layers_r_t=LAYERS_R,
-                             n_layers_out_t=LAYERS_OUT, penalty_l2_t=PENALTY_L2,
-                             transformation=RA_TRANSFORMATION),
-              TWOSTEP_NAME + SEP + RA_TRANSFORMATION + SEP + 'S2':
+# get basic models
+ALL_MODELS = get_model_set(model_selection='all', model_params=MODEL_PARAMS)
+
+COMBINED_MODELS = {TWOSTEP_NAME + SEP + RA_TRANSFORMATION + SEP + 'S2':
                   TwoStepNet(n_layers_r=LAYERS_R, n_layers_out=LAYERS_OUT,
                              penalty_l2=PENALTY_L2, n_layers_r_t=LAYERS_R,
                              n_layers_out_t=LAYERS_OUT, penalty_l2_t=PENALTY_L2,
-                             transformation=RA_TRANSFORMATION, first_stage_strategy='S2')
+                             transformation=RA_TRANSFORMATION, first_stage_strategy='S2')}
 
-              }
+FULL_MODEL_SET = dict(**ALL_MODELS, ** COMBINED_MODELS)
 
 
-def do_ihdp_experiments(n_exp: int = 100, file_name: str = 'ihdp_results_scale.csv',
+def do_ihdp_experiments(n_exp: int = 100, file_name: str = 'ihdp_results_scaled',
                         model_params: dict = None, scale_cate: bool = True,
                         models: dict = None):
     if models is None:
-        models = ALL_MODELS
+        models = FULL_MODEL_SET
+    elif type(models) is list or type(models) is str:
+        models = get_model_set(models)
 
     # make path
     if not os.path.exists(RESULT_DIR):
         os.makedirs(RESULT_DIR)
 
     # get file to write in
-    out_file = open(RESULT_DIR+file_name, 'w', buffering=1)
+    out_file = open(RESULT_DIR+file_name + '.csv', 'w', buffering=1)
     writer = csv.writer(out_file)
     header = [name+'_in' for name in models.keys()]+[name+'_out' for name in models.keys()]
     writer.writerow(header)
