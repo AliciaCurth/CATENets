@@ -8,7 +8,7 @@ from sklearn import clone
 
 from catenets.models import T_NAME, SNET1_NAME, SNET2_NAME, SNET3_NAME, \
     SNET_NAME, TWOSTEP_NAME, TNet, SNet1, SNet2, SNet3, SNet, TwoStepNet
-from catenets.models.disentangled_nets import DEFAULT_UNITS_R_BIG_S4, DEFAULT_UNITS_R_SMALL_S4
+from catenets.models.snet import DEFAULT_UNITS_R_BIG_S, DEFAULT_UNITS_R_SMALL_S
 from catenets.models.twostep_nets import S_STRATEGY, S1_STRATEGY
 from catenets.models.transformation_utils import AIPW_TRANSFORMATION, HT_TRANSFORMATION, \
     RA_TRANSFORMATION
@@ -61,14 +61,14 @@ ALL_MODELS = {T_NAME: TNet(n_layers_out=LAYERS_OUT, n_layers_r=LAYERS_R, penalty
 COMBINED_BEST = {TWOSTEP_NAME + SEP + AIPW_TRANSFORMATION + SEP + S_STRATEGY:
     TwoStepNet(
         transformation=AIPW_TRANSFORMATION, first_stage_strategy=S_STRATEGY,
-        n_units_r=DEFAULT_UNITS_R_BIG_S4, n_units_r_small=DEFAULT_UNITS_R_SMALL_S4,
+        n_units_r=DEFAULT_UNITS_R_BIG_S, n_units_r_small=DEFAULT_UNITS_R_SMALL_S,
         n_layers_out=LAYERS_OUT, n_layers_r=LAYERS_R, penalty_l2_t=PENALTY_L2,
         penalty_l2=PENALTY_L2, n_layers_out_t=LAYERS_OUT,
         n_layers_r_t=LAYERS_R, penalty_orthogonal=PENALTY_ORTHOGONAL),
     TWOSTEP_NAME + SEP + RA_TRANSFORMATION + SEP + S_STRATEGY:
         TwoStepNet(
             transformation=RA_TRANSFORMATION, first_stage_strategy=S_STRATEGY,
-            n_units_r=DEFAULT_UNITS_R_BIG_S4, n_units_r_small=DEFAULT_UNITS_R_SMALL_S4,
+            n_units_r=DEFAULT_UNITS_R_BIG_S, n_units_r_small=DEFAULT_UNITS_R_SMALL_S,
             penalty_orthogonal=PENALTY_ORTHOGONAL, n_layers_out=LAYERS_OUT, n_layers_r=LAYERS_R,
             penalty_l2_t=PENALTY_L2, penalty_l2=PENALTY_L2, n_layers_out_t=LAYERS_OUT,
             n_layers_r_t=LAYERS_R),
@@ -260,15 +260,24 @@ def one_simulation_experiment(n_train, n_test: int = NTEST_BASE, d: int = D_BASE
 
 def main_AISTATS(setting=1, models=None, file_base='results'):
     if setting == 1:
-        # no treatment effect, with confounding
+        # no treatment effect, with confounding, by n
         simulation_experiment_loop([1000, 2000, 5000, 10000], change_dim='n', n_t=0, n_w=0,
                                    n_c=5, n_o=5, file_base=file_base, models=models)
     elif setting == 2:
-        # with treatment effect, with confounding
+        # with treatment effect, with confounding, by n
         simulation_experiment_loop([1000, 2000, 5000, 10000], change_dim='n', n_t=5, n_w=0,
                                    n_c=5, n_o=5, file_base=file_base, models=models)
     elif setting == 3:
-        # Potential outcomes are supported on independent covariates, no confounding
+        # Potential outcomes are supported on independent covariates, no confounding, by n
         simulation_experiment_loop([1000, 2000, 5000, 10000], change_dim='n', n_t=10, n_w=0,
                                    n_c=0, n_o=10, file_base=file_base, models=models, xi=0.5,
                                    mu_1_model_params={'withbase': False})
+    elif setting == 4:
+        # vary number of predictive features at n=2000
+        simulation_experiment_loop([0, 1, 3, 5, 7, 10], change_dim=D_T_STRING, n_train=2000, n_c=5,
+                                   n_o=5, file_base=file_base, models=models)
+    elif setting == 5:
+        # vary percentage treated at n=2000
+        simulation_experiment_loop([0.1, 0.2, 0.3, 0.4, 0.5], change_dim=TARGET_STRING,
+                                   n_train=2000, n_c=5, n_o=5, n_t=0,
+                                   file_base=file_base, models=models)
