@@ -6,7 +6,7 @@ This repo contains Jax-based, sklearn-style implementations of Neural Network-ba
 We implement the SNet-class we introduce in our AISTATS paper, and re-implement a number of NN-based algorithms from existing literature (Shalit et al (2017), Shi et al (2019), Hassanpour & Greiner (2020)). We also consider NN-based instantiations of a number of two-step pseudo-regression estimators, including the DR-learner (Kennedy, 2020) and single-robust propensity-weighted and regression-adjusted learners. 
 
 ### Interface
-All implemented learning algorithms (``TNet, SNet, SNet1, SNet2, SNet3, TwoStepNet``) are come with a sklearn-style wrapper, implementing a ``.fit(X, y, w)`` and a ``.predict(X)`` method, where predict returns CATE by default. 
+All implemented learning algorithms (``TNet, SNet, SNet1, SNet2, SNet3, TwoStepNet``) come with a sklearn-style wrapper, implementing a ``.fit(X, y, w)`` and a ``.predict(X)`` method, where predict returns CATE by default. 
 
 Example usage:
 
