@@ -190,6 +190,7 @@ def do_one_experiment_repeat(n_train: int = NTRAIN_BASE, n_test: int = NTEST_BAS
     else:
         prop_string = str(target_prop)
 
+    # create file name and file
     file_name = file_base + SEP + str(n_train) + SEP + str(d) + SEP + str(n_w) + SEP + str(n_c) + \
                 SEP + str(n_o) + SEP + str(n_t) + SEP + str(xi) + SEP + prop_string
 

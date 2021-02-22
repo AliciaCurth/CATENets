@@ -2,6 +2,7 @@
 Author: Alicia Curth
 Script to run experiments on Johansson's IHDP dataset (retrieved via https://www.fredjo.com/)
 """
+import os
 import numpy as onp
 import csv
 
@@ -64,6 +65,11 @@ def do_ihdp_experiments(n_exp: int = 100, file_name: str = 'ihdp_results_scale.c
                         models: dict = None):
     if models is None:
         models = ALL_MODELS
+
+    # make path
+    if not os.path.exists(RESULT_DIR):
+        os.makedirs(RESULT_DIR)
+
     # get file to write in
     out_file = open(RESULT_DIR+file_name, 'w', buffering=1)
     writer = csv.writer(out_file)
