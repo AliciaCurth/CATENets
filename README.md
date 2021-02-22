@@ -6,7 +6,7 @@ This repo contains Jax-based, sklearn-style implementations of Neural Network-ba
 We implement the SNet-class we introduce in our AISTATS paper, and re-implement a number of NN-based algorithms from existing literature (Shalit et al (2017), Shi et al (2019), Hassanpour & Greiner (2020)). We also consider NN-based instantiations of a number of two-step pseudo-regression estimators, including the DR-learner (Kennedy, 2020) and single-robust propensity-weighted and regression-adjusted learners. 
 
 ### Interface
-All learning algorithms are implemented with a sklearn-style wrapper, implementing a ``.fit(X, y, w)`` and a ``.predict(X)`` method, where predict returns CATE by default. 
+All implemented learning algorithms (``TNet, SNet, SNet1, SNet2, SNet3, TwoStepNet``) are come with a sklearn-style wrapper, implementing a ``.fit(X, y, w)`` and a ``.predict(X)`` method, where predict returns CATE by default. 
 
 Example usage:
 
@@ -40,10 +40,13 @@ Options:
 --experiment # defaults to 'simulation', 'ihdp' will run ihdp experiments
 --setting # different simulation settings in synthetic experiments (can be 1-5)
 --models # defaults to None which will train all models considered in paper, 
-         # can be string of model name (e.g 'TNet'), 'plug' for all plugin models, 'twostep' for all two-step models
+         # can be string of model name (e.g 'TNet'), 'plug' for all plugin models,
+         # 'twostep' for all two-step models
 --file_name # base file name to write to, defaults to 'results'
---n_repeats # number of experiments to run, defaults to 10 (should be 100 for IHDP)
+--n_repeats # number of experiments to run, defaults to 10 (should be set to 100 for IHDP)
 ```
+To run the ihdp experiments, first download the IHDP-100 data files from https://www.fredjo.com/ and place them in a folder called 'data/'. 
+
 Note: jax is currently only supported on macOS and linux, but can be run from windows using WSL (the windows subsystem for linux). 
 
 
