@@ -39,7 +39,8 @@ python run_experiments.py
 Options:
 --experiment # defaults to 'simulation', 'ihdp' will run ihdp experiments
 --setting # different simulation settings in synthetic experiments (can be 1-5)
--- models # defaults to None which will train all models considered in paper, can be string of model name, 'plug' for all plugin models, 'twostep' for all two-step models
+--models # defaults to None which will train all models considered in paper, 
+         # can be string of model name (e.g 'TNet'), 'plug' for all plugin models, 'twostep' for all two-step models
 --file_name # base file name to write to, defaults to 'results'
 --n_repeats # number of experiments to run, defaults to 10 (should be 100 for IHDP)
 ```
