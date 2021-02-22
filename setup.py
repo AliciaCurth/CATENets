@@ -7,7 +7,7 @@ setuptools.setup(
     name='catenets',
     version='0.1.0',
     author="Alicia Curth",
-    author_email="aliciacurth@gmail.com",
+    author_email="amc253@cam.ac.uk",
     description="Conditional Average Treatment Effect Estimation Using Neural Networks",
     long_description=long_description,
     long_description_content_type="text/markdown",
