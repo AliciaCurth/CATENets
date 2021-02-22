@@ -30,13 +30,18 @@ cate_pred_s = s.predict(X)
 
 ```
 
-All experiments in the AISTATS paper can be replicated using this repository; the necessary code is in ``catenets.experiments.simulations_AISTATS`` and ``catenets.experiments.ihdp_experiments``. 
-
-### Installing
-The code is setup as a python package and can be installed by cloning the repository, creating a new virtual environment and running
+All experiments in the AISTATS paper can be replicated using this repository; the necessary code is in ``catenets.experiments.simulations_AISTATS`` and ``catenets.experiments.ihdp_experiments``. To do so using bash, create a new virtual environment and run
 ```shell
 pip install -r requirements.txt #install requirements
-python setup.py install # (optional:) install code as python package
+python run_experiments.py 
+```
+```shell
+Options:
+--experiment # defaults to 'simulation', 'ihdp' will run ihdp experiments
+--setting # different simulation settings in synthetic experiments (can be 1-5)
+-- models # defaults to None which will train all models considered in paper, can be string of model name, 'plug' for all plugin models, 'twostep' for all two-step models
+--file_name # base file name to write to, defaults to 'results'
+--n_repeats # number of experiments to run, defaults to 10 (should be 100 for IHDP)
 ```
 Note: jax is currently only supported on macOS and linux, but can be run from windows using WSL (the windows subsystem for linux). 
 
