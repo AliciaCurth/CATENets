@@ -155,6 +155,9 @@ def train_snet3(X, y, w, binary_y: bool = False, n_layers_r: int = DEFAULT_LAYER
     rng_key = random.PRNGKey(seed)
     onp.random.seed(seed)  # set seed for data generation via numpy as well
 
+    if not reg_diff:
+        penalty_diff = penalty_l2
+
     # get validation split (can be none)
     X, y, w, X_val, y_val, w_val, val_string = make_val_split(X, y, w,
                                                               val_split_prop=val_split_prop,

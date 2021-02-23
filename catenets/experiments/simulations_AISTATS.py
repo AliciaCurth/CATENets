@@ -24,12 +24,13 @@ LAYERS_R = 3
 PENALTY_L2 = 0.01 / 100
 PENALTY_ORTHOGONAL = 1 / 100
 
-MODEL_PARAMS = {'n_layers_out': LAYERS_OUT, 'n_layers_r': LAYERS_R, 'penalty_l2': PENALTY_L2,
-                'penalty_orthogonal': PENALTY_ORTHOGONAL, 'n_layers_out_t': LAYERS_OUT,
-                'n_layers_r_t': LAYERS_R, 'penalty_l2_t': PENALTY_L2}
+MODEL_PARAMS_AISTATS = {'n_layers_out': LAYERS_OUT,
+                        'n_layers_r': LAYERS_R, 'penalty_l2': PENALTY_L2,
+                        'penalty_orthogonal': PENALTY_ORTHOGONAL, 'n_layers_out_t': LAYERS_OUT,
+                        'n_layers_r_t': LAYERS_R, 'penalty_l2_t': PENALTY_L2}
 
 # get basic models
-ALL_MODELS = get_model_set(model_selection='all', model_params=MODEL_PARAMS)
+ALL_MODELS_AISTATS = get_model_set(model_selection='all', model_params=MODEL_PARAMS_AISTATS)
 
 # model-twostep combinations
 COMBINED_MODELS = {TWOSTEP_NAME + SEP + AIPW_TRANSFORMATION + SEP + S_STRATEGY:
@@ -58,7 +59,7 @@ COMBINED_MODELS = {TWOSTEP_NAME + SEP + AIPW_TRANSFORMATION + SEP + S_STRATEGY:
             penalty_l2=PENALTY_L2, n_layers_out_t=LAYERS_OUT, n_layers_r_t=LAYERS_R)
 }
 
-FULL_MODEL_SET = dict(**ALL_MODELS, ** COMBINED_MODELS)
+FULL_MODEL_SET_AISTATS = dict(**ALL_MODELS_AISTATS, **COMBINED_MODELS)
 
 # some more constants for experiments
 NTRAIN_BASE = 2000
@@ -157,7 +158,7 @@ def do_one_experiment_repeat(n_train: int = NTRAIN_BASE, n_test: int = NTEST_BAS
         range_exp = range(1, n_repeats + 1)
 
     if models is None:
-        models = FULL_MODEL_SET
+        models = FULL_MODEL_SET_AISTATS
 
     if target_prop is None:
         prop_string = str(prop_offset)
@@ -200,7 +201,7 @@ def one_simulation_experiment(n_train, n_test: int = NTEST_BASE, d: int = D_BASE
                               nonlinear_prop: bool = False, prop_offset: float = 0,
                               target_prop: float = None):
     if models is None:
-        models = FULL_MODEL_SET
+        models = FULL_MODEL_SET_AISTATS
 
     # get data
     X, y, w, p, t = simulate_treatment_setup(n_train + n_test, d=d, n_w=n_w, n_c=n_c, n_o=n_o,
@@ -234,8 +235,11 @@ def one_simulation_experiment(n_train, n_test: int = NTEST_BASE, d: int = D_BASE
 
 
 def main_AISTATS(setting=1, models=None, file_name='res', n_repeats: int = 10):
-    if type(models) is list or type(models) is str:
+    if models is None:
+        models = FULL_MODEL_SET_AISTATS
+    elif type(models) is list or type(models) is str:
         models = get_model_set(models)
+
     if setting == 1:
         # no treatment effect, with confounding, by n
         simulation_experiment_loop([1000, 2000, 5000, 10000], change_dim='n', n_t=0, n_w=0,

@@ -24,29 +24,29 @@ SEP = '_'
 LAYERS_OUT = 2
 LAYERS_R = 3
 PENALTY_L2 = 0.01 / 100
-PENALTY_ORTHOGONAL = 0
+PENALTY_ORTHOGONAL_IHDP = 0
 
 MODEL_PARAMS = {'n_layers_out': LAYERS_OUT, 'n_layers_r': LAYERS_R, 'penalty_l2': PENALTY_L2,
-                'penalty_orthogonal': PENALTY_ORTHOGONAL, 'n_layers_out_t': LAYERS_OUT,
+                'penalty_orthogonal': PENALTY_ORTHOGONAL_IHDP, 'n_layers_out_t': LAYERS_OUT,
                 'n_layers_r_t': LAYERS_R, 'penalty_l2_t': PENALTY_L2}
 
 # get basic models
-ALL_MODELS = get_model_set(model_selection='all', model_params=MODEL_PARAMS)
+ALL_MODELS_IHDP = get_model_set(model_selection='all', model_params=MODEL_PARAMS)
 
-COMBINED_MODELS = {TWOSTEP_NAME + SEP + RA_TRANSFORMATION + SEP + 'S2':
-                  TwoStepNet(n_layers_r=LAYERS_R, n_layers_out=LAYERS_OUT,
-                             penalty_l2=PENALTY_L2, n_layers_r_t=LAYERS_R,
-                             n_layers_out_t=LAYERS_OUT, penalty_l2_t=PENALTY_L2,
-                             transformation=RA_TRANSFORMATION, first_stage_strategy='S2')}
+COMBINED_MODELS_IHDP = {TWOSTEP_NAME + SEP + RA_TRANSFORMATION + SEP + 'S2':
+                            TwoStepNet(n_layers_r=LAYERS_R, n_layers_out=LAYERS_OUT,
+                                       penalty_l2=PENALTY_L2, n_layers_r_t=LAYERS_R,
+                                       n_layers_out_t=LAYERS_OUT, penalty_l2_t=PENALTY_L2,
+                                       transformation=RA_TRANSFORMATION, first_stage_strategy='S2')}
 
-FULL_MODEL_SET = dict(**ALL_MODELS, ** COMBINED_MODELS)
+FULL_MODEL_SET_IHDP = dict(**ALL_MODELS_IHDP, **COMBINED_MODELS_IHDP)
 
 
 def do_ihdp_experiments(n_exp: int = 100, file_name: str = 'ihdp_results_scaled',
                         model_params: dict = None, scale_cate: bool = True,
                         models: dict = None):
     if models is None:
-        models = FULL_MODEL_SET
+        models = FULL_MODEL_SET_IHDP
     elif type(models) is list or type(models) is str:
         models = get_model_set(models)
 
@@ -55,9 +55,9 @@ def do_ihdp_experiments(n_exp: int = 100, file_name: str = 'ihdp_results_scaled'
         os.makedirs(RESULT_DIR)
 
     # get file to write in
-    out_file = open(RESULT_DIR+file_name + '.csv', 'w', buffering=1)
+    out_file = open(RESULT_DIR + file_name + '.csv', 'w', buffering=1)
     writer = csv.writer(out_file)
-    header = [name+'_in' for name in models.keys()]+[name+'_out' for name in models.keys()]
+    header = [name + '_in' for name in models.keys()] + [name + '_out' for name in models.keys()]
     writer.writerow(header)
 
     # get data
@@ -97,7 +97,7 @@ def do_ihdp_experiments(n_exp: int = 100, file_name: str = 'ihdp_results_scaled'
             pehe_in.append(eval_root_mse(cate_pred_in, cate_true_in))
             pehe_out.append(eval_root_mse(cate_pred_out, cate_true_out))
 
-        writer.writerow(pehe_in+pehe_out)
+        writer.writerow(pehe_in + pehe_out)
 
     out_file.close()
 
@@ -118,14 +118,14 @@ def prepare_ihdp_data(data_train, data_test, rescale: bool = True, return_pos=Fa
 
         if sd_cate > 1:
             # training data
-            error = y - w*mu1 - (1-w)*mu0
-            mu0 = mu0/sd_cate
-            mu1 = mu1/sd_cate
-            y = w*mu1 + (1-w)*mu0 + error
+            error = y - w * mu1 - (1 - w) * mu0
+            mu0 = mu0 / sd_cate
+            mu1 = mu1 / sd_cate
+            y = w * mu1 + (1 - w) * mu0 + error
 
             # test data
-            mu0_t = mu0_t/sd_cate
-            mu1_t = mu1_t/sd_cate
+            mu0_t = mu0_t / sd_cate
+            mu1_t = mu1_t / sd_cate
 
     cate_true_in = mu1 - mu0
     cate_true_out = mu1_t - mu0_t

@@ -152,7 +152,7 @@ def train_snet(X, y, w, binary_y: bool = False, n_layers_r: int = DEFAULT_LAYERS
                reg_diff: bool = False, penalty_diff: float = DEFAULT_PENALTY_L2,
                nonlin: str = DEFAULT_NONLIN, avg_objective: bool = DEFAULT_AVG_OBJECTIVE,
                with_prop: bool = True):
-    # function to train a net with 4 representations
+    # function to train a net with 5 representations
     if not with_prop:
         raise ValueError('train_snet works only withprop=True')
     y, w = check_shape_1d_data(y), check_shape_1d_data(w)
@@ -160,6 +160,9 @@ def train_snet(X, y, w, binary_y: bool = False, n_layers_r: int = DEFAULT_LAYERS
     input_shape = (-1, d)
     rng_key = random.PRNGKey(seed)
     onp.random.seed(seed)  # set seed for data generation via numpy as well
+
+    if not reg_diff:
+        penalty_diff = penalty_l2
 
     # get validation split (can be none)
     X, y, w, X_val, y_val, w_val, val_string = make_val_split(X, y, w,
@@ -444,6 +447,9 @@ def train_snet_noprop(X, y, w, binary_y: bool = False, n_layers_r: int = DEFAULT
     input_shape = (-1, d)
     rng_key = random.PRNGKey(seed)
     onp.random.seed(seed)  # set seed for data generation via numpy as well
+
+    if not reg_diff:
+        penalty_diff = penalty_l2
 
     # get validation split (can be none)
     X, y, w, X_val, y_val, w_val, val_string = make_val_split(X, y, w,

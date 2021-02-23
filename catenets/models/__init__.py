@@ -22,6 +22,6 @@ __all__ = [T_NAME, SNET1_NAME, SNET2_NAME, SNET3_NAME, SNET_NAME, TWOSTEP_NAME]
 def get_catenet(name):
     if name not in ALL_MODELS:
         raise ValueError('Model name should be in '
-                         'catenets.models.ALL_MODELS.'
+                         'catenets.models.ALL_MODELS'
                          ' You passed {}'.format(name))
     return MODEL_DICT[name]

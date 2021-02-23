@@ -9,6 +9,12 @@
 .ipynb_checkpoints
 .ipynb_checkpoints/
 */.ipynb_checkpoints/
+*/bin/
+*/include/
+*/lib/
+*/lib64/
+*/share/
+*.cfg
 .pytest_cache
 data/
 build/
