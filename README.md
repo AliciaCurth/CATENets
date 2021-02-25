@@ -43,7 +43,7 @@ Options:
          # can be string of model name (e.g 'TNet'), 'plug' for all plugin models,
          # 'twostep' for all two-step models
 --file_name # base file name to write to, defaults to 'results'
---n_repeats # number of experiments to run, defaults to 10 (should be set to 100 for IHDP)
+--n_repeats # number of experiments to run for each configuration, defaults to 10 (should be set to 100 for IHDP)
 ```
 To run the ihdp experiments, first download the IHDP-100 data files from https://www.fredjo.com/ and place them in a folder called 'data/'. 
 
@@ -60,7 +60,8 @@ If you use this software please cite as follows:
   author={Curth, Alicia and van der Schaar, Mihaela}
     year={2021},
      booktitle={Proceedings of the 24th International Conference on Artificial
-  Intelligence and Statistics (AISTATS)}
+  Intelligence and Statistics (AISTATS)},
+  organization={PMLR}
 }
 ```
 
