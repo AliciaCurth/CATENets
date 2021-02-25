@@ -357,24 +357,26 @@ def train_twostep_net(X, y, w, p=None, first_stage_strategy: str = T_STRATEGY,
             scale_factor = 1
         else:
             pseudo_outcome = scale_factor * pseudo_outcome
-        return *train_output_net_only(X, pseudo_outcome, binary_y=False,
-                                      n_layers_out=n_layers_out_t,
-                                      n_units_out=n_units_out_t,
-                                      n_layers_r=n_layers_r_t,
-                                      n_units_r=n_units_r_t,
-                                      penalty_l2=penalty_l2_t,
-                                      step_size=step_size_t,
-                                      n_iter=n_iter,
-                                      batch_size=batch_size,
-                                      val_split_prop=val_split_prop,
-                                      early_stopping=early_stopping,
-                                      patience=patience,
-                                      n_iter_min=n_iter_min,
-                                      n_iter_print=n_iter_print,
-                                      verbose=verbose,
-                                      seed=seed,
-                                      return_val_loss=return_val_loss, nonlin=nonlin,
-                                      avg_objective=avg_objective), scale_factor
+        params, predict_funs = train_output_net_only(X, pseudo_outcome, binary_y=False,
+                                                     n_layers_out=n_layers_out_t,
+                                                     n_units_out=n_units_out_t,
+                                                     n_layers_r=n_layers_r_t,
+                                                     n_units_r=n_units_r_t,
+                                                     penalty_l2=penalty_l2_t,
+                                                     step_size=step_size_t,
+                                                     n_iter=n_iter,
+                                                     batch_size=batch_size,
+                                                     val_split_prop=val_split_prop,
+                                                     early_stopping=early_stopping,
+                                                     patience=patience,
+                                                     n_iter_min=n_iter_min,
+                                                     n_iter_print=n_iter_print,
+                                                     verbose=verbose,
+                                                     seed=seed,
+                                                     return_val_loss=return_val_loss,
+                                                     nonlin=nonlin,
+                                                     avg_objective=avg_objective)
+        return params, predict_funs, scale_factor
     else:
         return train_output_net_only(X, pseudo_outcome, binary_y=False,
                                      n_layers_out=n_layers_out_t,
@@ -672,20 +674,20 @@ def _train_and_predict_first_stage_s4(X, y, w, fit_mask, pred_mask, binary_y: bo
     if verbose > 0:
         print('Training SNet')
     params, predict_funs = train_snet(X_fit, y_fit, w_fit, binary_y=binary_y,
-                                       n_layers_r=n_layers_r, n_units_r=n_units_r,
-                                       n_layers_out=n_layers_out, n_units_out=n_units_out,
-                                       penalty_l2=penalty_l2, step_size=step_size,
-                                       n_iter=n_iter, batch_size=batch_size,
-                                       val_split_prop=val_split_prop,
-                                       early_stopping=early_stopping,
-                                       patience=patience, n_iter_min=n_iter_min,
-                                       verbose=verbose, n_iter_print=n_iter_print,
-                                       seed=seed, penalty_orthogonal=penalty_orthogonal,
-                                       n_units_r_small=n_units_r_small, nonlin=nonlin,
-                                       avg_objective=avg_objective)
+                                      n_layers_r=n_layers_r, n_units_r=n_units_r,
+                                      n_layers_out=n_layers_out, n_units_out=n_units_out,
+                                      penalty_l2=penalty_l2, step_size=step_size,
+                                      n_iter=n_iter, batch_size=batch_size,
+                                      val_split_prop=val_split_prop,
+                                      early_stopping=early_stopping,
+                                      patience=patience, n_iter_min=n_iter_min,
+                                      verbose=verbose, n_iter_print=n_iter_print,
+                                      seed=seed, penalty_orthogonal=penalty_orthogonal,
+                                      n_units_r_small=n_units_r_small, nonlin=nonlin,
+                                      avg_objective=avg_objective)
 
     _, mu_0_hat, mu_1_hat, pi_hat = predict_snet(X_pred, params, predict_funs, return_po=True,
-                                                  return_prop=True)
+                                                 return_prop=True)
     return mu_0_hat, mu_1_hat, pi_hat
 
 
