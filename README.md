@@ -30,7 +30,7 @@ cate_pred_s = s.predict(X)
 
 ```
 
-All experiments in the AISTATS paper can be replicated using this repository; the necessary code is in ``catenets.experiments.simulations_AISTATS`` and ``catenets.experiments.ihdp_experiments``. To do so using bash, create a new virtual environment and run
+All experiments in the AISTATS paper can be replicated using this repository; the necessary code is in ``catenets.experiments.simulations_AISTATS`` and ``catenets.experiments.ihdp_experiments``. To do so from shell, clone the repo, create a new virtual environment and run
 ```shell
 pip install -r requirements.txt #install requirements
 python run_experiments.py 
@@ -46,6 +46,8 @@ Options:
 --n_repeats # number of experiments to run for each configuration, defaults to 10 (should be set to 100 for IHDP)
 ```
 To run the ihdp experiments, first download the IHDP-100 data files from https://www.fredjo.com/ and place them in a folder called 'data/'. 
+
+The code can also be installed as a python package (``catenets``). From a local copy of the repo, run ``python setup.py install``. 
 
 Note: jax is currently only supported on macOS and linux, but can be run from windows using WSL (the windows subsystem for linux). 
 
