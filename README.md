@@ -3,11 +3,10 @@ Code Author: Alicia Curth (amc253@cam.ac.uk)
 
 This repo contains Jax-based, sklearn-style implementations of Neural Network-based Conditional Average Treatment Effect (CATE) Estimators, which were used in the AISTATS 2021 paper 'Nonparametric Estimation of Heterogeneous Treatment Effects: From Theory to Learning Algorithms' (https://arxiv.org/abs/2101.10943).
 
-We implement the SNet-class we introduce in our AISTATS paper, and re-implement a number of NN-based algorithms from existing literature (Shalit et al (2017), Shi et al (2019), Hassanpour & Greiner (2020)). We also consider NN-based instantiations of a number of two-step pseudo-regression estimators, including the DR-learner (Kennedy, 2020) and single-robust propensity-weighted and regression-adjusted learners. 
+We implement the SNet-class we introduce in our AISTATS paper, and re-implement a number of NN-based algorithms from existing literature (Shalit et al (2017), Shi et al (2019), Hassanpour & Greiner (2020)). We also provide NN-based instantiations of a number of so-called meta-learners for CATE estimation, including two-step pseudo-outcome regression estimators (the DR-learner (Kennedy, 2020) and single-robust propensity-weighted (PW) and regression-adjusted (RA) learners), Nie & Wager (2017)'s R-learner and Kuenzel et al (2019)'s X-learner. 
 
 ### Interface
-All implemented learning algorithms (``TNet, SNet, SNet1, SNet2, SNet3, PseudoOutcomeNet``) come
-with a sklearn-style wrapper, implementing a ``.fit(X, y, w)`` and a ``.predict(X)`` method, where predict returns CATE by default. 
+All implemented learning algorithms (``TNet, SNet, SNet1, SNet2, SNet3, DRNet, RANet, PWNet, RNet, XNet``) come with a sklearn-style wrapper, implementing a ``.fit(X, y, w)`` and a ``.predict(X)`` method, where predict returns CATE by default. All hyperparameters are documented in detail in the respective files in the .models folder.
 
 Example usage:
 
@@ -42,7 +41,7 @@ Options:
 --setting # different simulation settings in synthetic experiments (can be 1-5)
 --models # defaults to None which will train all models considered in paper, 
          # can be string of model name (e.g 'TNet'), 'plug' for all plugin models,
-         # 'twostep' for all two-step models
+         # 'pseudo' for all pseudo-outcome regression models
 --file_name # base file name to write to, defaults to 'results'
 --n_repeats # number of experiments to run for each configuration, defaults to 10 (should be set to 100 for IHDP)
 ```
