@@ -207,7 +207,6 @@ def predict_t_net(X, trained_params, predict_funs, return_po: bool = False,
         return mu_1 - mu_0
 
 
-
 def _train_tnet_jointly(X, y, w, binary_y: bool = False, n_layers_out: int = DEFAULT_LAYERS_OUT,
                         n_units_out: int = DEFAULT_UNITS_OUT, n_layers_r: int = DEFAULT_LAYERS_R,
                         n_units_r: int = DEFAULT_UNITS_R,

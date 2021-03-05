@@ -74,6 +74,8 @@ class SNet(BaseCATENet):
     penalty_diff: float
         l2-penalty for regularizing the difference between output heads. used only if
         train_separate=False
+    same_init: bool, False
+        Whether to initialise the two output heads with same values
     nonlin: string, default 'elu'
         Nonlinearity to use in NN
     penalty_disc: float, default zero
@@ -92,7 +94,7 @@ class SNet(BaseCATENet):
                  patience: int = DEFAULT_PATIENCE, n_iter_min: int = DEFAULT_N_ITER_MIN,
                  verbose: int = 1, n_iter_print: int = DEFAULT_N_ITER_PRINT,
                  reg_diff: bool = False, penalty_diff: float = DEFAULT_PENALTY_L2,
-                 seed: int = DEFAULT_SEED, nonlin: str = DEFAULT_NONLIN,
+                 seed: int = DEFAULT_SEED, nonlin: str = DEFAULT_NONLIN, same_init: bool = False
                  ):
         self.with_prop = with_prop
         self.binary_y = binary_y
@@ -109,6 +111,7 @@ class SNet(BaseCATENet):
         self.penalty_disc = penalty_disc
         self.reg_diff = reg_diff
         self.penalty_diff = penalty_diff
+        self.same_init = same_init
 
         self.step_size = step_size
         self.n_iter = n_iter
@@ -151,7 +154,7 @@ def train_snet(X, y, w, binary_y: bool = False, n_layers_r: int = DEFAULT_LAYERS
                seed: int = DEFAULT_SEED, return_val_loss: bool = False,
                reg_diff: bool = False, penalty_diff: float = DEFAULT_PENALTY_L2,
                nonlin: str = DEFAULT_NONLIN, avg_objective: bool = DEFAULT_AVG_OBJECTIVE,
-               with_prop: bool = True):
+               with_prop: bool = True, same_init: bool = False):
     # function to train a net with 5 representations
     if not with_prop:
         raise ValueError('train_snet works only withprop=True')
@@ -209,9 +212,15 @@ def train_snet(X, y, w, binary_y: bool = False, n_layers_r: int = DEFAULT_LAYERS
 
         # initialise output heads
         rng, layer_rng = random.split(rng)
-        input_shape, param_0 = init_fun_head_po(layer_rng, input_shape_repr_mu)
-        rng, layer_rng = random.split(rng)
-        input_shape, param_1 = init_fun_head_po(layer_rng, input_shape_repr_mu)
+        if same_init:
+            # initialise both on same values
+            input_shape, param_0 = init_fun_head_po(layer_rng, input_shape_repr_mu)
+            input_shape, param_1 = init_fun_head_po(layer_rng, input_shape_repr_mu)
+        else:
+            input_shape, param_0 = init_fun_head_po(layer_rng, input_shape_repr_mu)
+            rng, layer_rng = random.split(rng)
+            input_shape, param_1 = init_fun_head_po(layer_rng, input_shape_repr_mu)
+
         rng, layer_rng = random.split(rng)
         input_shape, param_prop = init_fun_head_prop(layer_rng, input_shape_repr_prop)
         return input_shape, [param_repr_c, param_repr_o, param_repr_mu0, param_repr_mu1,
@@ -435,7 +444,7 @@ def train_snet_noprop(X, y, w, binary_y: bool = False, n_layers_r: int = DEFAULT
                       seed: int = DEFAULT_SEED, return_val_loss: bool = False,
                       reg_diff: bool = False, penalty_diff: float = DEFAULT_PENALTY_L2,
                       nonlin: str = DEFAULT_NONLIN, avg_objective: bool = DEFAULT_AVG_OBJECTIVE,
-                      with_prop: bool = False):
+                      with_prop: bool = False, same_init: bool = False):
     """
     SNet but without the propensity head
     """
@@ -485,9 +494,15 @@ def train_snet_noprop(X, y, w, binary_y: bool = False, n_layers_r: int = DEFAULT
 
         # initialise output heads
         rng, layer_rng = random.split(rng)
-        input_shape, param_0 = init_fun_head_po(layer_rng, input_shape_repr)
-        rng, layer_rng = random.split(rng)
-        input_shape, param_1 = init_fun_head_po(layer_rng, input_shape_repr)
+        if same_init:
+            # initialise both on same values
+            input_shape, param_0 = init_fun_head_po(layer_rng, input_shape_repr)
+            input_shape, param_1 = init_fun_head_po(layer_rng, input_shape_repr)
+        else:
+            input_shape, param_0 = init_fun_head_po(layer_rng, input_shape_repr)
+            rng, layer_rng = random.split(rng)
+            input_shape, param_1 = init_fun_head_po(layer_rng, input_shape_repr)
+
         return input_shape, [param_repr_o, param_repr_p0, param_repr_p1, param_0, param_1]
 
     # Define loss functions

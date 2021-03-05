@@ -58,11 +58,14 @@ class SNet1(BaseCATENet):
     penalty_diff: float
         l2-penalty for regularizing the difference between output heads. used only if
         train_separate=False
+    same_init: bool, False
+        Whether to initialise the two output heads with same values
     nonlin: string, default 'elu'
         Nonlinearity to use in NN
     penalty_disc: float, default zero
         Discrepancy penalty. Defaults to zero as this feature is not tested.
     """
+
     def __init__(self, binary_y: bool = False, n_layers_r: int = DEFAULT_LAYERS_R,
                  n_units_r: int = DEFAULT_UNITS_R, n_layers_out: int = DEFAULT_LAYERS_OUT,
                  n_units_out: int = DEFAULT_UNITS_OUT, penalty_l2: float = DEFAULT_PENALTY_L2,
@@ -73,7 +76,7 @@ class SNet1(BaseCATENet):
                  verbose: int = 1, n_iter_print: int = DEFAULT_N_ITER_PRINT,
                  seed: int = DEFAULT_SEED, reg_diff: bool = False,
                  penalty_diff: float = DEFAULT_PENALTY_L2, same_init: bool = False,
-                 nonlin: str = DEFAULT_NONLIN, penalty_disc: float = DEFAULT_PENALTY_DISC,):
+                 nonlin: str = DEFAULT_NONLIN, penalty_disc: float = DEFAULT_PENALTY_DISC):
         # structure of net
         self.binary_y = binary_y
         self.n_layers_r = n_layers_r
@@ -106,6 +109,30 @@ class SNet1(BaseCATENet):
 
     def _get_predict_function(self):
         return predict_snet1
+
+
+class TARNet(SNet1):
+    """Wrapper for TARNet"""
+    def __init__(self, binary_y: bool = False, n_layers_r: int = DEFAULT_LAYERS_R,
+                 n_units_r: int = DEFAULT_UNITS_R, n_layers_out: int = DEFAULT_LAYERS_OUT,
+                 n_units_out: int = DEFAULT_UNITS_OUT, penalty_l2: float = DEFAULT_PENALTY_L2,
+                 step_size: float = DEFAULT_STEP_SIZE,
+                 n_iter: int = DEFAULT_N_ITER, batch_size: int = DEFAULT_BATCH_SIZE,
+                 val_split_prop: float = DEFAULT_VAL_SPLIT, early_stopping: bool = True,
+                 patience: int = DEFAULT_PATIENCE, n_iter_min: int = DEFAULT_N_ITER_MIN,
+                 verbose: int = 1, n_iter_print: int = DEFAULT_N_ITER_PRINT,
+                 seed: int = DEFAULT_SEED, reg_diff: bool = False,
+                 penalty_diff: float = DEFAULT_PENALTY_L2, same_init: bool = False,
+                 nonlin: str = DEFAULT_NONLIN):
+        super().__init__(binary_y=binary_y, n_layers_r=n_layers_r,
+                         n_units_r=n_units_r, n_layers_out=n_layers_out,
+                         n_units_out=n_units_out, penalty_l2=penalty_l2, step_size=step_size,
+                         n_iter=n_iter, batch_size=batch_size,
+                         val_split_prop=val_split_prop, early_stopping=early_stopping,
+                         patience=patience, n_iter_min=n_iter_min,
+                         verbose=verbose, n_iter_print=n_iter_print,
+                         seed=seed, reg_diff=reg_diff, penalty_diff=penalty_diff,
+                         same_init=same_init, nonlin=nonlin, penalty_disc=0)
 
 
 class SNet2(BaseCATENet):
@@ -152,9 +179,12 @@ class SNet2(BaseCATENet):
     penalty_diff: float
         l2-penalty for regularizing the difference between output heads. used only if
         train_separate=False
+    same_init: bool, False
+        Whether to initialise the two output heads with same values
     nonlin: string, default 'elu'
         Nonlinearity to use in NN
     """
+
     def __init__(self, binary_y: bool = False, n_layers_r: int = DEFAULT_LAYERS_R,
                  n_units_r: int = DEFAULT_UNITS_R, n_layers_out: int = DEFAULT_LAYERS_OUT,
                  n_units_out: int = DEFAULT_UNITS_OUT, penalty_l2: float = DEFAULT_PENALTY_L2,
@@ -163,7 +193,7 @@ class SNet2(BaseCATENet):
                  val_split_prop: float = DEFAULT_VAL_SPLIT, early_stopping: bool = True,
                  patience: int = DEFAULT_PATIENCE, n_iter_min: int = DEFAULT_N_ITER_MIN,
                  verbose: int = 1, n_iter_print: int = DEFAULT_N_ITER_PRINT,
-                 seed: int = DEFAULT_SEED, reg_diff: bool = False,
+                 seed: int = DEFAULT_SEED, reg_diff: bool = False, same_init: bool = False,
                  penalty_diff: float = DEFAULT_PENALTY_L2, nonlin: str = DEFAULT_NONLIN):
         self.binary_y = binary_y
 
@@ -183,6 +213,7 @@ class SNet2(BaseCATENet):
         self.n_iter_min = n_iter_min
         self.reg_diff = reg_diff
         self.penalty_diff = penalty_diff
+        self.same_init = same_init
 
         self.seed = seed
         self.verbose = verbose
@@ -414,9 +445,10 @@ def train_snet2(X, y, w, binary_y: bool = False, n_layers_r: int = DEFAULT_LAYER
                 verbose: int = 1, n_iter_print: int = DEFAULT_N_ITER_PRINT,
                 seed: int = DEFAULT_SEED, return_val_loss: bool = False,
                 reg_diff: bool = False, penalty_diff: float = DEFAULT_PENALTY_L2,
-                nonlin: str = DEFAULT_NONLIN, avg_objective: bool = DEFAULT_AVG_OBJECTIVE):
+                nonlin: str = DEFAULT_NONLIN, avg_objective: bool = DEFAULT_AVG_OBJECTIVE,
+                same_init: bool = False):
     """
-    SNet2 corresponds to SNet2 (Shi et al, 2019) [without TMLE regularisation term].
+    SNet2 corresponds to DragonNet (Shi et al, 2019) [without TMLE regularisation term].
     """
     y, w = check_shape_1d_data(y), check_shape_1d_data(w)
     d = X.shape[1]
@@ -451,10 +483,17 @@ def train_snet2(X, y, w, binary_y: bool = False, n_layers_r: int = DEFAULT_LAYER
         # param should look like [repr, po_0, po_1, prop]
         rng, layer_rng = random.split(rng)
         input_shape_repr, param_repr = init_fun_repr(layer_rng, input_shape)
+
         rng, layer_rng = random.split(rng)
-        input_shape, param_0 = init_fun_head_po(layer_rng, input_shape_repr)
-        rng, layer_rng = random.split(rng)
-        input_shape, param_1 = init_fun_head_po(layer_rng, input_shape_repr)
+        if same_init:
+            # initialise both on same values
+            input_shape, param_0 = init_fun_head_po(layer_rng, input_shape_repr)
+            input_shape, param_1 = init_fun_head_po(layer_rng, input_shape_repr)
+        else:
+            input_shape, param_0 = init_fun_head_po(layer_rng, input_shape_repr)
+            rng, layer_rng = random.split(rng)
+            input_shape, param_1 = init_fun_head_po(layer_rng, input_shape_repr)
+
         rng, layer_rng = random.split(rng)
         input_shape, param_prop = init_fun_head_prop(layer_rng, input_shape_repr)
         return input_shape, [param_repr, param_0, param_1, param_prop]
@@ -501,7 +540,7 @@ def train_snet2(X, y, w, binary_y: bool = False, n_layers_r: int = DEFAULT_LAYER
         # pass down to propensity head
         loss_prop = loss_head_prop(params[3], (reps, w), penalty_l2)
         weightsq_prop = sum([jnp.sum(params[3][i][0] ** 2) for i in
-                          range(0, 2 * n_layers_out + 1, 2)])
+                             range(0, 2 * n_layers_out + 1, 2)])
 
         weightsq_body = sum([jnp.sum(params[0][i][0] ** 2) for i in range(0, 2 * n_layers_r, 2)])
         weightsq_head = heads_l2_penalty(params[1], params[2], n_layers_out, reg_diff,
@@ -510,11 +549,11 @@ def train_snet2(X, y, w, binary_y: bool = False, n_layers_r: int = DEFAULT_LAYER
         if not avg_objective:
             return loss_0 + loss_1 + loss_prop + 0.5 * (penalty_l2 * (weightsq_body
                                                                       + weightsq_prop) +
-                                                                      weightsq_head)
+                                                        weightsq_head)
         else:
             n_batch = y.shape[0]
             return (loss_0 + loss_1) / n_batch + loss_prop / n_batch + \
-                   0.5 * (penalty_l2 * (weightsq_body + weightsq_prop) +  weightsq_head)
+                   0.5 * (penalty_l2 * (weightsq_body + weightsq_prop) + weightsq_head)
 
     # Define optimisation routine
     opt_init, opt_update, get_params = optimizers.adam(step_size=step_size)

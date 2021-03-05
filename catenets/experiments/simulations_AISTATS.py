@@ -6,10 +6,10 @@ import os
 import csv
 from sklearn import clone
 
-from catenets.models import TWOSTEP_NAME, TwoStepNet
+from catenets.models import PSEUDOOUT_NAME, PseudoOutcomeNet
 from catenets.models.snet import DEFAULT_UNITS_R_BIG_S, DEFAULT_UNITS_R_SMALL_S
-from catenets.models.twostep_nets import S_STRATEGY, S1_STRATEGY
-from catenets.models.transformation_utils import AIPW_TRANSFORMATION, RA_TRANSFORMATION
+from catenets.models.pseudo_outcome_nets import S_STRATEGY, S1_STRATEGY
+from catenets.models.transformation_utils import DR_TRANSFORMATION, RA_TRANSFORMATION
 from catenets.experiments.experiment_utils import eval_root_mse, get_model_set
 from catenets.experiments.simulation_utils import simulate_treatment_setup
 
@@ -33,27 +33,27 @@ MODEL_PARAMS_AISTATS = {'n_layers_out': LAYERS_OUT,
 ALL_MODELS_AISTATS = get_model_set(model_selection='all', model_params=MODEL_PARAMS_AISTATS)
 
 # model-twostep combinations
-COMBINED_MODELS = {TWOSTEP_NAME + SEP + AIPW_TRANSFORMATION + SEP + S_STRATEGY:
-    TwoStepNet(
-        transformation=AIPW_TRANSFORMATION, first_stage_strategy=S_STRATEGY,
+COMBINED_MODELS = {PSEUDOOUT_NAME + SEP + DR_TRANSFORMATION + SEP + S_STRATEGY:
+    PseudoOutcomeNet(
+        transformation=DR_TRANSFORMATION, first_stage_strategy=S_STRATEGY,
         n_units_r=DEFAULT_UNITS_R_BIG_S, n_units_r_small=DEFAULT_UNITS_R_SMALL_S,
         n_layers_out=LAYERS_OUT, n_layers_r=LAYERS_R, penalty_l2_t=PENALTY_L2,
         penalty_l2=PENALTY_L2, n_layers_out_t=LAYERS_OUT,
         n_layers_r_t=LAYERS_R, penalty_orthogonal=PENALTY_ORTHOGONAL),
-    TWOSTEP_NAME + SEP + RA_TRANSFORMATION + SEP + S_STRATEGY:
-        TwoStepNet(
+    PSEUDOOUT_NAME + SEP + RA_TRANSFORMATION + SEP + S_STRATEGY:
+        PseudoOutcomeNet(
             transformation=RA_TRANSFORMATION, first_stage_strategy=S_STRATEGY,
             n_units_r=DEFAULT_UNITS_R_BIG_S, n_units_r_small=DEFAULT_UNITS_R_SMALL_S,
             penalty_orthogonal=PENALTY_ORTHOGONAL, n_layers_out=LAYERS_OUT, n_layers_r=LAYERS_R,
             penalty_l2_t=PENALTY_L2, penalty_l2=PENALTY_L2, n_layers_out_t=LAYERS_OUT,
             n_layers_r_t=LAYERS_R),
-    TWOSTEP_NAME + SEP + AIPW_TRANSFORMATION + SEP + S1_STRATEGY:
-        TwoStepNet(
-            transformation=AIPW_TRANSFORMATION, first_stage_strategy=S1_STRATEGY,
+    PSEUDOOUT_NAME + SEP + DR_TRANSFORMATION + SEP + S1_STRATEGY:
+        PseudoOutcomeNet(
+            transformation=DR_TRANSFORMATION, first_stage_strategy=S1_STRATEGY,
             n_layers_out=LAYERS_OUT, n_layers_r=LAYERS_R, penalty_l2_t=PENALTY_L2,
             penalty_l2=PENALTY_L2, n_layers_out_t=LAYERS_OUT, n_layers_r_t=LAYERS_R),
-    TWOSTEP_NAME + SEP + RA_TRANSFORMATION + SEP + S1_STRATEGY:
-        TwoStepNet(
+    PSEUDOOUT_NAME + SEP + RA_TRANSFORMATION + SEP + S1_STRATEGY:
+        PseudoOutcomeNet(
             transformation=RA_TRANSFORMATION, first_stage_strategy=S1_STRATEGY,
             n_layers_out=LAYERS_OUT, n_layers_r=LAYERS_R, penalty_l2_t=PENALTY_L2,
             penalty_l2=PENALTY_L2, n_layers_out_t=LAYERS_OUT, n_layers_r_t=LAYERS_R)

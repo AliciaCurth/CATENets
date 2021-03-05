@@ -4,11 +4,11 @@ Utils for transformations
 """
 import numpy as onp
 
-HT_TRANSFORMATION = 'HT'
-AIPW_TRANSFORMATION = 'AIPW'
+PW_TRANSFORMATION = 'PW'
+DR_TRANSFORMATION = 'DR'
 RA_TRANSFORMATION = 'RA'
 
-ALL_TRANSFORMATIONS = [HT_TRANSFORMATION, AIPW_TRANSFORMATION, RA_TRANSFORMATION]
+ALL_TRANSFORMATIONS = [PW_TRANSFORMATION, DR_TRANSFORMATION, RA_TRANSFORMATION]
 
 
 def aipw_te_transformation(y, w, p, mu_0, mu_1):
@@ -95,9 +95,9 @@ def ra_te_transformation(y, w, p, mu_0, mu_1):
     return w * (y - mu_0) + (1-w) * (mu_1 - y)
 
 
-TRANSFORMATION_DICT = {HT_TRANSFORMATION: ht_te_transformation,
+TRANSFORMATION_DICT = {PW_TRANSFORMATION: ht_te_transformation,
                        RA_TRANSFORMATION: ra_te_transformation,
-                       AIPW_TRANSFORMATION: aipw_te_transformation}
+                       DR_TRANSFORMATION: aipw_te_transformation}
 
 
 def _get_transformation_function(transformation_name):

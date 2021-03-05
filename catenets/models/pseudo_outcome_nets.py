@@ -1,6 +1,7 @@
 """
 Author: Alicia Curth
-Implements Two-step Nets, namely the DR-learner, the PW-learner and the RA-learner
+Implements Pseudo-outcome based Two-step Nets, namely the DR-learner, the PW-learner and the
+RA-learner.
 """
 import numpy as onp
 import pandas as pd
@@ -10,7 +11,7 @@ from sklearn.model_selection import StratifiedKFold
 from catenets.models.base import BaseCATENet, train_output_net_only
 from catenets.models.model_utils import check_shape_1d_data, check_X_is_np
 from catenets.models.transformation_utils import _get_transformation_function, \
-    AIPW_TRANSFORMATION, HT_TRANSFORMATION, RA_TRANSFORMATION
+    DR_TRANSFORMATION, PW_TRANSFORMATION, RA_TRANSFORMATION
 from catenets.models.representation_nets import train_snet1, predict_snet1, train_snet2, \
     predict_snet2
 from catenets.models.disentangled_nets import train_snet3, predict_snet3, \
@@ -28,9 +29,10 @@ S_STRATEGY = 'S'
 ALL_STRATEGIES = [T_STRATEGY, S1_STRATEGY, S2_STRATEGY, S3_STRATEGY, S_STRATEGY]
 
 
-class TwoStepNet(BaseCATENet):
+class PseudoOutcomeNet(BaseCATENet):
     """
-    Class implements TwoStepLearners: RA-learner, PW-learner and DR-learner
+    Class implements TwoStepLearners based on pseudo-outcome regression as discussed in
+    Curth &vd Schaar (2021): RA-learner, PW-learner and DR-learner
 
     Parameters
     ----------
@@ -93,11 +95,10 @@ class TwoStepNet(BaseCATENet):
     nonlin: string, default 'elu'
         Nonlinearity to use in NN
     """
-
     def __init__(self, first_stage_strategy: str = T_STRATEGY,
                  data_split: bool = False,
                  cross_fit: bool = False, n_cf_folds: int = DEFAULT_CF_FOLDS,
-                 transformation: str = AIPW_TRANSFORMATION,
+                 transformation: str = DR_TRANSFORMATION,
                  binary_y: bool = False,
                  n_layers_out: int = DEFAULT_LAYERS_OUT,
                  n_layers_r: int = DEFAULT_LAYERS_R,
@@ -162,7 +163,7 @@ class TwoStepNet(BaseCATENet):
         self.rescale_transformation = rescale_transformation
 
     def _get_train_function(self):
-        return train_twostep_net
+        return train_pseudooutcome_net
 
     def fit(self, X, y, w, p=None):
         # overwrite super so we can pass p as extra param
@@ -172,6 +173,10 @@ class TwoStepNet(BaseCATENet):
 
         train_func = self._get_train_function()
         train_params = self.get_params()
+
+        if 'transformation' not in train_params.keys():
+            train_params.update({'transformation': self.transformation})
+
         if self.rescale_transformation:
             self._params, self._predict_funs, self._scale_factor = train_func(X, y, w, p,
                                                                               **train_params)
@@ -199,35 +204,176 @@ class TwoStepNet(BaseCATENet):
             return self._predict_funs(self._params, X)
 
 
-def train_twostep_net(X, y, w, p=None, first_stage_strategy: str = T_STRATEGY,
-                      data_split: bool = False,
-                      cross_fit: bool = False, n_cf_folds: int = DEFAULT_CF_FOLDS,
-                      transformation: str = AIPW_TRANSFORMATION,
-                      binary_y: bool = False,
-                      n_layers_out: int = DEFAULT_LAYERS_OUT,
-                      n_layers_r: int = DEFAULT_LAYERS_R,
-                      n_layers_r_t: int = DEFAULT_LAYERS_R_T,
-                      n_layers_out_t: int = DEFAULT_LAYERS_OUT_T,
-                      n_units_out: int = DEFAULT_UNITS_OUT,
-                      n_units_r: int = DEFAULT_UNITS_R,
-                      n_units_out_t: int = DEFAULT_UNITS_OUT_T,
-                      n_units_r_t: int = DEFAULT_UNITS_R_T,
-                      penalty_l2: float = DEFAULT_PENALTY_L2,
-                      penalty_l2_t: float = DEFAULT_PENALTY_L2,
-                      step_size: float = DEFAULT_STEP_SIZE,
-                      step_size_t: float = DEFAULT_STEP_SIZE_T,
-                      n_iter: int = DEFAULT_N_ITER,
-                      batch_size: int = DEFAULT_BATCH_SIZE,
-                      val_split_prop: float = DEFAULT_VAL_SPLIT,
-                      early_stopping: bool = True,
-                      patience: int = DEFAULT_PATIENCE,
-                      n_iter_min: int = DEFAULT_N_ITER_MIN,
-                      verbose: int = 1, n_iter_print: int = DEFAULT_N_ITER_PRINT,
-                      seed: int = DEFAULT_SEED, rescale_transformation: bool = False,
-                      return_val_loss: bool = False,
-                      penalty_orthogonal: float = DEFAULT_PENALTY_ORTHOGONAL,
-                      n_units_r_small: int = DEFAULT_UNITS_R_SMALL_S,
-                      nonlin: str = DEFAULT_NONLIN, avg_objective: bool = DEFAULT_AVG_OBJECTIVE):
+class DRNet(PseudoOutcomeNet):
+    """ Wrapper for DR-learner using PseudoOutcomeNet"""
+    def __init__(self, first_stage_strategy: str = T_STRATEGY,
+                 data_split: bool = False,
+                 cross_fit: bool = False, n_cf_folds: int = DEFAULT_CF_FOLDS,
+                 binary_y: bool = False,
+                 n_layers_out: int = DEFAULT_LAYERS_OUT,
+                 n_layers_r: int = DEFAULT_LAYERS_R,
+                 n_layers_out_t: int = DEFAULT_LAYERS_OUT_T,
+                 n_layers_r_t: int = DEFAULT_LAYERS_R_T,
+                 n_units_out: int = DEFAULT_UNITS_OUT,
+                 n_units_r: int = DEFAULT_UNITS_R,
+                 n_units_out_t: int = DEFAULT_UNITS_OUT_T,
+                 n_units_r_t: int = DEFAULT_UNITS_R_T,
+                 penalty_l2: float = DEFAULT_PENALTY_L2,
+                 penalty_l2_t: float = DEFAULT_PENALTY_L2,
+                 step_size: float = DEFAULT_STEP_SIZE,
+                 step_size_t: float = DEFAULT_STEP_SIZE_T,
+                 n_iter: int = DEFAULT_N_ITER,
+                 batch_size: int = DEFAULT_BATCH_SIZE,
+                 n_iter_min: int = DEFAULT_N_ITER_MIN,
+                 val_split_prop: float = DEFAULT_VAL_SPLIT,
+                 early_stopping: bool = True,
+                 patience: int = DEFAULT_PATIENCE,
+                 verbose: int = 1, n_iter_print: int = DEFAULT_N_ITER_PRINT,
+                 seed: int = DEFAULT_SEED,
+                 rescale_transformation: bool = False,
+                 penalty_orthogonal: float = DEFAULT_PENALTY_ORTHOGONAL,
+                 n_units_r_small: int = DEFAULT_UNITS_R_SMALL_S,
+                 nonlin: str = DEFAULT_NONLIN
+                 ):
+        super().__init__(first_stage_strategy=first_stage_strategy, data_split=data_split,
+                         cross_fit=cross_fit, n_cf_folds=n_cf_folds,
+                         transformation=DR_TRANSFORMATION, binary_y=binary_y,
+                         n_layers_out=n_layers_out, n_layers_r=n_layers_r,
+                         n_layers_out_t=n_layers_out_t, n_layers_r_t=n_layers_r_t,
+                         n_units_out=n_units_out,n_units_r=n_units_r, n_units_out_t=n_units_out_t,
+                         n_units_r_t=n_units_r_t, penalty_l2=penalty_l2, penalty_l2_t=penalty_l2_t,
+                         step_size=step_size, step_size_t=step_size_t, n_iter=n_iter,
+                         batch_size=batch_size, n_iter_min=n_iter_min,
+                         val_split_prop=val_split_prop, early_stopping=early_stopping,
+                         patience=patience, verbose=verbose, n_iter_print=n_iter_print,
+                         seed=seed, penalty_orthogonal=penalty_orthogonal,
+                         n_units_r_small=n_units_r_small, nonlin=nonlin,
+                         rescale_transformation=rescale_transformation)
+
+
+class RANet(PseudoOutcomeNet):
+    """ Wrapper for RA-learner using PseudoOutcomeNet"""
+    def __init__(self, first_stage_strategy: str = T_STRATEGY,
+                 data_split: bool = False,
+                 cross_fit: bool = False, n_cf_folds: int = DEFAULT_CF_FOLDS,
+                 binary_y: bool = False,
+                 n_layers_out: int = DEFAULT_LAYERS_OUT,
+                 n_layers_r: int = DEFAULT_LAYERS_R,
+                 n_layers_out_t: int = DEFAULT_LAYERS_OUT_T,
+                 n_layers_r_t: int = DEFAULT_LAYERS_R_T,
+                 n_units_out: int = DEFAULT_UNITS_OUT,
+                 n_units_r: int = DEFAULT_UNITS_R,
+                 n_units_out_t: int = DEFAULT_UNITS_OUT_T,
+                 n_units_r_t: int = DEFAULT_UNITS_R_T,
+                 penalty_l2: float = DEFAULT_PENALTY_L2,
+                 penalty_l2_t: float = DEFAULT_PENALTY_L2,
+                 step_size: float = DEFAULT_STEP_SIZE,
+                 step_size_t: float = DEFAULT_STEP_SIZE_T,
+                 n_iter: int = DEFAULT_N_ITER,
+                 batch_size: int = DEFAULT_BATCH_SIZE,
+                 n_iter_min: int = DEFAULT_N_ITER_MIN,
+                 val_split_prop: float = DEFAULT_VAL_SPLIT,
+                 early_stopping: bool = True,
+                 patience: int = DEFAULT_PATIENCE,
+                 verbose: int = 1, n_iter_print: int = DEFAULT_N_ITER_PRINT,
+                 seed: int = DEFAULT_SEED,
+                 rescale_transformation: bool = False,
+                 penalty_orthogonal: float = DEFAULT_PENALTY_ORTHOGONAL,
+                 n_units_r_small: int = DEFAULT_UNITS_R_SMALL_S,
+                 nonlin: str = DEFAULT_NONLIN
+                 ):
+        super().__init__(first_stage_strategy=first_stage_strategy, data_split=data_split,
+                         cross_fit=cross_fit, n_cf_folds=n_cf_folds,
+                         transformation=RA_TRANSFORMATION, binary_y=binary_y,
+                         n_layers_out=n_layers_out, n_layers_r=n_layers_r,
+                         n_layers_out_t=n_layers_out_t, n_layers_r_t=n_layers_r_t,
+                         n_units_out=n_units_out,n_units_r=n_units_r, n_units_out_t=n_units_out_t,
+                         n_units_r_t=n_units_r_t, penalty_l2=penalty_l2, penalty_l2_t=penalty_l2_t,
+                         step_size=step_size, step_size_t=step_size_t, n_iter=n_iter,
+                         batch_size=batch_size, n_iter_min=n_iter_min,
+                         val_split_prop=val_split_prop, early_stopping=early_stopping,
+                         patience=patience, verbose=verbose, n_iter_print=n_iter_print,
+                         seed=seed, penalty_orthogonal=penalty_orthogonal,
+                         n_units_r_small=n_units_r_small, nonlin=nonlin,
+                         rescale_transformation=rescale_transformation)
+
+
+class PWNet(PseudoOutcomeNet):
+    """ Wrapper for PW-learner using PseudoOutcomeNet"""
+    def __init__(self, first_stage_strategy: str = T_STRATEGY,
+                 data_split: bool = False,
+                 cross_fit: bool = False, n_cf_folds: int = DEFAULT_CF_FOLDS,
+                 binary_y: bool = False,
+                 n_layers_out: int = DEFAULT_LAYERS_OUT,
+                 n_layers_r: int = DEFAULT_LAYERS_R,
+                 n_layers_out_t: int = DEFAULT_LAYERS_OUT_T,
+                 n_layers_r_t: int = DEFAULT_LAYERS_R_T,
+                 n_units_out: int = DEFAULT_UNITS_OUT,
+                 n_units_r: int = DEFAULT_UNITS_R,
+                 n_units_out_t: int = DEFAULT_UNITS_OUT_T,
+                 n_units_r_t: int = DEFAULT_UNITS_R_T,
+                 penalty_l2: float = DEFAULT_PENALTY_L2,
+                 penalty_l2_t: float = DEFAULT_PENALTY_L2,
+                 step_size: float = DEFAULT_STEP_SIZE,
+                 step_size_t: float = DEFAULT_STEP_SIZE_T,
+                 n_iter: int = DEFAULT_N_ITER,
+                 batch_size: int = DEFAULT_BATCH_SIZE,
+                 n_iter_min: int = DEFAULT_N_ITER_MIN,
+                 val_split_prop: float = DEFAULT_VAL_SPLIT,
+                 early_stopping: bool = True,
+                 patience: int = DEFAULT_PATIENCE,
+                 verbose: int = 1, n_iter_print: int = DEFAULT_N_ITER_PRINT,
+                 seed: int = DEFAULT_SEED,
+                 rescale_transformation: bool = False,
+                 penalty_orthogonal: float = DEFAULT_PENALTY_ORTHOGONAL,
+                 n_units_r_small: int = DEFAULT_UNITS_R_SMALL_S,
+                 nonlin: str = DEFAULT_NONLIN
+                 ):
+        super().__init__(first_stage_strategy=first_stage_strategy, data_split=data_split,
+                         cross_fit=cross_fit, n_cf_folds=n_cf_folds,
+                         transformation=PW_TRANSFORMATION, binary_y=binary_y,
+                         n_layers_out=n_layers_out, n_layers_r=n_layers_r,
+                         n_layers_out_t=n_layers_out_t, n_layers_r_t=n_layers_r_t,
+                         n_units_out=n_units_out,n_units_r=n_units_r, n_units_out_t=n_units_out_t,
+                         n_units_r_t=n_units_r_t, penalty_l2=penalty_l2, penalty_l2_t=penalty_l2_t,
+                         step_size=step_size, step_size_t=step_size_t, n_iter=n_iter,
+                         batch_size=batch_size, n_iter_min=n_iter_min,
+                         val_split_prop=val_split_prop, early_stopping=early_stopping,
+                         patience=patience, verbose=verbose, n_iter_print=n_iter_print,
+                         seed=seed, penalty_orthogonal=penalty_orthogonal,
+                         n_units_r_small=n_units_r_small, nonlin=nonlin,
+                         rescale_transformation=rescale_transformation)
+
+
+def train_pseudooutcome_net(X, y, w, p=None, first_stage_strategy: str = T_STRATEGY,
+                            data_split: bool = False,
+                            cross_fit: bool = False, n_cf_folds: int = DEFAULT_CF_FOLDS,
+                            transformation: str = DR_TRANSFORMATION,
+                            binary_y: bool = False,
+                            n_layers_out: int = DEFAULT_LAYERS_OUT,
+                            n_layers_r: int = DEFAULT_LAYERS_R,
+                            n_layers_r_t: int = DEFAULT_LAYERS_R_T,
+                            n_layers_out_t: int = DEFAULT_LAYERS_OUT_T,
+                            n_units_out: int = DEFAULT_UNITS_OUT,
+                            n_units_r: int = DEFAULT_UNITS_R,
+                            n_units_out_t: int = DEFAULT_UNITS_OUT_T,
+                            n_units_r_t: int = DEFAULT_UNITS_R_T,
+                            penalty_l2: float = DEFAULT_PENALTY_L2,
+                            penalty_l2_t: float = DEFAULT_PENALTY_L2,
+                            step_size: float = DEFAULT_STEP_SIZE,
+                            step_size_t: float = DEFAULT_STEP_SIZE_T,
+                            n_iter: int = DEFAULT_N_ITER,
+                            batch_size: int = DEFAULT_BATCH_SIZE,
+                            val_split_prop: float = DEFAULT_VAL_SPLIT,
+                            early_stopping: bool = True,
+                            patience: int = DEFAULT_PATIENCE,
+                            n_iter_min: int = DEFAULT_N_ITER_MIN,
+                            verbose: int = 1, n_iter_print: int = DEFAULT_N_ITER_PRINT,
+                            seed: int = DEFAULT_SEED, rescale_transformation: bool = False,
+                            return_val_loss: bool = False,
+                            penalty_orthogonal: float = DEFAULT_PENALTY_ORTHOGONAL,
+                            n_units_r_small: int = DEFAULT_UNITS_R_SMALL_S,
+                            nonlin: str = DEFAULT_NONLIN, avg_objective: bool = DEFAULT_AVG_OBJECTIVE):
     # get shape of data
     n, d = X.shape
 
@@ -244,7 +390,7 @@ def train_twostep_net(X, y, w, p=None, first_stage_strategy: str = T_STRATEGY,
                          'You passed {}'.format(first_stage_strategy))
 
     # split data as wanted
-    if p is None or transformation is not HT_TRANSFORMATION:
+    if p is None or transformation is not PW_TRANSFORMATION:
         if not cross_fit:
             if not data_split:
                 if verbose > 0:
@@ -346,7 +492,7 @@ def train_twostep_net(X, y, w, p=None, first_stage_strategy: str = T_STRATEGY,
     # second stage
     y, w = check_shape_1d_data(y), check_shape_1d_data(w)
     # transform data and fit on transformed data
-    if transformation is HT_TRANSFORMATION:
+    if transformation is PW_TRANSFORMATION:
         mu_0 = None
         mu_1 = None
 
@@ -415,7 +561,7 @@ def _train_and_predict_first_stage_t(X, y, w, fit_mask, pred_mask,
                                      verbose: int = 1, n_iter_print: int = DEFAULT_N_ITER_PRINT,
                                      seed: int = DEFAULT_SEED, nonlin: str = DEFAULT_NONLIN,
                                      avg_objective: bool = False,
-                                     transformation: str = AIPW_TRANSFORMATION):
+                                     transformation: str = DR_TRANSFORMATION):
     # train and predict first stage estimators using TNet
     if len(w.shape) > 1:
         w = w.reshape((len(w),))
@@ -424,7 +570,7 @@ def _train_and_predict_first_stage_t(X, y, w, fit_mask, pred_mask,
     X_fit, y_fit, w_fit = X[fit_mask, :], y[fit_mask], w[fit_mask]
     X_pred = X[pred_mask, :]
 
-    if transformation is not HT_TRANSFORMATION:
+    if transformation is not PW_TRANSFORMATION:
         if verbose > 0:
             print('Training PO_0 Net')
         params_0, predict_fun_0 = train_output_net_only(X_fit[w_fit == 0], y_fit[w_fit == 0],
@@ -515,7 +661,7 @@ def _train_and_predict_first_stage_s1(X, y, w, fit_mask, pred_mask, binary_y: bo
                                       verbose: int = 1, n_iter_print: int = DEFAULT_N_ITER_PRINT,
                                       seed: int = DEFAULT_SEED, nonlin: str = DEFAULT_NONLIN,
                                       avg_objective: bool = False,
-                                      transformation: str = AIPW_TRANSFORMATION):
+                                      transformation: str = DR_TRANSFORMATION):
     # Train and predict first stage estimators using SNet1/ TARNet
     # split the data
     X_fit, y_fit, w_fit = X[fit_mask, :], y[fit_mask], w[fit_mask]
@@ -709,7 +855,7 @@ def _train_and_predict_first_stage(X, y, w, fit_mask, pred_mask, first_stage_str
                                    penalty_orthogonal: float = DEFAULT_PENALTY_ORTHOGONAL,
                                    n_units_r_small: int = DEFAULT_UNITS_R_SMALL_S,
                                    nonlin: str = DEFAULT_NONLIN, avg_objective: bool = False,
-                                   transformation: str = AIPW_TRANSFORMATION):
+                                   transformation: str = DR_TRANSFORMATION):
     if first_stage_strategy == T_STRATEGY:
         # simplest case: train three seperate heads
         mu_0, mu_1, pi_hat = _train_and_predict_first_stage_t(X, y, w, fit_mask, pred_mask,

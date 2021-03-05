@@ -7,8 +7,9 @@ import jax.numpy as jnp
 from catenets.models.base import check_shape_1d_data
 
 from catenets.models import T_NAME, SNET1_NAME, SNET2_NAME, SNET3_NAME, \
-    SNET_NAME, TWOSTEP_NAME, TwoStepNet, get_catenet
-from catenets.models.transformation_utils import AIPW_TRANSFORMATION, HT_TRANSFORMATION, \
+    SNET_NAME, PSEUDOOUT_NAME, PseudoOutcomeNet, get_catenet, DRNET_NAME, RANET_NAME, \
+    RNET_NAME, XNET_NAME
+from catenets.models.transformation_utils import DR_TRANSFORMATION, PW_TRANSFORMATION, \
     RA_TRANSFORMATION
 
 SEP = "_"
@@ -38,10 +39,12 @@ def get_model_set(model_selection = 'all', model_params: dict = None):
     if type(model_selection) is str:
         if model_selection == 'plug':
             models = get_all_plugin_models()
+        elif model_selection == 'pseudo':
+            models = get_all_pseudoout_models()
         elif model_selection == 'twostep':
             models = get_all_twostep_models()
         elif model_selection == 'all':
-            models = dict(**get_all_plugin_models(), **get_all_twostep_models())
+            models = dict(**get_all_plugin_models(), **get_all_pseudoout_models())
         else:
             models = {model_selection: get_catenet(model_selection)()}
     elif type(model_selection) is list:
@@ -63,8 +66,8 @@ def get_model_set(model_selection = 'all', model_params: dict = None):
 
 
 ALL_PLUGIN_MODELS = [T_NAME,  SNET1_NAME,  SNET2_NAME, SNET3_NAME, SNET_NAME]
-
-ALL_TWOSTEP_MODELS = [AIPW_TRANSFORMATION, HT_TRANSFORMATION, RA_TRANSFORMATION]
+ALL_PSEUDOOUT_MODELS = [DR_TRANSFORMATION, PW_TRANSFORMATION, RA_TRANSFORMATION]
+ALL_TWOSTEP_MODELS = [DRNET_NAME, RANET_NAME, XNET_NAME, RNET_NAME]
 
 
 def get_all_plugin_models():
@@ -74,8 +77,15 @@ def get_all_plugin_models():
     return model_dict
 
 
-def get_all_twostep_models():
+def get_all_pseudoout_models():  # DR, RA, PW learner
     model_dict = {}
-    for trans in ALL_TWOSTEP_MODELS:
-        model_dict.update({TWOSTEP_NAME + SEP + trans: TwoStepNet(transformation=trans)})
+    for trans in ALL_PSEUDOOUT_MODELS:
+        model_dict.update({PSEUDOOUT_NAME + SEP + trans: PseudoOutcomeNet(transformation=trans)})
+    return model_dict
+
+
+def get_all_twostep_models():  # DR, RA, R, X learner
+    model_dict = {}
+    for name in ALL_TWOSTEP_MODELS:
+        model_dict.update({name: get_catenet(name)()})
     return model_dict

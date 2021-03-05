@@ -10,7 +10,7 @@ from sklearn import clone
 
 from catenets.experiments.experiment_utils import eval_root_mse, get_model_set
 
-from catenets.models import TWOSTEP_NAME, TwoStepNet
+from catenets.models import PSEUDOOUT_NAME, PseudoOutcomeNet
 from catenets.models.transformation_utils import RA_TRANSFORMATION
 
 # Some constants
@@ -33,11 +33,11 @@ MODEL_PARAMS = {'n_layers_out': LAYERS_OUT, 'n_layers_r': LAYERS_R, 'penalty_l2'
 # get basic models
 ALL_MODELS_IHDP = get_model_set(model_selection='all', model_params=MODEL_PARAMS)
 
-COMBINED_MODELS_IHDP = {TWOSTEP_NAME + SEP + RA_TRANSFORMATION + SEP + 'S2':
-                            TwoStepNet(n_layers_r=LAYERS_R, n_layers_out=LAYERS_OUT,
-                                       penalty_l2=PENALTY_L2, n_layers_r_t=LAYERS_R,
-                                       n_layers_out_t=LAYERS_OUT, penalty_l2_t=PENALTY_L2,
-                                       transformation=RA_TRANSFORMATION, first_stage_strategy='S2')}
+COMBINED_MODELS_IHDP = {PSEUDOOUT_NAME + SEP + RA_TRANSFORMATION + SEP + 'S2':
+                            PseudoOutcomeNet(n_layers_r=LAYERS_R, n_layers_out=LAYERS_OUT,
+                                             penalty_l2=PENALTY_L2, n_layers_r_t=LAYERS_R,
+                                             n_layers_out_t=LAYERS_OUT, penalty_l2_t=PENALTY_L2,
+                                             transformation=RA_TRANSFORMATION, first_stage_strategy='S2')}
 
 FULL_MODEL_SET_IHDP = dict(**ALL_MODELS_IHDP, **COMBINED_MODELS_IHDP)
 
