@@ -59,7 +59,7 @@ If you use this software please cite as follows:
 ```
 @inproceedings{curth2021nonparametric,
   title={Nonparametric Estimation of Heterogeneous Treatment Effects: From Theory to Learning Algorithms},
-  author={Curth, Alicia and van der Schaar, Mihaela}
+  author={Curth, Alicia and van der Schaar, Mihaela},
     year={2021},
      booktitle={Proceedings of the 24th International Conference on Artificial
   Intelligence and Statistics (AISTATS)},
