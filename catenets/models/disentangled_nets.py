@@ -39,8 +39,13 @@ class SNet3(BaseCATENet):
         Whether the outcome is binary
     n_layers_out: int
         Number of hypothesis layers (n_layers_out x n_units_out + 1 x Dense layer)
+    n_layers_out_prop: int
+        Number of hypothesis layers for propensity score(n_layers_out x n_units_out + 1 x Dense
+        layer)
     n_units_out: int
         Number of hidden units in each hypothesis layer
+    n_units_out_prop: int
+        Number of hidden units in each propensity score hypothesis layer
     n_layers_r: int
         Number of shared & private representation layers before hypothesis layers
     n_units_r: int
@@ -86,7 +91,10 @@ class SNet3(BaseCATENet):
     def __init__(self, binary_y: bool = False, n_layers_r: int = DEFAULT_LAYERS_R,
                  n_units_r: int = DEFAULT_UNITS_R_BIG_S3, n_layers_out: int = DEFAULT_LAYERS_OUT,
                  n_units_r_small: int = DEFAULT_UNITS_R_SMALL_S3,
-                 n_units_out: int = DEFAULT_UNITS_OUT, penalty_l2: float = DEFAULT_PENALTY_L2,
+                 n_units_out: int = DEFAULT_UNITS_OUT,
+                 n_units_out_prop: int = DEFAULT_UNITS_OUT,
+                 n_layers_out_prop: int = DEFAULT_LAYERS_OUT,
+                 penalty_l2: float = DEFAULT_PENALTY_L2,
                  penalty_orthogonal: float = DEFAULT_PENALTY_ORTHOGONAL,
                  penalty_disc: float = DEFAULT_PENALTY_DISC,
                  step_size: float = DEFAULT_STEP_SIZE,
@@ -101,9 +109,11 @@ class SNet3(BaseCATENet):
 
         self.n_layers_r = n_layers_r
         self.n_layers_out = n_layers_out
+        self.n_layers_out_prop = n_layers_out_prop
         self.n_units_r = n_units_r
         self.n_units_r_small = n_units_r_small
         self.n_units_out = n_units_out
+        self.n_units_out_prop = n_units_out_prop
         self.nonlin = nonlin
 
         self.penalty_l2 = penalty_l2
@@ -138,6 +148,8 @@ def train_snet3(X, y, w, binary_y: bool = False, n_layers_r: int = DEFAULT_LAYER
                 n_units_r_small: int = DEFAULT_UNITS_R_SMALL_S3,
                 n_layers_out: int = DEFAULT_LAYERS_OUT,
                 n_units_out: int = DEFAULT_UNITS_OUT,
+                n_units_out_prop: int = DEFAULT_UNITS_OUT,
+                n_layers_out_prop: int = DEFAULT_LAYERS_OUT,
                 penalty_l2: float = DEFAULT_PENALTY_L2, penalty_disc: float = DEFAULT_PENALTY_DISC,
                 penalty_orthogonal: float = DEFAULT_PENALTY_ORTHOGONAL,
                 step_size: float = DEFAULT_STEP_SIZE,
@@ -180,8 +192,9 @@ def train_snet3(X, y, w, binary_y: bool = False, n_layers_r: int = DEFAULT_LAYER
                                                        n_units_out=n_units_out,
                                                        binary_y=binary_y, nonlin=nonlin)
     # add propensity head
-    init_fun_head_prop, predict_fun_head_prop = OutputHead(n_layers_out=n_layers_out,
-                                                           n_units_out=n_units_out, binary_y=True,
+    init_fun_head_prop, predict_fun_head_prop = OutputHead(n_layers_out=n_layers_out_prop,
+                                                           n_units_out=n_units_out_prop,
+                                                           binary_y=True,
                                                            nonlin=nonlin)
 
     def init_fun_snet3(rng, input_shape):
