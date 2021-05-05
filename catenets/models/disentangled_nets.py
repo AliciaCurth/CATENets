@@ -274,7 +274,7 @@ def train_snet3(X, y, w, binary_y: bool = False, n_layers_r: int = DEFAULT_LAYER
         # pass down to propensity head
         loss_prop = loss_head_prop(params[5], (reps_prop, w), penalty_l2)
         weightsq_prop = sum([jnp.sum(params[5][i][0] ** 2) for i in
-                             range(0, 2 * n_layers_out + 1, 2)])
+                             range(0, 2 * n_layers_out_prop + 1, 2)])
 
         # which variable has impact on which representation
         col_c = _get_absolute_rowsums(params[0][0][0])

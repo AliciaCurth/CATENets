@@ -551,7 +551,7 @@ def train_snet2(X, y, w, binary_y: bool = False, n_layers_r: int = DEFAULT_LAYER
         # pass down to propensity head
         loss_prop = loss_head_prop(params[3], (reps, w), penalty_l2)
         weightsq_prop = sum([jnp.sum(params[3][i][0] ** 2) for i in
-                             range(0, 2 * n_layers_out + 1, 2)])
+                             range(0, 2 * n_layers_out_prop + 1, 2)])
 
         weightsq_body = sum([jnp.sum(params[0][i][0] ** 2) for i in range(0, 2 * n_layers_r, 2)])
         weightsq_head = heads_l2_penalty(params[1], params[2], n_layers_out, reg_diff,

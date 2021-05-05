@@ -310,7 +310,7 @@ def train_snet(X, y, w, binary_y: bool = False, n_layers_r: int = DEFAULT_LAYERS
         weightsq_head = heads_l2_penalty(params[5], params[6], n_layers_out, reg_diff,
                                          penalty_l2, penalty_diff)
         weightsq_prop = sum([jnp.sum(params[7][i][0] ** 2) for i in
-                             range(0, 2 * n_layers_out + 1, 2)])
+                             range(0, 2 * n_layers_out_prop + 1, 2)])
 
         if not avg_objective:
             return loss_0 + loss_1 + loss_prop + loss_disc + loss_o + 0.5 * (penalty_l2 * (

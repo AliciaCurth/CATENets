@@ -65,12 +65,13 @@ def OutputHead(n_layers_out: int = DEFAULT_LAYERS_OUT, n_units_out: int = DEFAUL
         layers = ()
 
     # add output layers
-    layers = (*layers, Dense(n_units_out), NL)
+    if n_layers_out > 0:
+        layers = (*layers, Dense(n_units_out), NL)
 
-    if n_layers_out > 1:
-        # add required number of layers
-        for i in range(n_layers_out - 1):
-            layers = (*layers, Dense(n_units_out), NL)
+        if n_layers_out > 1:
+            # add required number of layers
+            for i in range(n_layers_out - 1):
+                layers = (*layers, Dense(n_units_out), NL)
 
     # return final architecture
     if not binary_y:
