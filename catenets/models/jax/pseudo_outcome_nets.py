@@ -11,8 +11,7 @@ import pandas as pd
 from sklearn.model_selection import StratifiedKFold
 
 import catenets.logger as log
-from catenets.models.jax.base import BaseCATENet, train_output_net_only
-from catenets.models.jax.constants import (
+from catenets.models.constants import (
     DEFAULT_AVG_OBJECTIVE,
     DEFAULT_BATCH_SIZE,
     DEFAULT_CF_FOLDS,
@@ -36,6 +35,7 @@ from catenets.models.jax.constants import (
     DEFAULT_UNITS_R_T,
     DEFAULT_VAL_SPLIT,
 )
+from catenets.models.jax.base import BaseCATENet, train_output_net_only
 from catenets.models.jax.disentangled_nets import (
     DEFAULT_UNITS_R_BIG_S3,
     DEFAULT_UNITS_R_SMALL_S3,
