@@ -11,10 +11,13 @@ from sklearn import clone
 import catenets.logger as log
 from catenets.experiments.experiment_utils import eval_root_mse, get_model_set
 from catenets.experiments.simulation_utils import simulate_treatment_setup
-from catenets.models import PSEUDOOUT_NAME, PseudoOutcomeNet
-from catenets.models.pseudo_outcome_nets import S1_STRATEGY, S_STRATEGY
-from catenets.models.snet import DEFAULT_UNITS_R_BIG_S, DEFAULT_UNITS_R_SMALL_S
-from catenets.models.transformation_utils import DR_TRANSFORMATION, RA_TRANSFORMATION
+from catenets.models.jax import PSEUDOOUT_NAME, PseudoOutcomeNet
+from catenets.models.jax.pseudo_outcome_nets import S1_STRATEGY, S_STRATEGY
+from catenets.models.jax.snet import DEFAULT_UNITS_R_BIG_S, DEFAULT_UNITS_R_SMALL_S
+from catenets.models.jax.transformation_utils import (
+    DR_TRANSFORMATION,
+    RA_TRANSFORMATION,
+)
 
 # some constants
 RESULT_DIR = "results/simulations/"

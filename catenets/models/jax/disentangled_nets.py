@@ -11,8 +11,8 @@ from jax import grad, jit, random
 from jax.experimental import optimizers
 
 import catenets.logger as log
-from catenets.models.base import BaseCATENet, OutputHead, ReprBlock
-from catenets.models.constants import (
+from catenets.models.jax.base import BaseCATENet, OutputHead, ReprBlock
+from catenets.models.jax.constants import (
     DEFAULT_AVG_OBJECTIVE,
     DEFAULT_BATCH_SIZE,
     DEFAULT_LAYERS_OUT,
@@ -31,12 +31,12 @@ from catenets.models.constants import (
     DEFAULT_VAL_SPLIT,
     LARGE_VAL,
 )
-from catenets.models.model_utils import (
+from catenets.models.jax.model_utils import (
     check_shape_1d_data,
     heads_l2_penalty,
     make_val_split,
 )
-from catenets.models.representation_nets import mmd2_lin
+from catenets.models.jax.representation_nets import mmd2_lin
 
 DEFAULT_UNITS_R_BIG_S3 = 150
 DEFAULT_UNITS_R_SMALL_S3 = 50

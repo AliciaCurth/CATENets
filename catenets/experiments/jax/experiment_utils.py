@@ -6,7 +6,7 @@ from typing import Callable, Optional, Union
 
 import jax.numpy as jnp
 
-from catenets.models import (
+from catenets.models.jax import (
     DRNET_NAME,
     PSEUDOOUT_NAME,
     RANET_NAME,
@@ -20,8 +20,8 @@ from catenets.models import (
     PseudoOutcomeNet,
     get_catenet,
 )
-from catenets.models.base import check_shape_1d_data
-from catenets.models.transformation_utils import (
+from catenets.models.jax.base import check_shape_1d_data
+from catenets.models.jax.transformation_utils import (
     DR_TRANSFORMATION,
     PW_TRANSFORMATION,
     RA_TRANSFORMATION,

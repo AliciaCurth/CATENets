@@ -12,13 +12,13 @@ from jax.experimental import optimizers
 from sklearn.model_selection import StratifiedKFold
 
 import catenets.logger as log
-from catenets.models.base import (
+from catenets.models.jax.base import (
     BaseCATENet,
     OutputHead,
     make_val_split,
     train_output_net_only,
 )
-from catenets.models.constants import (
+from catenets.models.jax.constants import (
     DEFAULT_AVG_OBJECTIVE,
     DEFAULT_BATCH_SIZE,
     DEFAULT_CF_FOLDS,
@@ -42,7 +42,7 @@ from catenets.models.constants import (
     DEFAULT_VAL_SPLIT,
     LARGE_VAL,
 )
-from catenets.models.model_utils import check_shape_1d_data, check_X_is_np
+from catenets.models.jax.model_utils import check_shape_1d_data, check_X_is_np
 
 R_STRATEGY_NAME = "R"
 U_STRATEGY_NAME = "U"

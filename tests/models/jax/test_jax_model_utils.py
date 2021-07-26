@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from catenets.models.model_utils import (
+from catenets.models.jax.model_utils import (
     check_shape_1d_data,
     check_X_is_np,
     make_val_split,

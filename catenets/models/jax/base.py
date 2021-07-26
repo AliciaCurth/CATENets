@@ -14,7 +14,7 @@ from sklearn.base import BaseEstimator, RegressorMixin
 from sklearn.model_selection import ParameterGrid
 
 import catenets.logger as log
-from catenets.models.constants import (
+from catenets.models.jax.constants import (
     DEFAULT_BATCH_SIZE,
     DEFAULT_LAYERS_OUT,
     DEFAULT_N_ITER,
@@ -30,7 +30,7 @@ from catenets.models.constants import (
     DEFAULT_VAL_SPLIT,
     LARGE_VAL,
 )
-from catenets.models.model_utils import (
+from catenets.models.jax.model_utils import (
     check_shape_1d_data,
     check_X_is_np,
     make_val_split,

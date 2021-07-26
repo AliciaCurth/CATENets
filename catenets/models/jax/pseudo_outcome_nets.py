@@ -11,8 +11,8 @@ import pandas as pd
 from sklearn.model_selection import StratifiedKFold
 
 import catenets.logger as log
-from catenets.models.base import BaseCATENet, train_output_net_only
-from catenets.models.constants import (
+from catenets.models.jax.base import BaseCATENet, train_output_net_only
+from catenets.models.jax.constants import (
     DEFAULT_AVG_OBJECTIVE,
     DEFAULT_BATCH_SIZE,
     DEFAULT_CF_FOLDS,
@@ -36,26 +36,26 @@ from catenets.models.constants import (
     DEFAULT_UNITS_R_T,
     DEFAULT_VAL_SPLIT,
 )
-from catenets.models.disentangled_nets import (
+from catenets.models.jax.disentangled_nets import (
     DEFAULT_UNITS_R_BIG_S3,
     DEFAULT_UNITS_R_SMALL_S3,
     predict_snet3,
     train_snet3,
 )
-from catenets.models.model_utils import check_shape_1d_data, check_X_is_np
-from catenets.models.representation_nets import (
+from catenets.models.jax.model_utils import check_shape_1d_data, check_X_is_np
+from catenets.models.jax.representation_nets import (
     predict_snet1,
     predict_snet2,
     train_snet1,
     train_snet2,
 )
-from catenets.models.snet import (
+from catenets.models.jax.snet import (
     DEFAULT_UNITS_R_BIG_S,
     DEFAULT_UNITS_R_SMALL_S,
     predict_snet,
     train_snet,
 )
-from catenets.models.transformation_utils import (
+from catenets.models.jax.transformation_utils import (
     DR_TRANSFORMATION,
     PW_TRANSFORMATION,
     RA_TRANSFORMATION,

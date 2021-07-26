@@ -6,7 +6,7 @@ import pytest
 
 import catenets.logger as log
 from catenets.datasets import load
-from catenets.experiments.experiment_utils import get_model_set
+from catenets.experiments.jax.experiment_utils import get_model_set
 
 LAYERS_OUT = 2
 LAYERS_R = 3

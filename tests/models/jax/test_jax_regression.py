@@ -7,7 +7,7 @@ import pytest
 from sklearn.model_selection import train_test_split
 
 import catenets.logger as log
-from catenets.experiments.experiment_utils import get_model_set
+from catenets.experiments.jax.experiment_utils import get_model_set
 
 try:
     from medicaldata.Twins import download, load

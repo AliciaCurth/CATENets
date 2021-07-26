@@ -3,7 +3,7 @@ from typing import Callable
 import numpy as np
 import pytest
 
-from catenets.models.transformation_utils import (
+from catenets.models.jax.transformation_utils import (
     ALL_TRANSFORMATIONS,
     DR_TRANSFORMATION,
     PW_TRANSFORMATION,

@@ -12,8 +12,8 @@ from sklearn import clone
 import catenets.logger as log
 from catenets.datasets.dataset_ihdp import get_one_data_set, load_raw, prepare_ihdp_data
 from catenets.experiments.experiment_utils import eval_root_mse, get_model_set
-from catenets.models import PSEUDOOUT_NAME, PseudoOutcomeNet
-from catenets.models.transformation_utils import RA_TRANSFORMATION
+from catenets.models.jax import PSEUDOOUT_NAME, PseudoOutcomeNet
+from catenets.models.jax.transformation_utils import RA_TRANSFORMATION
 
 # Some constants
 DATA_DIR = Path("data/")
@@ -78,9 +78,7 @@ def do_ihdp_experiments(
     # get file to write in
     out_file = open(RESULT_DIR / (file_name + ".csv"), "w", buffering=1)
     writer = csv.writer(out_file)
-    header = [name + "_in" for name in models.keys()] + [
-        name + "_out" for name in models.keys()
-    ]
+    header = [name + "_in" for name in models.keys()] + [name + "_out" for name in models.keys()]  # type: ignore
     writer.writerow(header)
 
     # get data
@@ -105,7 +103,7 @@ def do_ihdp_experiments(
             data_exp, data_exp_test, rescale=scale_cate
         )
 
-        for model_name, estimator in models.items():
+        for model_name, estimator in models.items():  # type: ignore
             log.info(f"Experiment {i_exp} with {model_name}")
             estimator_temp = clone(estimator)
             if model_params is not None:
