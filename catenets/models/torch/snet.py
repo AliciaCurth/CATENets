@@ -144,7 +144,7 @@ class SNet(BaseCATEEstimator):
         # add indicator as additional variable
         X_ext = torch.cat((X, w.reshape((-1, 1))), dim=1)
 
-        if self._weighting_strategy is None:
+        if self.weighting_strategy is None:
             # fit standard S-learner
             log.info("Fit the outcome estimator")
             self._output_estimator.train(X_ext, y)

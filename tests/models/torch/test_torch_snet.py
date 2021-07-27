@@ -28,7 +28,7 @@ def test_model_params() -> None:
         weighting_strategy="ipw",
     )
 
-    assert model._weighting_strategy == "ipw"
+    assert model.weighting_strategy == "ipw"
     assert model._propensity_estimator is not None
     assert model._output_estimator is not None
 
