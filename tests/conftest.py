@@ -2,4 +2,4 @@ import sys
 
 import catenets.logger as log
 
-log.add(sink=sys.stderr, level="DEBUG")
+log.add(sink=sys.stderr, level="CRITICAL")
