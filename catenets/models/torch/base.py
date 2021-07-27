@@ -36,6 +36,7 @@ NONLIN = {
 class BasicNet(nn.Module):
     def __init__(
         self,
+        name: str,
         n_unit_in: int,
         n_layers_out: int = DEFAULT_LAYERS_OUT,
         n_units_out: int = DEFAULT_UNITS_OUT,
@@ -53,6 +54,7 @@ class BasicNet(nn.Module):
     ) -> None:
         super(BasicNet, self).__init__()
 
+        self.name = name
         if nonlin not in ["elu", "relu", "sigmoid"]:
             raise ValueError("Unknown nonlinearity")
 
@@ -115,6 +117,7 @@ class BasicNet(nn.Module):
         for i in range(self.n_iter):
             # shuffle data for minibatches
             np.random.shuffle(train_indices)
+            train_loss = []
             for b in range(n_batches):
                 self.optimizer.zero_grad()
 
@@ -132,12 +135,17 @@ class BasicNet(nn.Module):
                 batch_loss.backward()
 
                 self.optimizer.step()
+                train_loss.append(batch_loss.detach())
+
+            train_loss = torch.Tensor(train_loss)
 
             if i % self.n_iter_print == 0:
                 with torch.no_grad():
                     preds = self.forward(X_val).squeeze()
                     val_loss = self.loss(preds, y_val)
-                    log.info(f"Epoch: {i}, current {val_string} loss: {val_loss}")
+                    log.info(
+                        f"[{self.name}] Epoch: {i}, current {val_string} loss: {val_loss}, train_loss: {torch.mean(train_loss)}"
+                    )
 
         return self
 
@@ -233,23 +241,42 @@ class BaseCATEEstimator(nn.Module):
         super(BaseCATEEstimator, self).__init__()
         self.binary_y = binary_y
 
-        self._weighting_strategy = weighting_strategy
+        self.weighting_strategy = weighting_strategy
+        self.n_unit_in = n_unit_in
+        self.binary_y = binary_y
+        self.n_layers_out_prop = n_layers_out_prop
+        self.n_units_out_prop = n_units_out_prop
+        self.n_layers_r = n_layers_r
+        self.n_units_r = n_units_r
+        self.weight_decay = weight_decay
+        self.lr = lr
+        self.n_iter = n_iter
+        self.batch_size = batch_size
+        self.val_split_prop = val_split_prop
+        self.n_iter_print = n_iter_print
+        self.seed = seed
+        self.nonlin = nonlin
+        self._propensity_estimator = self._generate_propensity_estimator()
 
-        self._propensity_estimator = BasicNet(
-            n_unit_in,
-            binary_y=binary_y,
-            n_layers_out=n_layers_out_prop,
-            n_units_out=n_units_out_prop,
-            n_layers_r=n_layers_r,
-            n_units_r=n_units_r,
-            weight_decay=weight_decay,
-            lr=lr,
-            n_iter=n_iter,
-            batch_size=batch_size,
-            val_split_prop=val_split_prop,
-            n_iter_print=n_iter_print,
-            seed=seed,
-            nonlin=nonlin,
+    def _generate_propensity_estimator(
+        self, name: str = "propensity_estimator"
+    ) -> nn.Module:
+        return BasicNet(
+            name,
+            self.n_unit_in,
+            binary_y=self.binary_y,
+            n_layers_out=self.n_layers_out_prop,
+            n_units_out=self.n_units_out_prop,
+            n_layers_r=self.n_layers_r,
+            n_units_r=self.n_units_r,
+            weight_decay=self.weight_decay,
+            lr=self.lr,
+            n_iter=self.n_iter,
+            batch_size=self.batch_size,
+            val_split_prop=self.val_split_prop,
+            n_iter_print=self.n_iter_print,
+            seed=self.seed,
+            nonlin=self.nonlin,
         )
 
     def _get_importance_weights(self, X: torch.Tensor, w: torch.Tensor) -> torch.Tensor:
@@ -257,7 +284,7 @@ class BaseCATEEstimator(nn.Module):
             raise ValueError(
                 "Can only call get_importance_weights if propensity_estimator is not None."
             )
-        if self._weighting_strategy is None:
+        if self.weighting_strategy is None:
             raise ValueError(
                 "weighting_strategy must be valid for get_importance_weights"
             )
@@ -266,7 +293,7 @@ class BaseCATEEstimator(nn.Module):
         if p_pred.ndim > 1:
             if p_pred.shape[1] == 2:
                 p_pred = p_pred[:, 1]
-        return compute_importance_weights(p_pred, w, self._weighting_strategy, {})
+        return compute_importance_weights(p_pred, w, self.weighting_strategy, {})
 
     @abc.abstractmethod
     def train(

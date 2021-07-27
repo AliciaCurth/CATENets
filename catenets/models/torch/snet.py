@@ -101,6 +101,7 @@ class SNet(BaseCATEEstimator):
         )
 
         self._output_estimator = BasicNet(
+            "snet_est",
             n_unit_in + 1,
             binary_y=binary_y,
             n_layers_out=n_layers_out,

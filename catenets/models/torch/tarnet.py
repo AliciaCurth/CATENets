@@ -89,6 +89,7 @@ class TARNet(BaseCATEEstimator):
         for idx in range(2):
             self._hypothesis_block.append(
                 BasicNet(
+                    f"tarnet_hyp_{idx}",
                     n_units_r,
                     binary_y=binary_y,
                     n_layers_out=n_layers_out,

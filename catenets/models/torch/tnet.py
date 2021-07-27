@@ -73,6 +73,7 @@ class TNet(BaseCATEEstimator):
         super(TNet, self).__init__(n_unit_in)
 
         self._plug_in_0 = BasicNet(
+            "tnet_est_0",
             n_unit_in,
             binary_y=binary_y,
             n_layers_out=n_layers_out,
@@ -90,6 +91,7 @@ class TNet(BaseCATEEstimator):
         )
 
         self._plug_in_1 = BasicNet(
+            "tnet_est_1",
             n_unit_in,
             binary_y=binary_y,
             n_layers_out=n_layers_out,
