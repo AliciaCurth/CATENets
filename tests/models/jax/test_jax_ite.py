@@ -1,10 +1,8 @@
-import sys
 from copy import deepcopy
 
 import numpy as np
 import pytest
 
-import catenets.logger as log
 from catenets.datasets import load
 from catenets.experiments.jax.experiment_utils import get_model_set
 
@@ -24,8 +22,6 @@ MODEL_PARAMS = {
 }
 
 ALL_MODELS = get_model_set(model_selection="all", model_params=MODEL_PARAMS)
-
-log.add(sink=sys.stderr, level="DEBUG")
 
 
 def sqrt_PEHE(y: np.ndarray, hat_y: np.ndarray) -> float:

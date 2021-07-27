@@ -25,8 +25,8 @@ All implemented learning algorithms (``TNet, SNet, SNet1, SNet2, SNet3, DRNet, R
 Example usage:
 
 ```python
-from catenets.models import TNet, SNet
-from catenets.experiments.simulation_utils import simulate_treatment_setup
+from catenets.models.jax import TNet, SNet
+from catenets.experiments.jax.simulation_utils import simulate_treatment_setup
 
 # simulate some data (here: unconfounded, 10 prognostic variables and 5 predictive variables)
 X, y, w, p, cate = simulate_treatment_setup(n=2000, n_o=10, n_t=5, n_c=0)

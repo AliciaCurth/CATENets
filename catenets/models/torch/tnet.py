@@ -1,5 +1,3 @@
-from typing import Optional
-
 import torch
 
 import catenets.logger as log
@@ -132,7 +130,6 @@ class TNet(BaseCATEEstimator):
         X: torch.Tensor,
         y: torch.Tensor,
         w: torch.Tensor,
-        p: Optional[torch.Tensor] = None,
     ) -> "TNet":
         """
         Train plug-in models.
@@ -145,8 +142,6 @@ class TNet(BaseCATEEstimator):
             The outcome variable
         w: torch.Tensor (n_samples,)
             The treatment indicator
-        p: array-like of shape (n_samples,)
-            The treatment propensity
         """
         log.info("Train first network")
         self._plug_in_0.train(X[w == 0], y[w == 0])

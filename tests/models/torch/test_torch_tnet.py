@@ -1,14 +1,9 @@
-import sys
-
 import numpy as np
 import pytest
 from torch import nn
 
-import catenets.logger as log
 from catenets.datasets import load
 from catenets.models.torch import TNet
-
-log.add(sink=sys.stderr, level="DEBUG")
 
 
 def sqrt_PEHE(y: np.ndarray, hat_y: np.ndarray) -> float:

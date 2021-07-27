@@ -72,6 +72,7 @@ class BasicNet(nn.Module):
 
         # return final architecture
         self.model = nn.Sequential(*layers).to(DEVICE)
+        self.binary_y = binary_y
 
         self.n_iter = n_iter
         self.batch_size = batch_size
@@ -82,15 +83,15 @@ class BasicNet(nn.Module):
         self.optimizer = torch.optim.Adam(
             self.parameters(), lr=lr, weight_decay=weight_decay
         )
-        if binary_y:
-            self.loss = nn.BCELoss()
-        else:
-            self.loss = nn.MSELoss()
 
     def forward(self, X: torch.Tensor) -> torch.Tensor:
         return self.model(X)
 
-    def train(self, X: torch.Tensor, y: torch.Tensor) -> "BasicNet":
+    def train(
+        self, X: torch.Tensor, y: torch.Tensor, weight: Optional[torch.Tensor] = None
+    ) -> "BasicNet":
+        self.loss = nn.BCELoss(weight=weight) if self.binary_y else nn.MSELoss()
+
         X = torch.Tensor(X).to(DEVICE)
         y = torch.Tensor(y).to(DEVICE)
 
@@ -164,7 +165,6 @@ class BaseCATEEstimator(nn.Module):
         X: torch.Tensor,
         y: torch.Tensor,
         w: torch.Tensor,
-        p: Optional[torch.Tensor] = None,
     ) -> "BaseCATEEstimator":
         """
         Train method for a CATEModel
@@ -177,8 +177,6 @@ class BaseCATEEstimator(nn.Module):
             Outcome vector
         w: torch.Tensor
             Treatment indicator
-        p: torch.Tensor
-            Vector of treatment propensities.
         """
         ...
 

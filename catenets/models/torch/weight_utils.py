@@ -4,7 +4,7 @@ Implement different reweighting/balancing strategies as in Li et al (2018)
 """
 from typing import Optional
 
-import numpy as np
+import torch
 
 IPW_NAME = "ipw"
 TRUNC_IPW_NAME = "truncipw"
@@ -15,11 +15,11 @@ ALL_WEIGHTING_STRATEGIES = [IPW_NAME, TRUNC_IPW_NAME, OVERLAP_NAME, MATCHING_NAM
 
 
 def compute_importance_weights(
-    propensity: np.ndarray,
-    w: np.ndarray,
+    propensity: torch.Tensor,
+    w: torch.Tensor,
     weighting_strategy: str,
     weight_args: Optional[dict] = None,
-) -> np.ndarray:
+) -> torch.Tensor:
     if weighting_strategy not in ALL_WEIGHTING_STRATEGIES:
         raise ValueError(
             "weighting_strategy should be in "
@@ -39,24 +39,24 @@ def compute_importance_weights(
         return compute_matching_weights(propensity, w)
 
 
-def compute_ipw(propensity: np.ndarray, w: np.ndarray) -> np.ndarray:
-    p_hat = np.average(w)
+def compute_ipw(propensity: torch.Tensor, w: torch.Tensor) -> torch.Tensor:
+    p_hat = torch.mean(w)
     return w * p_hat / propensity + (1 - w) * (1 - p_hat) / (1 - propensity)
 
 
 def compute_trunc_ipw(
-    propensity: np.ndarray, w: np.ndarray, cutoff: float = 0.05
-) -> np.ndarray:
+    propensity: torch.Tensor, w: torch.Tensor, cutoff: float = 0.05
+) -> torch.Tensor:
     ipw = compute_ipw(propensity, w)
-    return np.where((propensity > cutoff) & (propensity < 1 - cutoff), ipw, 0)
+    return torch.where((propensity > cutoff) & (propensity < 1 - cutoff), ipw, 0)
 
 
 # TODO check normalizing these weights
-def compute_matching_weights(propensity: np.ndarray, w: np.ndarray) -> np.ndarray:
+def compute_matching_weights(propensity: torch.Tensor, w: torch.Tensor) -> torch.Tensor:
     ipw = compute_ipw(propensity, w)
-    return np.minimum(ipw, 1 - ipw) * ipw
+    return torch.minimum(ipw, 1 - ipw) * ipw
 
 
-def compute_overlap_weights(propensity: np.ndarray, w: np.ndarray) -> np.ndarray:
+def compute_overlap_weights(propensity: torch.Tensor, w: torch.Tensor) -> torch.Tensor:
     ipw = compute_ipw(propensity, w)
     return propensity * (1 - propensity) * ipw
