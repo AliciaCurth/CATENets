@@ -20,7 +20,8 @@ from catenets.models.constants import (
     DEFAULT_VAL_SPLIT,
 )
 from catenets.models.torch.model_utils import make_val_split
-from catenets.models.torch.weight_utils import compute_importance_weights
+
+DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
 class BasicNet(nn.Module):
@@ -70,7 +71,7 @@ class BasicNet(nn.Module):
             layers.append(nn.Sigmoid())
 
         # return final architecture
-        self.model = nn.Sequential(*layers)
+        self.model = nn.Sequential(*layers).to(DEVICE)
 
         self.n_iter = n_iter
         self.batch_size = batch_size
@@ -79,7 +80,7 @@ class BasicNet(nn.Module):
         self.val_split_prop = val_split_prop
 
         self.optimizer = torch.optim.Adam(
-            self.parameter(), lr=lr, weight_decay=weight_decay
+            self.parameters(), lr=lr, weight_decay=weight_decay
         )
         if binary_y:
             self.loss = nn.BCELoss()
@@ -90,13 +91,14 @@ class BasicNet(nn.Module):
         return self.model(X)
 
     def train(self, X: torch.Tensor, y: torch.Tensor) -> "BasicNet":
-        X = torch.Tensor(X)
-        y = torch.Tensor(y)
+        X = torch.Tensor(X).to(DEVICE)
+        y = torch.Tensor(y).to(DEVICE)
 
         # get validation split (can be none)
         X, y, X_val, y_val, val_string = make_val_split(
             X, y, val_split_prop=self.val_split_prop, seed=self.seed
         )
+        y_val = y_val.squeeze()
         n = X.shape[0]  # could be different from before due to split
 
         # calculate number of batches per epoch
@@ -115,20 +117,20 @@ class BasicNet(nn.Module):
                     (b * batch_size) : min((b + 1) * batch_size, n - 1)
                 ]
 
-                X_next = X[idx_next, :]
-                y_next = y[idx_next, :]
+                X_next = X[idx_next]
+                y_next = y[idx_next].squeeze()
 
-                preds = self.forward(X_next)
+                preds = self.forward(X_next).squeeze()
 
-                loss = self.loss(preds, y_next)
+                batch_loss = self.loss(preds, y_next)
 
-                loss.backward()
+                batch_loss.backward()
 
                 self.optimizer.step()
 
             if i % self.n_iter_print == 0:
                 with torch.no_grad():
-                    preds = self.forward(X_val)
+                    preds = self.forward(X_val).squeeze()
                     val_loss = self.loss(preds, y_val)
                     log.info(f"Epoch: {i}, current {val_string} loss: {val_loss}")
 
@@ -141,9 +143,8 @@ class BaseCATEEstimator(nn.Module):
 
     Parameters
     ----------
-    po_estimator: estimator
-        Estimator to be used for potential outcome regressions. Should be sklearn-style estimator
-        with .fit and .predict/.predict_proba method
+    po_estimator: nn.Module
+        Estimator to be used for potential outcome regressions.
     binary_y: bool, default False
         Whether the outcome data is binary
     propensity_estimator: estimator, default None
@@ -152,50 +153,10 @@ class BaseCATEEstimator(nn.Module):
 
     def __init__(
         self,
-        po_estimator: BasicNet,
         binary_y: bool = False,
-        propensity_estimator: Optional[BasicNet] = None,
-        weighting_strategy: Optional[str] = None,
-        weight_args: Optional[dict] = None,
     ) -> None:
         super(BaseCATEEstimator, self).__init__()
-        self.po_estimator = po_estimator
         self.binary_y = binary_y
-        self.propensity_estimator = propensity_estimator
-        self.weighting_strategy = weighting_strategy
-        self.weight_args = weight_args
-
-    def _fit_propensity_estimator(
-        self, X: torch.Tensor, w: torch.Tensor
-    ) -> "BasePluginCATEEstimator":
-        if self.propensity_estimator is None:
-            raise ValueError(
-                "Can only fit propensity estimator if propensity_estimator is not "
-                "None."
-            )
-        self.propensity_estimator.train(X, w)
-        return self
-
-    def _get_importance_weights(self, X: torch.Tensor, w: torch.Tensor) -> torch.Tensor:
-        if self.propensity_estimator is None:
-            raise ValueError(
-                "Can only call get_importance_weights if propensity_estimator is not None."
-            )
-        if self.weighting_strategy is None:
-            raise ValueError(
-                "weighting_strategy must be valid for get_importance_weights"
-            )
-
-        if self.weight_args is None:
-            raise ValueError("weight_args must be valid for get_importance_weights")
-
-        p_pred = self.propensity_estimator.predict_proba(X)
-        if p_pred.ndim > 1:
-            if p_pred.shape[1] == 2:
-                p_pred = p_pred[:, 1]
-        return compute_importance_weights(
-            p_pred, w, self.weighting_strategy, self.weight_args
-        )
 
     @abc.abstractmethod
     def train(
@@ -206,7 +167,7 @@ class BaseCATEEstimator(nn.Module):
         p: Optional[torch.Tensor] = None,
     ) -> "BaseCATEEstimator":
         """
-        Fit method for a CATEModel
+        Train method for a CATEModel
 
         Parameters
         ----------
@@ -245,65 +206,3 @@ class BaseCATEEstimator(nn.Module):
 
         if not ((w == 0) | (w == 1)).all():
             raise ValueError("W should be binary")
-
-
-class BasePluginCATEEstimator(BaseCATEEstimator):
-    """
-    Base class for plug-in/ indirect estimators of CATE; such as S- and T-learners
-
-    Parameters
-    ----------
-    po_estimator: estimator
-        Estimator to be used for potential outcome regressions. Should be sklearn-style estimator
-        with .fit and .predict/.predict_proba method
-    binary_y: bool, default False
-        Whether the outcome data is binary
-    propensity_estimator: estimator, default None
-        Estimator to be used for propensity score estimation (if needed)
-    """
-
-    def __init__(
-        self,
-        po_estimator: BasicNet,
-        binary_y: bool = False,
-        propensity_estimator: Optional[BasicNet] = None,
-        weighting_strategy: Optional[str] = None,
-        weight_args: Optional[dict] = None,
-    ):
-        self.po_estimator = po_estimator
-        self.binary_y = binary_y
-        self.propensity_estimator = propensity_estimator
-        self.weighting_strategy = weighting_strategy
-        self.weight_args = weight_args
-
-    def _fit_propensity_estimator(
-        self, X: np.ndarray, w: np.ndarray
-    ) -> "BasePluginCATEEstimator":
-        if self.propensity_estimator is None:
-            raise ValueError(
-                "Can only fit propensity estimator if propensity_estimator is not "
-                "None."
-            )
-        self.propensity_estimator.fit(X, w)
-        return self
-
-    def _get_importance_weights(self, X: np.ndarray, w: np.ndarray) -> np.ndarray:
-        if self.propensity_estimator is None:
-            raise ValueError(
-                "Can only call get_importance_weights if propensity_estimator is not None."
-            )
-        if self.weighting_strategy is None:
-            raise ValueError(
-                "weighting_strategy must be valid for get_importance_weights"
-            )
-
-        if self.weight_args is None:
-            raise ValueError("weight_args must be valid for get_importance_weights")
-
-        p_pred = self.propensity_estimator.predict_proba(X)
-        if p_pred.ndim > 1:
-            if p_pred.shape[1] == 2:
-                p_pred = p_pred[:, 1]
-        return compute_importance_weights(
-            p_pred, w, self.weighting_strategy, self.weight_args
-        )
