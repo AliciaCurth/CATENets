@@ -24,7 +24,7 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements_dev.txt
       - name: pre-commit validation
-        run: pre-commit run --files alg/ganite/*
+        run: pre-commit run --files catenets/*
       - name: Security checks
         run: |
             bandit -r catenets/*
