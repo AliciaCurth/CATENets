@@ -1,15 +1,11 @@
 from typing import Optional
 
-import numpy as np
 import pytest
 from torch import nn
 
 from catenets.datasets import load
 from catenets.models.torch import SNet
-
-
-def sqrt_PEHE(y: np.ndarray, hat_y: np.ndarray) -> float:
-    return np.sqrt(np.mean(((y[:, 1] - y[:, 0]) - hat_y) ** 2))
+from catenets.models.torch.metrics import sqrt_PEHE
 
 
 def test_model_params() -> None:

@@ -70,7 +70,7 @@ class TNet(BaseCATEEstimator):
         seed: int = DEFAULT_SEED,
         nonlin: str = DEFAULT_NONLIN,
     ) -> None:
-        super(TNet, self).__init__()
+        super(TNet, self).__init__(n_unit_in)
 
         self._plug_in_0 = BasicNet(
             n_unit_in,
@@ -116,7 +116,7 @@ class TNet(BaseCATEEstimator):
 
         Returns
         -------
-        y: torch.Tensor of shape (n_treatments, n_samples,)
+        y: torch.Tensor of shape (n_samples,)
         """
         X = torch.Tensor(X)
 

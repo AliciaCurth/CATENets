@@ -44,5 +44,5 @@ def test_model_sanity(dataset: str, pehe_threshold: float, model_name: str) -> N
     cate_pred = model.predict(X_test, return_po=False)
 
     pehe = sqrt_PEHE(Y_test, cate_pred)
-    print(f"PEHE score for model {model_name} on {dataset} = {pehe}")
+    print(f"PEHE score for model jax.{model_name} on {dataset} = {pehe}")
     assert pehe < pehe_threshold

@@ -18,7 +18,6 @@ from catenets.models.constants import (
     DEFAULT_VAL_SPLIT,
 )
 from catenets.models.torch.base import BaseCATEEstimator, BasicNet
-from catenets.models.torch.weight_utils import compute_importance_weights
 
 
 class SNet(BaseCATEEstimator):
@@ -83,17 +82,13 @@ class SNet(BaseCATEEstimator):
         nonlin: str = DEFAULT_NONLIN,
         weighting_strategy: Optional[str] = None,
     ) -> None:
-        super(SNet, self).__init__()
-
-        self._weighting_strategy = weighting_strategy
-
-        self._propensity_estimator = BasicNet(
+        super(SNet, self).__init__(
             n_unit_in,
             binary_y=binary_y,
-            n_layers_out=n_layers_out_prop,
-            n_units_out=n_units_out_prop,
             n_layers_r=n_layers_r,
             n_units_r=n_units_r,
+            n_units_out_prop=n_units_out_prop,
+            n_layers_out_prop=n_layers_out_prop,
             weight_decay=weight_decay,
             lr=lr,
             n_iter=n_iter,
@@ -102,7 +97,9 @@ class SNet(BaseCATEEstimator):
             n_iter_print=n_iter_print,
             seed=seed,
             nonlin=nonlin,
+            weighting_strategy=weighting_strategy,
         )
+
         self._output_estimator = BasicNet(
             n_unit_in + 1,
             binary_y=binary_y,
@@ -119,22 +116,6 @@ class SNet(BaseCATEEstimator):
             seed=seed,
             nonlin=nonlin,
         )
-
-    def _get_importance_weights(self, X: torch.Tensor, w: torch.Tensor) -> torch.Tensor:
-        if self._propensity_estimator is None:
-            raise ValueError(
-                "Can only call get_importance_weights if propensity_estimator is not None."
-            )
-        if self._weighting_strategy is None:
-            raise ValueError(
-                "weighting_strategy must be valid for get_importance_weights"
-            )
-
-        p_pred = self._propensity_estimator(X)
-        if p_pred.ndim > 1:
-            if p_pred.shape[1] == 2:
-                p_pred = p_pred[:, 1]
-        return compute_importance_weights(p_pred, w, self._weighting_strategy, {})
 
     def train(
         self,
@@ -198,7 +179,7 @@ class SNet(BaseCATEEstimator):
             Test-sample features
         Returns
         -------
-        y: array-like of shape (n_treatments, n_samples,)
+        y: array-like of shape (n_samples,)
         """
         X = torch.Tensor(X)
         X_ext = self._create_extended_matrices(X)
