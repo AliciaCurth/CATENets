@@ -62,8 +62,13 @@ class SNet(BaseCATENet):
         Whether the outcome is binary
     n_layers_out: int
         Number of hypothesis layers (n_layers_out x n_units_out + 1 x Dense layer)
+    n_layers_out_prop: int
+        Number of hypothesis layers for propensity score(n_layers_out x n_units_out + 1 x Dense
+        layer)
     n_units_out: int
         Number of hidden units in each hypothesis layer
+    n_units_out_prop: int
+        Number of hidden units in each propensity score hypothesis layer
     n_layers_r: int
         Number of shared & private representation layers before hypothesis layers
     n_units_r: int
@@ -116,6 +121,8 @@ class SNet(BaseCATENet):
         n_layers_out: int = DEFAULT_LAYERS_OUT,
         n_units_r_small: int = DEFAULT_UNITS_R_SMALL_S,
         n_units_out: int = DEFAULT_UNITS_OUT,
+        n_units_out_prop: int = DEFAULT_UNITS_OUT,
+        n_layers_out_prop: int = DEFAULT_LAYERS_OUT,
         penalty_l2: float = DEFAULT_PENALTY_L2,
         penalty_orthogonal: float = DEFAULT_PENALTY_ORTHOGONAL,
         penalty_disc: float = DEFAULT_PENALTY_DISC,
@@ -138,9 +145,11 @@ class SNet(BaseCATENet):
 
         self.n_layers_r = n_layers_r
         self.n_layers_out = n_layers_out
+        self.n_layers_out_prop = n_layers_out_prop
         self.n_units_r = n_units_r
         self.n_units_r_small = n_units_r_small
         self.n_units_out = n_units_out
+        self.n_units_out_prop = n_units_out_prop
         self.nonlin = nonlin
 
         self.penalty_l2 = penalty_l2
@@ -184,6 +193,8 @@ def train_snet(
     n_units_r_small: int = DEFAULT_UNITS_R_SMALL_S,
     n_layers_out: int = DEFAULT_LAYERS_OUT,
     n_units_out: int = DEFAULT_UNITS_OUT,
+    n_units_out_prop: int = DEFAULT_UNITS_OUT,
+    n_layers_out_prop: int = DEFAULT_LAYERS_OUT,
     penalty_l2: float = DEFAULT_PENALTY_L2,
     penalty_disc: float = DEFAULT_PENALTY_DISC,
     penalty_orthogonal: float = DEFAULT_PENALTY_ORTHOGONAL,
@@ -239,7 +250,10 @@ def train_snet(
     )
     # add propensity head
     init_fun_head_prop, predict_fun_head_prop = OutputHead(
-        n_layers_out=n_layers_out, n_units_out=n_units_out, binary_y=True, nonlin=nonlin
+        n_layers_out=n_layers_out_prop,
+        n_units_out=n_units_out_prop,
+        binary_y=True,
+        nonlin=nonlin,
     )
 
     def init_fun_snet(rng: float, input_shape: Tuple) -> Tuple[Tuple, List]:
@@ -397,7 +411,10 @@ def train_snet(
             params[5], params[6], n_layers_out, reg_diff, penalty_l2, penalty_diff
         )
         weightsq_prop = sum(
-            [jnp.sum(params[7][i][0] ** 2) for i in range(0, 2 * n_layers_out + 1, 2)]
+            [
+                jnp.sum(params[7][i][0] ** 2)
+                for i in range(0, 2 * n_layers_out_prop + 1, 2)
+            ]
         )
 
         if not avg_objective:
@@ -594,6 +611,8 @@ def train_snet_noprop(
     n_units_r_small: int = DEFAULT_UNITS_R_SMALL_S3,
     n_layers_out: int = DEFAULT_LAYERS_OUT,
     n_units_out: int = DEFAULT_UNITS_OUT,
+    n_units_out_prop: int = DEFAULT_UNITS_OUT,
+    n_layers_out_prop: int = DEFAULT_LAYERS_OUT,
     penalty_l2: float = DEFAULT_PENALTY_L2,
     penalty_orthogonal: float = DEFAULT_PENALTY_ORTHOGONAL,
     step_size: float = DEFAULT_STEP_SIZE,
@@ -617,7 +636,7 @@ def train_snet_noprop(
     SNet but without the propensity head
     """
     if with_prop:
-        raise ValueError("train_snet_noprop works only withprop=False")
+        raise ValueError("train_snet_noprop works only with_prop=False")
     # function to train a net with 3 representations
     y, w = check_shape_1d_data(y), check_shape_1d_data(w)
     d = X.shape[1]

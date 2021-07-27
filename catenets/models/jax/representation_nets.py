@@ -204,8 +204,13 @@ class SNet2(BaseCATENet):
         Whether the outcome is binary
     n_layers_out: int
         Number of hypothesis layers (n_layers_out x n_units_out + 1 x Dense layer)
+    n_layers_out_prop: int
+        Number of hypothesis layers for propensity score(n_layers_out x n_units_out + 1 x Dense
+        layer)
     n_units_out: int
         Number of hidden units in each hypothesis layer
+    n_units_out_prop: int
+        Number of hidden units in each propensity score hypothesis layer
     n_layers_r: int
         Number of shared representation layers before hypothesis layers
     n_units_r: int
@@ -249,6 +254,8 @@ class SNet2(BaseCATENet):
         n_layers_out: int = DEFAULT_LAYERS_OUT,
         n_units_out: int = DEFAULT_UNITS_OUT,
         penalty_l2: float = DEFAULT_PENALTY_L2,
+        n_units_out_prop: int = DEFAULT_UNITS_OUT,
+        n_layers_out_prop: int = DEFAULT_LAYERS_OUT,
         step_size: float = DEFAULT_STEP_SIZE,
         n_iter: int = DEFAULT_N_ITER,
         batch_size: int = DEFAULT_BATCH_SIZE,
@@ -267,8 +274,10 @@ class SNet2(BaseCATENet):
 
         self.n_layers_r = n_layers_r
         self.n_layers_out = n_layers_out
+        self.n_layers_out_prop = n_layers_out_prop
         self.n_units_r = n_units_r
         self.n_units_out = n_units_out
+        self.n_units_out_prop = n_units_out_prop
         self.nonlin = nonlin
 
         self.penalty_l2 = penalty_l2
@@ -578,6 +587,8 @@ def train_snet2(
     n_layers_out: int = DEFAULT_LAYERS_OUT,
     n_units_out: int = DEFAULT_UNITS_OUT,
     penalty_l2: float = DEFAULT_PENALTY_L2,
+    n_units_out_prop: int = DEFAULT_UNITS_OUT,
+    n_layers_out_prop: int = DEFAULT_LAYERS_OUT,
     step_size: float = DEFAULT_STEP_SIZE,
     n_iter: int = DEFAULT_N_ITER,
     batch_size: int = DEFAULT_BATCH_SIZE,
@@ -626,7 +637,10 @@ def train_snet2(
     )
     # add propensity head
     init_fun_head_prop, predict_fun_head_prop = OutputHead(
-        n_layers_out=n_layers_out, n_units_out=n_units_out, binary_y=True, nonlin=nonlin
+        n_layers_out=n_layers_out_prop,
+        n_units_out=n_units_out_prop,
+        binary_y=True,
+        nonlin=nonlin,
     )
 
     def init_fun_snet2(rng: float, input_shape: Tuple) -> Tuple[Tuple, List]:
@@ -704,7 +718,10 @@ def train_snet2(
         # pass down to propensity head
         loss_prop = loss_head_prop(params[3], (reps, w), penalty_l2)
         weightsq_prop = sum(
-            [jnp.sum(params[3][i][0] ** 2) for i in range(0, 2 * n_layers_out + 1, 2)]
+            [
+                jnp.sum(params[3][i][0] ** 2)
+                for i in range(0, 2 * n_layers_out_prop + 1, 2)
+            ]
         )
 
         weightsq_body = sum(

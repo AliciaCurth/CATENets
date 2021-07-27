@@ -54,10 +54,9 @@ def ReprBlock(
     layers: Tuple
     layers = (Dense(n_units), NL)
 
-    if n_layers > 1:
-        # add required number of layers
-        for i in range(n_layers - 1):
-            layers = (*layers, Dense(n_units), NL)
+    # add required number of layers
+    for i in range(n_layers - 1):
+        layers = (*layers, Dense(n_units), NL)
 
     return stax.serial(*layers)
 
@@ -80,26 +79,15 @@ def OutputHead(
     else:
         raise ValueError("Unknown nonlinearity")
 
-    layers: Tuple
+    layers: Tuple = ()
 
-    if n_layers_r > 0:
-        # representation block first
-        layers = (Dense(n_units_r), NL)
+    # add required number of layers
+    for i in range(n_layers_r):
+        layers = (*layers, Dense(n_units_r), NL)
 
-        if n_layers_r > 1:
-            # add required number of layers
-            for i in range(n_layers_r - 1):
-                layers = (*layers, Dense(n_units_r), NL)
-    else:
-        layers = ()
-
-    # add output layers
-    layers = (*layers, Dense(n_units_out), NL)
-
-    if n_layers_out > 1:
-        # add required number of layers
-        for i in range(n_layers_out - 1):
-            layers = (*layers, Dense(n_units_out), NL)
+    # add required number of layers
+    for i in range(n_layers_out):
+        layers = (*layers, Dense(n_units_out), NL)
 
     # return final architecture
     if not binary_y:
