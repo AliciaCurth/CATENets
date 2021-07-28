@@ -4,12 +4,12 @@ import pytest
 from torch import nn
 
 from catenets.datasets import load
-from catenets.models.torch import SNet
-from catenets.models.torch.metrics import sqrt_PEHE
+from catenets.experiments.torch.metrics import sqrt_PEHE
+from catenets.models.torch import SLearner
 
 
 def test_model_params() -> None:
-    model = SNet(
+    model = SLearner(
         2,
         binary_y=True,
         n_layers_out=1,
@@ -53,7 +53,7 @@ def test_model_params() -> None:
 
 @pytest.mark.parametrize("nonlin", ["elu", "relu", "sigmoid"])
 def test_model_params_nonlin(nonlin: str) -> None:
-    model = SNet(2, nonlin=nonlin)
+    model = SLearner(2, nonlin=nonlin)
 
     nonlins = {
         "elu": nn.ELU,
@@ -73,7 +73,9 @@ def test_model_sanity(
     X_train, W_train, Y_train, Y_train_full, X_test, Y_test = load(dataset)
     W_train = W_train.ravel()
 
-    model = SNet(X_train.shape[1], n_iter=250, weighting_strategy=weighting_strategy)
+    model = SLearner(
+        X_train.shape[1], n_iter=250, weighting_strategy=weighting_strategy
+    )
 
     model.train(X=X_train, y=Y_train, w=W_train)
 
@@ -82,6 +84,6 @@ def test_model_sanity(
     pehe = sqrt_PEHE(Y_test, cate_pred)
 
     print(
-        f"PEHE score for model torch.SNet(weighting_strategy={weighting_strategy}) on {dataset} = {pehe}"
+        f"PEHE score for model torch.SLearner(weighting_strategy={weighting_strategy}) on {dataset} = {pehe}"
     )
     assert pehe < pehe_threshold

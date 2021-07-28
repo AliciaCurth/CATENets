@@ -4,8 +4,8 @@ import pytest
 from torch import nn
 
 from catenets.datasets import load
+from catenets.experiments.torch.metrics import sqrt_PEHE
 from catenets.models.torch import RANet, XNet
-from catenets.models.torch.metrics import sqrt_PEHE
 
 
 @pytest.mark.parametrize("model_t", [RANet, XNet])

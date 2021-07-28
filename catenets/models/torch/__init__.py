@@ -1,6 +1,16 @@
 from .pseudo_outcome_nets import RANet, XNet
-from .snet import SNet
+from .slearner import SLearner
 from .tarnet import TARNet
 from .tnet import TNet
 
-__all__ = ["TNet", "SNet", "TARNet", "XNet", "RNet", "UNet", "RANet", "PWNet", "DRNet"]
+__all__ = [
+    "TNet",
+    "SLearner",
+    "TARNet",
+    "XNet",
+    "RNet",
+    "UNet",
+    "RANet",
+    "PWNet",
+    "DRNet",
+]

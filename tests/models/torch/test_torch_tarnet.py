@@ -2,8 +2,8 @@ import pytest
 from torch import nn
 
 from catenets.datasets import load
+from catenets.experiments.torch.metrics import sqrt_PEHE
 from catenets.models.torch import TARNet
-from catenets.models.torch.metrics import sqrt_PEHE
 
 
 def test_model_params() -> None:

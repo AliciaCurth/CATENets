@@ -20,7 +20,7 @@ from catenets.models.constants import (
 from catenets.models.torch.base import BaseCATEEstimator, BasicNet
 
 
-class SNet(BaseCATEEstimator):
+class SLearner(BaseCATEEstimator):
     """
 
     Parameters
@@ -82,7 +82,7 @@ class SNet(BaseCATEEstimator):
         nonlin: str = DEFAULT_NONLIN,
         weighting_strategy: Optional[str] = None,
     ) -> None:
-        super(SNet, self).__init__(
+        super(SLearner, self).__init__(
             n_unit_in,
             binary_y=binary_y,
             n_layers_r=n_layers_r,
@@ -123,7 +123,7 @@ class SNet(BaseCATEEstimator):
         X: torch.Tensor,
         y: torch.Tensor,
         w: torch.Tensor,
-    ) -> "SNet":
+    ) -> "SLearner":
         """
         Fit treatment models.
 
