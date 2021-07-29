@@ -17,7 +17,7 @@ from catenets.models.constants import (
     DEFAULT_VAL_SPLIT,
 )
 from catenets.models.torch.base import BaseCATEEstimator, BasicNet, RepresentationNet
-from catenets.models.torch.model_utils import make_val_split
+from catenets.models.torch.utils.model_utils import make_val_split
 
 
 class TARNet(BaseCATEEstimator):

@@ -15,7 +15,12 @@ from catenets.models.constants import (
     DEFAULT_UNITS_OUT,
     DEFAULT_VAL_SPLIT,
 )
-from catenets.models.torch.base import BaseCATEEstimator, BasicNet, PropensityNet
+from catenets.models.torch.base import (
+    DEVICE,
+    BaseCATEEstimator,
+    BasicNet,
+    PropensityNet,
+)
 
 
 class SLearner(BaseCATEEstimator):
@@ -95,7 +100,7 @@ class SLearner(BaseCATEEstimator):
                 n_iter_print=n_iter_print,
                 seed=seed,
                 nonlin=nonlin,
-            )
+            ).to(DEVICE)
         if weighting_strategy is not None:
             self._propensity_estimator = PropensityNet(
                 "slearner_prop_estimator",
@@ -112,7 +117,7 @@ class SLearner(BaseCATEEstimator):
                 seed=seed,
                 nonlin=nonlin,
                 val_split_prop=val_split_prop,
-            )
+            ).to(DEVICE)
 
     def train(
         self,
@@ -133,12 +138,12 @@ class SLearner(BaseCATEEstimator):
             The treatment indicator
         """
 
-        X = torch.Tensor(X)
-        y = torch.Tensor(y)
-        w = torch.Tensor(w)
+        X = torch.Tensor(X).to(DEVICE)
+        y = torch.Tensor(y).to(DEVICE)
+        w = torch.Tensor(w).to(DEVICE)
 
         # add indicator as additional variable
-        X_ext = torch.cat((X, w.reshape((-1, 1))), dim=1)
+        X_ext = torch.cat((X, w.reshape((-1, 1))), dim=1).to(DEVICE)
 
         if not (
             hasattr(self._po_estimator, "train") or hasattr(self._po_estimator, "fit")
@@ -166,13 +171,13 @@ class SLearner(BaseCATEEstimator):
 
     def _create_extended_matrices(self, X: torch.Tensor) -> torch.Tensor:
         n = X.shape[0]
-        X = torch.Tensor(X)
+        X = torch.Tensor(X).to(DEVICE)
 
         # create extended matrices
         w_1 = torch.ones((n, 1))
         w_0 = torch.zeros((n, 1))
-        X_ext_0 = torch.cat((X, w_0), dim=1)
-        X_ext_1 = torch.cat((X, w_1), dim=1)
+        X_ext_0 = torch.cat((X, w_0), dim=1).to(DEVICE)
+        X_ext_1 = torch.cat((X, w_1), dim=1).to(DEVICE)
 
         return [X_ext_0, X_ext_1]
 
@@ -188,7 +193,7 @@ class SLearner(BaseCATEEstimator):
         -------
         y: array-like of shape (n_samples,)
         """
-        X = torch.Tensor(X)
+        X = torch.Tensor(X).to(DEVICE)
         X_ext = self._create_extended_matrices(X)
 
         y = []

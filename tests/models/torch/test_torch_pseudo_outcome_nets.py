@@ -1,17 +1,30 @@
 from typing import Any
 
+import numpy as np
 import pytest
+from sklearn.ensemble import RandomForestRegressor
 from torch import nn
+from xgboost import XGBClassifier
 
 from catenets.datasets import load
-from catenets.experiments.torch.metrics import sqrt_PEHE
-from catenets.models.torch import RANet, XNet
+from catenets.experiments.torch.tester import evaluate_treatments_model
+from catenets.models.torch import (
+    DRLearner,
+    PWLearner,
+    RALearner,
+    RLearner,
+    ULearner,
+    XLearner,
+)
 
 
-@pytest.mark.parametrize("model_t", [RANet, XNet])
-def test_model_params(model_t: Any) -> None:
+@pytest.mark.parametrize(
+    "model_t", [DRLearner, PWLearner, RALearner, RLearner, ULearner, XLearner]
+)
+def test_nn_model_params(model_t: Any) -> None:
     model = model_t(
         2,
+        binary_y=True,
     )
 
     assert model._te_estimator is not None
@@ -20,9 +33,11 @@ def test_model_params(model_t: Any) -> None:
 
 
 @pytest.mark.parametrize("nonlin", ["elu", "relu", "sigmoid"])
-@pytest.mark.parametrize("model_t", [RANet, XNet])
-def test_model_params_nonlin(nonlin: str, model_t: Any) -> None:
-    model = model_t(2, nonlin=nonlin)
+@pytest.mark.parametrize(
+    "model_t", [DRLearner, PWLearner, RALearner, RLearner, ULearner, XLearner]
+)
+def test_nn_model_params_nonlin(nonlin: str, model_t: Any) -> None:
+    model = model_t(2, binary_y=True, nonlin=nonlin)
 
     nonlins = {
         "elu": nn.ELU,
@@ -34,19 +49,82 @@ def test_model_params_nonlin(nonlin: str, model_t: Any) -> None:
         assert isinstance(mod.model[1], nonlins[nonlin])
 
 
-@pytest.mark.parametrize("dataset, pehe_threshold", [("twins", 0.4), ("ihdp", 1.5)])
-@pytest.mark.parametrize("model_t", [RANet, XNet])
-def test_model_sanity(dataset: str, pehe_threshold: float, model_t: Any) -> None:
+@pytest.mark.parametrize("dataset, pehe_threshold", [("twins", 0.4), ("ihdp", 4)])
+@pytest.mark.parametrize(
+    "model_t", [DRLearner, PWLearner, RALearner, RLearner, ULearner, XLearner]
+)
+def test_nn_model_sanity(dataset: str, pehe_threshold: float, model_t: Any) -> None:
     X_train, W_train, Y_train, Y_train_full, X_test, Y_test = load(dataset)
     W_train = W_train.ravel()
 
-    model = model_t(X_train.shape[1], n_iter=500)
+    model = model_t(
+        X_train.shape[1], binary_y=(len(np.unique(Y_train)) == 2), n_iter=250
+    )
 
-    model.train(X=X_train, y=Y_train, w=W_train)
+    score = evaluate_treatments_model(model, X_train, Y_train, Y_train_full, W_train)
 
-    cate_pred = model(X_test).detach().numpy()
+    print(
+        f"Evaluation for model torch.{model_t} with NNs on {dataset} = {score['str']}"
+    )
+    assert score["raw"]["pehe"][0] < pehe_threshold
 
-    pehe = sqrt_PEHE(Y_test, cate_pred)
 
-    print(f"PEHE score for model torch.{model_t} on {dataset} = {pehe}")
-    assert pehe < pehe_threshold
+@pytest.mark.parametrize("dataset, pehe_threshold", [("twins", 0.4)])
+@pytest.mark.parametrize(
+    "po_estimator",
+    [
+        XGBClassifier(
+            n_estimators=100,
+            reg_lambda=1e-3,
+            reg_alpha=1e-3,
+            colsample_bytree=0.1,
+            colsample_bynode=0.1,
+            colsample_bylevel=0.1,
+            max_depth=6,
+            tree_method="hist",
+            learning_rate=1e-2,
+            min_child_weight=0,
+            max_bin=256,
+            random_state=0,
+            eval_metric="logloss",
+            use_label_encoder=False,
+        ),
+    ],
+)
+@pytest.mark.parametrize(
+    "te_estimator",
+    [
+        RandomForestRegressor(
+            n_estimators=100,
+            max_depth=6,
+        ),
+    ],
+)
+@pytest.mark.parametrize("model_t", [DRLearner, RALearner])
+def test_sklearn_model_pseudo_outcome_binary(
+    dataset: str,
+    pehe_threshold: float,
+    po_estimator: Any,
+    te_estimator: Any,
+    model_t: Any,
+) -> None:
+    X_train, W_train, Y_train, Y_train_full, X_test, Y_test = load(dataset)
+    W_train = W_train.ravel()
+
+    model = model_t(
+        X_train.shape[1],
+        binary_y=True,
+        po_estimator=po_estimator,
+        te_estimator=te_estimator,
+        n_iter=200,  # for the NN-based models
+    )
+
+    score = evaluate_treatments_model(
+        model, X_train, Y_train, Y_train_full, W_train, n_folds=3
+    )
+
+    print(
+        f"Evaluation for model {model_t} with po_estimator = {type(po_estimator)},"
+        "te_estimator = {type(te_estimator)} on {dataset} = {score['str']}"
+    )
+    assert score["raw"]["pehe"][0] < pehe_threshold

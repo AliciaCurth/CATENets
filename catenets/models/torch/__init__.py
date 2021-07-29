@@ -1,4 +1,11 @@
-from .pseudo_outcome_nets import RANet, XNet
+from .pseudo_outcome_nets import (
+    DRLearner,
+    PWLearner,
+    RALearner,
+    RLearner,
+    ULearner,
+    XLearner,
+)
 from .slearner import SLearner
 from .tarnet import TARNet
 from .tlearner import TLearner
@@ -7,10 +14,10 @@ __all__ = [
     "TLearner",
     "SLearner",
     "TARNet",
-    "XNet",
-    "RNet",
-    "UNet",
-    "RANet",
-    "PWNet",
-    "DRNet",
+    "XLearner",
+    "RLearner",
+    "ULearner",
+    "RALearner",
+    "PWLearner",
+    "DRLearner",
 ]

@@ -10,8 +10,17 @@ IPW_NAME = "ipw"
 TRUNC_IPW_NAME = "truncipw"
 OVERLAP_NAME = "overlap"
 MATCHING_NAME = "match"
+PROP = "prop"
+ONE_MINUS_PROP = "1-prop"
 
-ALL_WEIGHTING_STRATEGIES = [IPW_NAME, TRUNC_IPW_NAME, OVERLAP_NAME, MATCHING_NAME]
+ALL_WEIGHTING_STRATEGIES = [
+    IPW_NAME,
+    TRUNC_IPW_NAME,
+    OVERLAP_NAME,
+    MATCHING_NAME,
+    PROP,
+    ONE_MINUS_PROP,
+]
 
 
 def compute_importance_weights(
@@ -28,7 +37,11 @@ def compute_importance_weights(
     if weight_args is None:
         weight_args = {}
 
-    if weighting_strategy == IPW_NAME:
+    if weighting_strategy == PROP:
+        return propensity
+    elif weighting_strategy == ONE_MINUS_PROP:
+        return 1 - propensity
+    elif weighting_strategy == IPW_NAME:
         return compute_ipw(propensity, w)
     elif weighting_strategy == TRUNC_IPW_NAME:
         return compute_trunc_ipw(propensity, w, **weight_args)

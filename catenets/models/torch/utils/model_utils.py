@@ -7,6 +7,7 @@ from typing import Any, Optional
 import torch
 from sklearn.model_selection import train_test_split
 
+import catenets.logger as log
 from catenets.models.constants import DEFAULT_SEED, DEFAULT_VAL_SPLIT
 
 TRAIN_STRING = "training"
@@ -54,31 +55,34 @@ def make_val_split(
     return X_t, y_t, w_t, X_val, y_val, w_val, VALIDATION_STRING
 
 
-def heads_l2_penalty(
-    params_0: torch.Tensor,
-    params_1: torch.Tensor,
-    n_layers_out: torch.Tensor,
-    reg_diff: torch.Tensor,
-    penalty_0: torch.Tensor,
-    penalty_1: torch.Tensor,
-) -> torch.Tensor:
-    # Compute l2 penalty for output heads. Either seperately, or regularizing their difference
-
-    # get l2-penalty for first head
-    weightsq_0 = penalty_0 * sum(
-        [torch.sum(params_0[i][0] ** 2) for i in range(0, 2 * n_layers_out + 1, 2)]
-    )
-
-    # get l2-penalty for second head
-    if reg_diff:
-        weightsq_1 = penalty_1 * sum(
-            [
-                torch.sum((params_1[i][0] - params_0[i][0]) ** 2)
-                for i in range(0, 2 * n_layers_out + 1, 2)
-            ]
-        )
+def train_wrapper(
+    estimator: Any,
+    X: torch.Tensor,
+    y: torch.Tensor,
+    **kwargs: Any,
+) -> None:
+    if hasattr(estimator, "train"):
+        log.debug(f"Train PyTorch network {estimator}")
+        estimator.train(X, y, **kwargs)
+    elif hasattr(estimator, "fit"):
+        log.debug(f"Train sklearn estimator {estimator}")
+        estimator.fit(X.detach().numpy(), y.detach().numpy())
     else:
-        weightsq_1 = penalty_1 * sum(
-            [torch.sum(params_1[i][0] ** 2) for i in range(0, 2 * n_layers_out + 1, 2)]
-        )
-    return weightsq_1 + weightsq_0
+        raise NotImplementedError(f"Invalid estimator for the {estimator}")
+
+
+def predict_wrapper(estimator: Any, X: torch.Tensor) -> torch.Tensor:
+    if hasattr(estimator, "forward"):
+        return estimator(X)
+    elif hasattr(estimator, "predict_proba"):
+        X_np = X.detach().numpy()
+        no_event_proba = estimator.predict_proba(X_np)[:, 0]  # no event probability
+
+        return torch.Tensor(no_event_proba)
+    elif hasattr(estimator, "predict"):
+        X_np = X.detach().numpy()
+        no_event_proba = estimator.predict(X_np)
+
+        return torch.Tensor(no_event_proba)
+    else:
+        raise NotImplementedError(f"Invalid estimator for the {estimator}")

@@ -3,7 +3,6 @@ from typing import Any
 
 import torch
 
-import catenets.logger as log
 from catenets.models.constants import (
     DEFAULT_BATCH_SIZE,
     DEFAULT_LAYERS_OUT,
@@ -16,7 +15,8 @@ from catenets.models.constants import (
     DEFAULT_UNITS_OUT,
     DEFAULT_VAL_SPLIT,
 )
-from catenets.models.torch.base import BaseCATEEstimator, BasicNet
+from catenets.models.torch.base import DEVICE, BaseCATEEstimator, BasicNet
+from catenets.models.torch.utils.model_utils import predict_wrapper, train_wrapper
 
 
 class TLearner(BaseCATEEstimator):
@@ -93,7 +93,7 @@ class TLearner(BaseCATEEstimator):
                         n_iter_print=n_iter_print,
                         seed=seed,
                         nonlin=nonlin,
-                    )
+                    ).to(DEVICE),
                 )
 
     def forward(self, X: torch.Tensor) -> torch.Tensor:
@@ -108,26 +108,11 @@ class TLearner(BaseCATEEstimator):
         -------
         y: torch.Tensor of shape (n_samples,)
         """
-        X = torch.Tensor(X)
+        X = torch.Tensor(X).to(DEVICE)
 
         y_hat = []
         for widx, plugin in enumerate(self._plug_in):
-            if hasattr(plugin, "forward"):
-                y_hat.append(plugin(X))
-            elif hasattr(plugin, "predict_proba"):
-                X_np = X.detach().numpy()
-                no_event_proba = plugin.predict_proba(X_np)[
-                    :, 0
-                ]  # no event probability
-
-                y_hat.append(torch.Tensor(no_event_proba))
-            elif hasattr(plugin, "predict"):
-                X_np = X.detach().numpy()
-                no_event_proba = plugin.predict(X_np)
-
-                y_hat.append(torch.Tensor(no_event_proba))
-            else:
-                raise NotImplementedError("Invalid po_estimator for the tlearner")
+            y_hat.append(predict_wrapper(plugin, X))
 
         return y_hat[1] - y_hat[0]
 
@@ -149,18 +134,11 @@ class TLearner(BaseCATEEstimator):
         w: torch.Tensor (n_samples,)
             The treatment indicator
         """
-        X = torch.Tensor(X)
-        y = torch.Tensor(y)
-        w = torch.Tensor(w)
+        X = torch.Tensor(X).to(DEVICE)
+        y = torch.Tensor(y).to(DEVICE)
+        w = torch.Tensor(w).to(DEVICE)
 
         for widx, plugin in enumerate(self._plug_in):
-            if hasattr(plugin, "train"):
-                log.info(f"Train PyTorch network {plugin}")
-                plugin.train(X[w == widx], y[w == widx])
-            elif hasattr(plugin, "fit"):
-                log.info(f"Train sklearn estimator {plugin}")
-                plugin.fit(X[w == widx].detach().numpy(), y[w == widx].detach().numpy())
-            else:
-                raise NotImplementedError("Invalid po_estimator for the tlearner")
+            train_wrapper(plugin, X[w == widx], y[w == widx])
 
         return self

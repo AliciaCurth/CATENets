@@ -1,5 +1,6 @@
 import abc
-from typing import Tuple
+import copy
+from typing import Any, Optional, Tuple
 
 import numpy as np
 import torch
@@ -26,11 +27,22 @@ from catenets.models.constants import (
     DEFAULT_UNITS_R_T,
     DEFAULT_VAL_SPLIT,
 )
-from catenets.models.torch.base import BaseCATEEstimator, BasicNet
-from catenets.models.torch.transformations import ra_transformation_cate
+from catenets.models.torch.base import (
+    DEVICE,
+    BaseCATEEstimator,
+    BasicNet,
+    PropensityNet,
+)
+from catenets.models.torch.utils.model_utils import predict_wrapper, train_wrapper
+from catenets.models.torch.utils.transformations import (
+    dr_transformation_cate,
+    pw_transformation_cate,
+    ra_transformation_cate,
+    u_transformation_cate,
+)
 
 
-class PseudoOutcomeNet(BaseCATEEstimator):
+class PseudoOutcomeLearner(BaseCATEEstimator):
     """
     Class implements TwoStepLearners based on pseudo-outcome regression as discussed in
     Curth &vd Schaar (2021): RA-learner, PW-learner and DR-learner
@@ -41,24 +53,18 @@ class PseudoOutcomeNet(BaseCATEEstimator):
         Number of features
     binary_y: bool, default False
         Whether the outcome is binary
+    po_estimator: sklearn/PyTorch model, default: None
+        Custom potential outcome model. If this parameter is set, the rest of the parameters are ignored.
+    te_estimator: sklearn/PyTorch model, default: None
+        Custom treatment effects model. If this parameter is set, the rest of the parameters are ignored.
     n_layers_out: int
         First stage Number of hypothesis layers (n_layers_out x n_units_out + 1 x Dense layer)
     n_units_out: int
         First stage Number of hidden units in each hypothesis layer
-    n_layers_r: int
-        First stage Number of representation layers before hypothesis layers (distinction between
-        hypothesis layers and representation layers is made to match TARNet & SNets)
-    n_units_r: int
-        First stage Number of hidden units in each representation layer
     n_layers_out_t: int
         Second stage Number of hypothesis layers (n_layers_out x n_units_out + 1 x Dense layer)
     n_units_out_t: int
         Second stage Number of hidden units in each hypothesis layer
-    n_layers_r_t: int
-        Second stage Number of representation layers before hypothesis layers (distinction between
-        hypothesis layers and representation layers is made to match TARNet & SNets)
-    n_units_r_t: int
-        Second stage Number of hidden units in each representation layer
     n_layers_out_prop: int
         Number of hypothesis layers for propensity score(n_layers_out x n_units_out + 1 x Dense
         layer)
@@ -93,8 +99,10 @@ class PseudoOutcomeNet(BaseCATEEstimator):
     def __init__(
         self,
         n_unit_in: int,
+        binary_y: bool,
+        po_estimator: Any = None,
+        te_estimator: Any = None,
         n_folds: int = DEFAULT_CF_FOLDS,
-        binary_y: bool = True,
         n_layers_out: int = DEFAULT_LAYERS_OUT,
         n_layers_r: int = DEFAULT_LAYERS_R,
         n_layers_out_t: int = DEFAULT_LAYERS_OUT_T,
@@ -115,17 +123,18 @@ class PseudoOutcomeNet(BaseCATEEstimator):
         n_iter_print: int = DEFAULT_N_ITER_PRINT,
         seed: int = DEFAULT_SEED,
         nonlin: str = DEFAULT_NONLIN,
-        weighting_strategy: str = "prop",
+        weighting_strategy: Optional[str] = "prop",
     ):
-        super(PseudoOutcomeNet, self).__init__()
+        super(PseudoOutcomeLearner, self).__init__()
         self.n_unit_in = n_unit_in
         self.binary_y = binary_y
         self.n_layers_out = n_layers_out
         self.n_units_out = n_units_out
-        self.n_layers_r = n_layers_r
-        self.n_units_r = n_units_r
+        self.n_units_out_prop = n_units_out_prop
+        self.n_layers_out_prop = n_layers_out_prop
         self.weight_decay_t = weight_decay_t
-        self.weight_decay = weight_decay_t
+        self.weight_decay = weight_decay
+        self.weighting_strategy = weighting_strategy
         self.lr = lr_t
         self.lr_t = lr_t
         self.n_iter = n_iter
@@ -135,17 +144,20 @@ class PseudoOutcomeNet(BaseCATEEstimator):
         self.seed = seed
         self.nonlin = nonlin
         self.lr = lr
-
-        # set other arguments
         self.n_folds = n_folds
-        self.random_state = seed
-        self.binary_y = binary_y
 
         # set estimators
+        self._te_template = te_estimator
+        self._po_template = po_estimator
+
         self._te_estimator = self._generate_te_estimator()
         self._po_estimator = self._generate_te_estimator()
+        if weighting_strategy is not None:
+            self._propensity_estimator = self._generate_propensity_estimator()
 
     def _generate_te_estimator(self, name: str = "te_estimator") -> nn.Module:
+        if self._te_template is not None:
+            return copy.deepcopy(self._te_template)
         return BasicNet(
             name,
             self.n_unit_in,
@@ -160,13 +172,16 @@ class PseudoOutcomeNet(BaseCATEEstimator):
             n_iter_print=self.n_iter_print,
             seed=self.seed,
             nonlin=self.nonlin,
-        )
+        ).to(DEVICE)
 
     def _generate_po_estimator(self, name: str = "po_estimator") -> nn.Module:
+        if self._po_template is not None:
+            return copy.deepcopy(self._po_template)
+
         return BasicNet(
             name,
             self.n_unit_in,
-            binary_y=False,
+            binary_y=self.binary_y,
             n_layers_out=self.n_layers_out,
             n_units_out=self.n_units_out,
             weight_decay=self.weight_decay,
@@ -177,28 +192,54 @@ class PseudoOutcomeNet(BaseCATEEstimator):
             n_iter_print=self.n_iter_print,
             seed=self.seed,
             nonlin=self.nonlin,
-        )
+        ).to(DEVICE)
+
+    def _generate_propensity_estimator(
+        self, name: str = "propensity_estimator"
+    ) -> nn.Module:
+        if self.weighting_strategy is None:
+            raise ValueError("Invalid weighting_strategy for PropensityNet")
+        return PropensityNet(
+            name,
+            self.n_unit_in,
+            2,  # number of treatments
+            self.weighting_strategy,
+            n_units_out_prop=self.n_units_out_prop,
+            n_layers_out_prop=self.n_layers_out_prop,
+            weight_decay=self.weight_decay,
+            lr=self.lr,
+            n_iter=self.n_iter,
+            batch_size=self.batch_size,
+            n_iter_print=self.n_iter_print,
+            seed=self.seed,
+            nonlin=self.nonlin,
+            val_split_prop=self.val_split_prop,
+        ).to(DEVICE)
 
     def train(
         self, X: torch.Tensor, y: torch.Tensor, w: torch.Tensor
-    ) -> "PseudoOutcomeNet":
-        X = torch.Tensor(X)
-        y = torch.Tensor(y).squeeze()
-        w = torch.Tensor(w).squeeze()
+    ) -> "PseudoOutcomeLearner":
+        X = torch.Tensor(X).to(DEVICE)
+        y = torch.Tensor(y).squeeze().to(DEVICE)
+        w = torch.Tensor(w).squeeze().to(DEVICE)
 
         n = len(y)
 
         # STEP 1: fit plug-in estimators via cross-fitting
-        mu_0_pred, mu_1_pred, p_pred = torch.zeros(n), torch.zeros(n), torch.zeros(n)
+        mu_0_pred, mu_1_pred, p_pred = (
+            torch.zeros(n).to(DEVICE),
+            torch.zeros(n).to(DEVICE),
+            torch.zeros(n).to(DEVICE),
+        )
 
         # create folds stratified by treatment assignment to ensure balance
         splitter = StratifiedKFold(
-            n_splits=self.n_folds, shuffle=True, random_state=self.random_state
+            n_splits=self.n_folds, shuffle=True, random_state=self.seed
         )
 
         for train_index, test_index in splitter.split(X, w):
             # create masks
-            pred_mask = torch.zeros(n, dtype=bool)
+            pred_mask = torch.zeros(n, dtype=bool).to(DEVICE)
             pred_mask[test_index] = 1
 
             # fit plug-in te_estimator
@@ -209,7 +250,8 @@ class PseudoOutcomeNet(BaseCATEEstimator):
             ) = self._first_step(X, y, w, ~pred_mask, pred_mask)
 
         # use estimated propensity scores
-        p = p_pred
+        if self.weighting_strategy is not None:
+            p = p_pred
 
         # STEP 2: direct TE estimation
         self._second_step(X, y, w, p, mu_0_pred, mu_1_pred)
@@ -229,8 +271,8 @@ class PseudoOutcomeNet(BaseCATEEstimator):
         te_est: array-like of shape (n_samples,)
             Predicted treatment effects
         """
-        X = torch.Tensor(X)
-        return self._te_estimator(X)
+        X = torch.Tensor(X).to(DEVICE)
+        return predict_wrapper(self._te_estimator, X)
 
     @abc.abstractmethod
     def _first_step(
@@ -269,19 +311,117 @@ class PseudoOutcomeNet(BaseCATEEstimator):
         # fit two separate (standard) models
         # untreated model
         temp_model_0 = self._generate_po_estimator("po_estimator_0_impute_pos")
-        temp_model_0.train(X_fit[W_fit == 0], Y_fit[W_fit == 0])
+        train_wrapper(temp_model_0, X_fit[W_fit == 0], Y_fit[W_fit == 0])
 
         # treated model
         temp_model_1 = self._generate_po_estimator("po_estimator_1_impute_pos")
-        temp_model_1.train(X_fit[W_fit == 1], Y_fit[W_fit == 1])
+        train_wrapper(temp_model_1, X_fit[W_fit == 1], Y_fit[W_fit == 1])
 
-        mu_0_pred = temp_model_0(X[pred_mask, :])
-        mu_1_pred = temp_model_1(X[pred_mask, :])
+        mu_0_pred = predict_wrapper(temp_model_0, X[pred_mask, :])
+        mu_1_pred = predict_wrapper(temp_model_1, X[pred_mask, :])
 
         return mu_0_pred, mu_1_pred
 
+    def _impute_propensity(
+        self,
+        X: torch.Tensor,
+        w: torch.Tensor,
+        fit_mask: torch.tensor,
+        pred_mask: torch.Tensor,
+    ) -> torch.Tensor:
+        # split sample
+        X_fit, W_fit = X[fit_mask, :], w[fit_mask]
 
-class RANet(PseudoOutcomeNet):
+        # fit propensity estimator
+        temp_propensity_estimator = self._generate_propensity_estimator(
+            "prop_estimator_impute_propensity"
+        )
+        train_wrapper(temp_propensity_estimator, X_fit, W_fit)
+
+        # predict propensity on hold out
+        return temp_propensity_estimator.get_importance_weights(
+            X[pred_mask, :], w[pred_mask]
+        )
+
+    def _impute_unconditional_mean(
+        self,
+        X: torch.Tensor,
+        y: torch.Tensor,
+        fit_mask: torch.Tensor,
+        pred_mask: torch.Tensor,
+    ) -> torch.Tensor:
+        # R-learner and U-learner need to impute unconditional mean
+        X_fit, Y_fit = X[fit_mask, :], y[fit_mask]
+
+        # fit model
+        temp_model = self._generate_po_estimator("po_est_impute_unconditional_mean")
+        train_wrapper(temp_model, X_fit, Y_fit)
+
+        return predict_wrapper(temp_model, X[pred_mask, :])
+
+
+class DRLearner(PseudoOutcomeLearner):
+    """
+    DR-learner for CATE estimation, based on doubly robust AIPW pseudo-outcome
+    """
+
+    def _first_step(
+        self,
+        X: torch.Tensor,
+        y: torch.Tensor,
+        w: torch.Tensor,
+        fit_mask: torch.Tensor,
+        pred_mask: torch.Tensor,
+    ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+        mu0_pred, mu1_pred = self._impute_pos(X, y, w, fit_mask, pred_mask)
+        p_pred = self._impute_propensity(X, w, fit_mask, pred_mask).squeeze()
+        return mu0_pred.squeeze(), mu1_pred.squeeze(), p_pred
+
+    def _second_step(
+        self,
+        X: torch.Tensor,
+        y: torch.Tensor,
+        w: torch.Tensor,
+        p: torch.Tensor,
+        mu_0: torch.Tensor,
+        mu_1: torch.Tensor,
+    ) -> None:
+        pseudo_outcome = dr_transformation_cate(y, w, p, mu_0, mu_1)
+        train_wrapper(self._te_estimator, X, pseudo_outcome.detach())
+
+
+class PWLearner(PseudoOutcomeLearner):
+    """
+    PW-learner for CATE estimation, based on singly robust Horvitz Thompson pseudo-outcome
+    """
+
+    def _first_step(
+        self,
+        X: torch.Tensor,
+        y: torch.Tensor,
+        w: torch.Tensor,
+        fit_mask: torch.Tensor,
+        pred_mask: torch.Tensor,
+    ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+
+        mu0_pred, mu1_pred = np.nan, np.nan  # not needed
+        p_pred = self._impute_propensity(X, w, fit_mask, pred_mask).squeeze()
+        return mu0_pred, mu1_pred, p_pred
+
+    def _second_step(
+        self,
+        X: torch.Tensor,
+        y: torch.Tensor,
+        w: torch.Tensor,
+        p: torch.Tensor,
+        mu_0: torch.Tensor,
+        mu_1: torch.Tensor,
+    ) -> None:
+        pseudo_outcome = pw_transformation_cate(y, w, p)
+        train_wrapper(self._te_estimator, X, pseudo_outcome.detach())
+
+
+class RALearner(PseudoOutcomeLearner):
     """
     RA-learner for CATE estimation, based on singly robust regression-adjusted pseudo-outcome
     """
@@ -308,10 +448,76 @@ class RANet(PseudoOutcomeNet):
         mu_1: torch.Tensor,
     ) -> None:
         pseudo_outcome = ra_transformation_cate(y, w, p, mu_0, mu_1)
-        self._te_estimator.train(X, pseudo_outcome.detach())
+        train_wrapper(self._te_estimator, X, pseudo_outcome.detach())
 
 
-class XNet(PseudoOutcomeNet):
+class ULearner(PseudoOutcomeLearner):
+    """
+    U-learner for CATE estimation. Based on pseudo-outcome (Y-mu(x))/(w-pi(x))
+    """
+
+    def _first_step(
+        self,
+        X: torch.Tensor,
+        y: torch.Tensor,
+        w: torch.Tensor,
+        fit_mask: torch.Tensor,
+        pred_mask: torch.Tensor,
+    ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+
+        mu_pred = self._impute_unconditional_mean(X, y, fit_mask, pred_mask).squeeze()
+        mu1_pred = np.nan  # only have one thing to impute here
+        p_pred = self._impute_propensity(X, w, fit_mask, pred_mask).squeeze()
+        return mu_pred, mu1_pred, p_pred
+
+    def _second_step(
+        self,
+        X: torch.Tensor,
+        y: torch.Tensor,
+        w: torch.Tensor,
+        p: torch.Tensor,
+        mu_0: torch.Tensor,
+        mu_1: torch.Tensor,
+    ) -> None:
+        pseudo_outcome = u_transformation_cate(y, w, p, mu_0)
+        train_wrapper(self._te_estimator, X, pseudo_outcome.detach())
+
+
+class RLearner(PseudoOutcomeLearner):
+    """
+    R-learner for CATE estimation. Based on pseudo-outcome (Y-mu(x))/(w-pi(x)) and sample weight
+    (w-pi(x))^2 -- can only be implemented if .fit of te_estimator takes argument 'sample_weight'.
+    """
+
+    def _first_step(
+        self,
+        X: torch.Tensor,
+        y: torch.Tensor,
+        w: torch.Tensor,
+        fit_mask: torch.Tensor,
+        pred_mask: torch.Tensor,
+    ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+        mu_pred = self._impute_unconditional_mean(X, y, fit_mask, pred_mask).squeeze()
+        mu1_pred = np.nan  # only have one thing to impute here
+        p_pred = self._impute_propensity(X, w, fit_mask, pred_mask).squeeze()
+        return mu_pred, mu1_pred, p_pred
+
+    def _second_step(
+        self,
+        X: torch.Tensor,
+        y: torch.Tensor,
+        w: torch.Tensor,
+        p: torch.Tensor,
+        mu_0: torch.Tensor,
+        mu_1: torch.Tensor,
+    ) -> None:
+        pseudo_outcome = u_transformation_cate(y, w, p, mu_0)
+        train_wrapper(
+            self._te_estimator, X, pseudo_outcome.detach(), weight=(w - p) ** 2
+        )
+
+
+class XLearner(PseudoOutcomeLearner):
     """
     X-learner for CATE estimation. Combines two CATE estimates via a weighting function g(x):
     tau(x) = g(x) tau_0(x) + (1-g(x)) tau_1(x)
@@ -396,14 +602,13 @@ class XNet(PseudoOutcomeNet):
         # split by treatment status, fit one model per group
         pseudo_0 = mu_1[w == 0] - y[w == 0]
         self._te_estimator_0 = self._generate_te_estimator("te_estimator_0_xnet")
-        self._te_estimator_0.train(X[w == 0], pseudo_0.detach())
+        train_wrapper(self._te_estimator_0, X[w == 0], pseudo_0.detach())
 
         pseudo_1 = y[w == 1] - mu_0[w == 1]
         self._te_estimator_1 = self._generate_te_estimator("te_estimator_1_xnet")
-        self._te_estimator_1.train(X[w == 1], pseudo_1.detach())
+        train_wrapper(self._te_estimator_1, X[w == 1], pseudo_1.detach())
 
-        if self.weighting_strategy == "prop" or self.weighting_strategy == "1-prop":
-            self._propensity_estimator.train(X, w)
+        train_wrapper(self._propensity_estimator, X, w)
 
     def forward(self, X: torch.Tensor) -> torch.Tensor:
         """
@@ -420,18 +625,10 @@ class XNet(PseudoOutcomeNet):
         te_est: array-like of shape (n_samples,)
             Predicted treatment effects
         """
-        X = torch.Tensor(X)
-        tau0_pred = self._te_estimator_0(X)
-        tau1_pred = self._te_estimator_1(X)
+        X = torch.Tensor(X).to(DEVICE)
+        tau0_pred = predict_wrapper(self._te_estimator_0, X)
+        tau1_pred = predict_wrapper(self._te_estimator_1, X)
 
-        if self.weighting_strategy == "prop" or self.weighting_strategy == "1-prop":
-            prop_pred = self._propensity_estimator(X)
-
-        if self.weighting_strategy == "prop":
-            weight = prop_pred
-        elif self.weighting_strategy == "1-prop":
-            weight = 1 - prop_pred
-        else:
-            raise ValueError("invalid value for self.weighting_strategy")
+        weight = self._propensity_estimator.get_importance_weights(X)
 
         return weight * tau0_pred + (1 - weight) * tau1_pred

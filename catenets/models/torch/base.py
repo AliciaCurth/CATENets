@@ -13,23 +13,27 @@ from catenets.models.constants import (
     DEFAULT_N_ITER,
     DEFAULT_N_ITER_PRINT,
     DEFAULT_NONLIN,
+    DEFAULT_PATIENCE,
     DEFAULT_PENALTY_L2,
     DEFAULT_SEED,
     DEFAULT_STEP_SIZE,
     DEFAULT_UNITS_OUT,
     DEFAULT_UNITS_R,
     DEFAULT_VAL_SPLIT,
+    LARGE_VAL,
 )
-from catenets.models.torch.decorators import benchmark, check_input_train
-from catenets.models.torch.model_utils import make_val_split
-from catenets.models.torch.weight_utils import compute_importance_weights
+from catenets.models.torch.utils.decorators import benchmark, check_input_train
+from catenets.models.torch.utils.model_utils import make_val_split
+from catenets.models.torch.utils.weight_utils import compute_importance_weights
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
 EPS = 1e-8
 
 NONLIN = {
     "elu": nn.ELU,
     "relu": nn.ReLU,
+    "leaky_relu": nn.LeakyReLU,
     "sigmoid": nn.Sigmoid,
 }
 
@@ -81,7 +85,7 @@ class BasicNet(nn.Module):
         super(BasicNet, self).__init__()
 
         self.name = name
-        if nonlin not in ["elu", "relu", "sigmoid"]:
+        if nonlin not in ["elu", "relu", "leaky_relu", "sigmoid"]:
             raise ValueError("Unknown nonlinearity")
 
         NL = NONLIN[nonlin]
@@ -89,7 +93,13 @@ class BasicNet(nn.Module):
 
         # add required number of layers
         for i in range(n_layers_out):
-            layers.extend([nn.Linear(n_units_out, n_units_out), NL()])
+            layers.extend(
+                [
+                    nn.Dropout(0.2),
+                    nn.Linear(n_units_out, n_units_out),
+                    NL(),
+                ]
+            )
 
         # add final layers
         layers.append(nn.Linear(n_units_out, 1))
@@ -117,7 +127,7 @@ class BasicNet(nn.Module):
         self, X: torch.Tensor, y: torch.Tensor, weight: Optional[torch.Tensor] = None
     ) -> "BasicNet":
         X = torch.Tensor(X).to(DEVICE)
-        y = torch.Tensor(y).to(DEVICE)
+        y = torch.Tensor(y).to(DEVICE).squeeze()
 
         # get validation split (can be none)
         X, y, X_val, y_val, val_string = make_val_split(
@@ -132,6 +142,8 @@ class BasicNet(nn.Module):
         train_indices = np.arange(n)
 
         # do training
+        val_loss_best = LARGE_VAL
+        patience = 0
         for i in range(self.n_iter):
             # shuffle data for minibatches
             np.random.shuffle(train_indices)
@@ -144,7 +156,7 @@ class BasicNet(nn.Module):
                 ]
 
                 X_next = X[idx_next]
-                y_next = y[idx_next].squeeze()
+                y_next = y[idx_next]
 
                 weight_next = None
                 if weight is not None:
@@ -159,6 +171,7 @@ class BasicNet(nn.Module):
                 batch_loss.backward()
 
                 self.optimizer.step()
+
                 train_loss.append(batch_loss.detach())
 
             train_loss = torch.Tensor(train_loss)
@@ -168,6 +181,13 @@ class BasicNet(nn.Module):
                 with torch.no_grad():
                     preds = self.forward(X_val).squeeze()
                     val_loss = loss(preds, y_val)
+                    if val_loss_best > val_loss:
+                        val_loss_best = val_loss
+                        patience = 0
+                    else:
+                        patience += 1
+                    if patience > DEFAULT_PATIENCE:
+                        break
                     log.info(
                         f"[{self.name}] Epoch: {i}, current {val_string} loss: {val_loss}, train_loss: {torch.mean(train_loss)}"
                     )
@@ -227,23 +247,11 @@ class PropensityNet(nn.Module):
         layers = [
             nn.Linear(in_features=n_unit_in, out_features=n_units_out_prop),
             NL(),
+            nn.Linear(in_features=n_units_out_prop, out_features=n_unit_out),
+            nn.Softmax(dim=-1),
         ]
-        for idx in range(n_layers_out_prop):
-            layers.extend(
-                [
-                    nn.Linear(
-                        in_features=n_units_out_prop, out_features=n_units_out_prop
-                    ),
-                    NL(),
-                ]
-            )
-        layers.extend(
-            [
-                nn.Linear(in_features=n_units_out_prop, out_features=n_unit_out),
-                nn.Softmax(dim=-1),
-            ]
-        )
-        self.model = nn.Sequential(*layers)
+
+        self.model = nn.Sequential(*layers).to(DEVICE)
         self.name = name
         self.weighting_strategy = weighting_strategy
         self.n_iter = n_iter
@@ -259,7 +267,9 @@ class PropensityNet(nn.Module):
     def forward(self, X: torch.Tensor) -> torch.Tensor:
         return self.model(X)
 
-    def get_importance_weights(self, X: torch.Tensor, w: torch.Tensor) -> torch.Tensor:
+    def get_importance_weights(
+        self, X: torch.Tensor, w: Optional[torch.Tensor] = None
+    ) -> torch.Tensor:
         p_pred = self.forward(X).squeeze()[:, 1]
         return compute_importance_weights(p_pred, w, self.weighting_strategy, {})
 
@@ -283,6 +293,8 @@ class PropensityNet(nn.Module):
         train_indices = np.arange(n)
 
         # do training
+        val_loss_best = LARGE_VAL
+        patience = 0
         for i in range(self.n_iter):
             # shuffle data for minibatches
             np.random.shuffle(train_indices)
@@ -306,12 +318,19 @@ class PropensityNet(nn.Module):
                 self.optimizer.step()
                 train_loss.append(batch_loss.detach())
 
-            train_loss = torch.Tensor(train_loss)
+            train_loss = torch.Tensor(train_loss).to(DEVICE)
 
             if i % self.n_iter_print == 0:
                 with torch.no_grad():
                     preds = self.forward(X_val).squeeze()
                     val_loss = self.loss(preds, y_val)
+                    if val_loss_best > val_loss:
+                        val_loss_best = val_loss
+                        patience = 0
+                    else:
+                        patience += 1
+                    if patience > DEFAULT_PATIENCE:
+                        break
                     log.info(
                         f"[{self.name}] Epoch: {i}, current {val_string} loss: {val_loss}, train_loss: {torch.mean(train_loss)}"
                     )
@@ -354,7 +373,7 @@ class BaseCATEEstimator(nn.Module):
 
     @abc.abstractmethod
     @benchmark
-    def forward(self, X: torch.Tensor) -> np.ndarray:
+    def forward(self, X: torch.Tensor) -> torch.Tensor:
         """
         Predict treatment effect estimates using a CATEModel.
 
