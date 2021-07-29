@@ -125,6 +125,6 @@ def test_sklearn_model_pseudo_outcome_binary(
 
     print(
         f"Evaluation for model {model_t} with po_estimator = {type(po_estimator)},"
-        "te_estimator = {type(te_estimator)} on {dataset} = {score['str']}"
+        f"te_estimator = {type(te_estimator)} on {dataset} = {score['str']}"
     )
     assert score["raw"]["pehe"][0] < pehe_threshold

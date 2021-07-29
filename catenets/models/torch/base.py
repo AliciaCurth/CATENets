@@ -371,6 +371,15 @@ class BaseCATEEstimator(nn.Module):
         """
         ...
 
+    @benchmark
+    def fit(
+        self,
+        X: torch.Tensor,
+        y: torch.Tensor,
+        w: torch.Tensor,
+    ) -> "BaseCATEEstimator":
+        return self.train(X, y, w)
+
     @abc.abstractmethod
     @benchmark
     def forward(self, X: torch.Tensor) -> torch.Tensor:
@@ -387,3 +396,10 @@ class BaseCATEEstimator(nn.Module):
         potential outcomes probabilities
         """
         ...
+
+    @benchmark
+    def predict(
+        self,
+        X: torch.Tensor,
+    ) -> torch.Tensor:
+        return self.forward(X)
