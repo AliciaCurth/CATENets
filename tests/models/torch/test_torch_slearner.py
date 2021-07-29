@@ -40,7 +40,7 @@ def test_nn_model_params() -> None:
     assert model._po_estimator.seed == 11
     assert model._po_estimator.val_split_prop == 0.9
     assert (
-        len(model._po_estimator.model) == 6
+        len(model._po_estimator.model) == 7
     )  # 1 in + NL + 2 * n_layers_hidden + out + Sigmoid
 
     assert model._propensity_estimator.n_iter == 700
@@ -49,7 +49,7 @@ def test_nn_model_params() -> None:
     assert model._propensity_estimator.seed == 11
     assert model._propensity_estimator.val_split_prop == 0.9
     assert (
-        len(model._propensity_estimator.model) == 28
+        len(model._propensity_estimator.model) == 4
     )  # 1 in + NL + 2 * n_layers_hidden + out + Softmax
 
 

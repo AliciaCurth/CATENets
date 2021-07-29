@@ -7,13 +7,14 @@ from .pseudo_outcome_nets import (
     XLearner,
 )
 from .slearner import SLearner
-from .tarnet import TARNet
+from .snet import DragonNet, TARNet
 from .tlearner import TLearner
 
 __all__ = [
     "TLearner",
     "SLearner",
     "TARNet",
+    "DragonNet",
     "XLearner",
     "RLearner",
     "ULearner",
