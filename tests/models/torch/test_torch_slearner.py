@@ -67,6 +67,7 @@ def test_nn_model_params_nonlin(nonlin: str) -> None:
         assert isinstance(mod.model[1], nonlins[nonlin])
 
 
+@pytest.mark.slow
 @pytest.mark.parametrize("weighting_strategy", ["ipw", None])
 @pytest.mark.parametrize("dataset, pehe_threshold", [("twins", 0.4), ("ihdp", 1.5)])
 def test_nn_model_sanity(

@@ -54,6 +54,7 @@ def test_nn_model_params_nonlin(nonlin: str) -> None:
         assert isinstance(mod.model[1], nonlins[nonlin])
 
 
+@pytest.mark.slow
 @pytest.mark.parametrize("dataset, pehe_threshold", [("twins", 0.4), ("ihdp", 1.5)])
 def test_nn_model_sanity(dataset: str, pehe_threshold: float) -> None:
     X_train, W_train, Y_train, Y_train_full, X_test, Y_test = load(dataset)
