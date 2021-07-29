@@ -12,6 +12,7 @@ from catenets.models import T_NAME, SNET1_NAME, SNET2_NAME, SNET3_NAME, \
 from catenets.models.transformation_utils import DR_TRANSFORMATION, PW_TRANSFORMATION, \
     RA_TRANSFORMATION
 
+
 SEP = "_"
 
 
@@ -37,14 +38,14 @@ def get_model_set(model_selection = 'all', model_params: dict = None):
     """ Helper function to retrieve a set of models """
     # get model selection
     if type(model_selection) is str:
-        if model_selection == 'plug':
-            models = get_all_plugin_models()
+        if model_selection == 'snet':
+            models = get_all_snets()
         elif model_selection == 'pseudo':
             models = get_all_pseudoout_models()
         elif model_selection == 'twostep':
             models = get_all_twostep_models()
         elif model_selection == 'all':
-            models = dict(**get_all_plugin_models(), **get_all_pseudoout_models())
+            models = dict(**get_all_snets(), **get_all_pseudoout_models())
         else:
             models = {model_selection: get_catenet(model_selection)()}
     elif type(model_selection) is list:
@@ -65,14 +66,14 @@ def get_model_set(model_selection = 'all', model_params: dict = None):
     return models
 
 
-ALL_PLUGIN_MODELS = [T_NAME,  SNET1_NAME,  SNET2_NAME, SNET3_NAME, SNET_NAME]
+ALL_SNETS = [T_NAME, SNET1_NAME, SNET2_NAME, SNET3_NAME, SNET_NAME]
 ALL_PSEUDOOUT_MODELS = [DR_TRANSFORMATION, PW_TRANSFORMATION, RA_TRANSFORMATION]
 ALL_TWOSTEP_MODELS = [DRNET_NAME, RANET_NAME, XNET_NAME, RNET_NAME]
 
 
-def get_all_plugin_models():
+def get_all_snets():
     model_dict = {}
-    for name in ALL_PLUGIN_MODELS:
+    for name in ALL_SNETS:
         model_dict.update({name: get_catenet(name)()})
     return model_dict
 

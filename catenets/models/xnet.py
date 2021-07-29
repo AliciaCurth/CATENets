@@ -7,6 +7,11 @@ import pandas as pd
 from catenets.models.constants import *
 from catenets.models.base import BaseCATENet, train_output_net_only
 from catenets.models.model_utils import check_shape_1d_data, check_X_is_np
+from catenets.models.pseudo_outcome_nets import ALL_STRATEGIES, train_tnet, \
+    train_offsetnet, train_flextenet, train_snet, train_snet1, train_snet2, train_snet3, \
+    predict_t_net, predict_offsetnet, predict_flextenet, predict_snet, predict_snet1, \
+    predict_snet2, predict_snet3, S_STRATEGY, S1_STRATEGY, S2_STRATEGY, S3_STRATEGY, \
+    FLEX_STRATEGY, OFFSET_STRATEGY, T_STRATEGY  # same strategies as other nets
 
 
 class XNet(BaseCATENet):
@@ -70,7 +75,10 @@ class XNet(BaseCATENet):
     nonlin: string, default 'elu'
         Nonlinearity to use in NN
     """
+
     def __init__(self, weight_strategy: int = None,
+                 first_stage_strategy: str = T_STRATEGY,
+                 first_stage_args: dict = None,
                  binary_y: bool = False,
                  n_layers_out: int = DEFAULT_LAYERS_OUT,
                  n_layers_r: int = DEFAULT_LAYERS_R,
@@ -94,6 +102,8 @@ class XNet(BaseCATENet):
                  seed: int = DEFAULT_SEED, nonlin: str = DEFAULT_NONLIN):
         # settings
         self.weight_strategy = weight_strategy
+        self.first_stage_strategy = first_stage_strategy
+        self.first_stage_args = first_stage_args
         self.binary_y = binary_y
 
         # model architecture hyperparams
@@ -136,7 +146,7 @@ class XNet(BaseCATENet):
 
         Parameters
         ----------
-        X: pd.DataFrame or np.array
+        X: pd.DataFrame or onp.array
             Covariate matrix
         return_po: bool, default False
             Whether to return potential outcome estimate
@@ -156,6 +166,8 @@ class XNet(BaseCATENet):
 
 
 def train_x_net(X, y, w, weight_strategy: int = None,
+                first_stage_strategy: str = T_STRATEGY,
+                first_stage_args: dict = None,
                 binary_y: bool = False,
                 n_layers_out: int = DEFAULT_LAYERS_OUT,
                 n_layers_r: int = DEFAULT_LAYERS_R,
@@ -190,59 +202,34 @@ def train_x_net(X, y, w, weight_strategy: int = None,
         # weight_strategy=-1 sets g(x)=(1-pi(x))
         raise ValueError('XNet only implements weight_strategy in [0, 1, -1, None]')
 
+    if first_stage_strategy not in ALL_STRATEGIES:
+        raise ValueError('Parameter first stage should be in '
+                         'catenets.models.twostep_nets.ALL_STRATEGIES. '
+                         'You passed {}'.format(first_stage_strategy))
+
     # first stage: get estimates of PO regression
     if verbose > 0:
         print("Training first stage")
 
-    if not weight_strategy == 1:
-        if verbose > 0:
-            print('Training PO_0 Net')
-        params_0, predict_fun_0 = train_output_net_only(X[w == 0], y[w == 0],
-                                                        binary_y=binary_y,
-                                                        n_layers_out=n_layers_out,
-                                                        n_units_out=n_units_out,
-                                                        n_layers_r=n_layers_r,
-                                                        n_units_r=n_units_r,
-                                                        penalty_l2=penalty_l2,
-                                                        step_size=step_size,
-                                                        n_iter=n_iter,
-                                                        batch_size=batch_size,
-                                                        val_split_prop=val_split_prop,
-                                                        early_stopping=early_stopping,
-                                                        patience=patience,
-                                                        n_iter_min=n_iter_min,
-                                                        n_iter_print=n_iter_print,
-                                                        verbose=verbose,
-                                                        seed=seed, nonlin=nonlin,
-                                                        avg_objective=avg_objective)
-        mu_hat_0 = predict_fun_0(params_0, X[w == 1])
-    else:
-        mu_hat_0 = None
-
-    if not weight_strategy == 0:
-        if verbose > 0:
-            print('Training PO_1 Net')
-        params_1, predict_fun_1 = train_output_net_only(X[w == 1], y[w == 1],
-                                                        binary_y=binary_y,
-                                                        n_layers_out=n_layers_out,
-                                                        n_units_out=n_units_out,
-                                                        n_layers_r=n_layers_r,
-                                                        n_units_r=n_units_r,
-                                                        penalty_l2=penalty_l2,
-                                                        step_size=step_size,
-                                                        n_iter=n_iter,
-                                                        batch_size=batch_size,
-                                                        val_split_prop=val_split_prop,
-                                                        early_stopping=early_stopping,
-                                                        patience=patience,
-                                                        n_iter_min=n_iter_min,
-                                                        n_iter_print=n_iter_print,
-                                                        verbose=verbose,
-                                                        seed=seed, nonlin=nonlin,
-                                                        avg_objective=avg_objective)
-        mu_hat_1 = predict_fun_1(params_1, X[w == 0])
-    else:
-        mu_hat_1 = None
+    mu_hat_0, mu_hat_1 = _get_first_stage_pos(X, y, w, binary_y=binary_y,
+                                              n_layers_out=n_layers_out,
+                                              n_units_out=n_units_out,
+                                              n_layers_r=n_layers_r,
+                                              n_units_r=n_units_r,
+                                              penalty_l2=penalty_l2,
+                                              step_size=step_size,
+                                              n_iter=n_iter,
+                                              batch_size=batch_size,
+                                              val_split_prop=val_split_prop,
+                                              early_stopping=early_stopping,
+                                              patience=patience,
+                                              n_iter_min=n_iter_min,
+                                              n_iter_print=n_iter_print,
+                                              verbose=verbose,
+                                              seed=seed, nonlin=nonlin,
+                                              avg_objective=avg_objective,
+                                              first_stage_strategy=first_stage_strategy,
+                                              first_stage_args=first_stage_args)
 
     if weight_strategy is None or weight_strategy == -1:
         # also fit propensity estimator
@@ -336,6 +323,59 @@ def train_x_net(X, y, w, weight_strategy: int = None,
     return params, predict_funs
 
 
+def _get_first_stage_pos(X, y, w, first_stage_strategy: str = T_STRATEGY,
+                         first_stage_args: dict = None,
+                         binary_y: bool = False,
+                         n_layers_out: int = DEFAULT_LAYERS_OUT,
+                         n_layers_r: int = DEFAULT_LAYERS_R,
+                         n_units_out: int = DEFAULT_UNITS_OUT,
+                         n_units_r: int = DEFAULT_UNITS_R,
+                         penalty_l2: float = DEFAULT_PENALTY_L2,
+                         step_size: float = DEFAULT_STEP_SIZE,
+                         n_iter: int = DEFAULT_N_ITER,
+                         batch_size: int = DEFAULT_BATCH_SIZE,
+                         n_iter_min: int = DEFAULT_N_ITER_MIN,
+                         val_split_prop: float = DEFAULT_VAL_SPLIT,
+                         early_stopping: bool = True,
+                         patience: int = DEFAULT_PATIENCE,
+                         verbose: int = 1, n_iter_print: int = DEFAULT_N_ITER_PRINT,
+                         seed: int = DEFAULT_SEED, nonlin: str = DEFAULT_NONLIN,
+                         avg_objective: bool = DEFAULT_AVG_OBJECTIVE):
+    if first_stage_args is None:
+        first_stage_args = {}
+
+    if first_stage_strategy == T_STRATEGY:
+        train_fun, predict_fun = train_tnet, predict_t_net
+    elif first_stage_strategy == S_STRATEGY:
+        train_fun, predict_fun = train_snet, predict_snet
+    elif first_stage_strategy == S1_STRATEGY:
+        train_fun, predict_fun = train_snet1, predict_snet1
+    elif first_stage_strategy == S2_STRATEGY:
+        train_fun, predict_fun = train_snet2, predict_snet2
+    elif first_stage_strategy == S3_STRATEGY:
+        train_fun, predict_fun = train_snet3, predict_snet3
+    elif first_stage_strategy == OFFSET_STRATEGY:
+        train_fun, predict_fun = train_offsetnet, predict_offsetnet
+    elif first_stage_strategy == FLEX_STRATEGY:
+        train_fun, predict_fun = train_flextenet, predict_flextenet
+
+    trained_params, pred_fun = train_fun(X, y, w, binary_y=binary_y,
+                                         n_layers_r=n_layers_r, n_units_r=n_units_r,
+                                         n_layers_out=n_layers_out, n_units_out=n_units_out,
+                                         penalty_l2=penalty_l2, step_size=step_size,
+                                         n_iter=n_iter, batch_size=batch_size,
+                                         val_split_prop=val_split_prop,
+                                         early_stopping=early_stopping,
+                                         patience=patience, n_iter_min=n_iter_min,
+                                         verbose=verbose, n_iter_print=n_iter_print,
+                                         seed=seed, nonlin=nonlin, avg_objective=avg_objective,
+                                         **first_stage_args)
+
+    _, mu_0, mu_1 = predict_fun(X, trained_params, pred_fun, return_po=True)
+
+    return mu_0[w == 1], mu_1[w == 0]
+
+
 def predict_x_net(X, trained_params, predict_funs,
                   return_po: bool = False, return_prop: bool = False,
                   weight_strategy: int = None):
@@ -370,4 +410,4 @@ def predict_x_net(X, trained_params, predict_funs,
     elif weight_strategy == 1:
         weight = 1
 
-    return weight * tau0_pred + (1-weight) * tau1_pred
+    return weight * tau0_pred + (1 - weight) * tau1_pred

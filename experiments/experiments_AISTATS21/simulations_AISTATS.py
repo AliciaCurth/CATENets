@@ -10,11 +10,11 @@ from catenets.models import PSEUDOOUT_NAME, PseudoOutcomeNet
 from catenets.models.snet import DEFAULT_UNITS_R_BIG_S, DEFAULT_UNITS_R_SMALL_S
 from catenets.models.pseudo_outcome_nets import S_STRATEGY, S1_STRATEGY
 from catenets.models.transformation_utils import DR_TRANSFORMATION, RA_TRANSFORMATION
-from catenets.experiments.experiment_utils import eval_root_mse, get_model_set
-from catenets.experiments.simulation_utils import simulate_treatment_setup
+from catenets.experiment_utils.base import eval_root_mse, get_model_set
+from catenets.experiment_utils.simulation_utils import simulate_treatment_setup
 
 # some constants
-RESULT_DIR = 'results/simulations/'
+RESULT_DIR = 'results/experiments_AISTATS21/simulations/'
 CSV_STRING = '.csv'
 SEP = '_'
 
@@ -36,17 +36,18 @@ ALL_MODELS_AISTATS = get_model_set(model_selection='all', model_params=MODEL_PAR
 COMBINED_MODELS = {PSEUDOOUT_NAME + SEP + DR_TRANSFORMATION + SEP + S_STRATEGY:
     PseudoOutcomeNet(
         transformation=DR_TRANSFORMATION, first_stage_strategy=S_STRATEGY,
-        n_units_r=DEFAULT_UNITS_R_BIG_S, n_units_r_small=DEFAULT_UNITS_R_SMALL_S,
+        n_units_r=DEFAULT_UNITS_R_BIG_S,
         n_layers_out=LAYERS_OUT, n_layers_r=LAYERS_R, penalty_l2_t=PENALTY_L2,
         penalty_l2=PENALTY_L2, n_layers_out_t=LAYERS_OUT,
-        n_layers_r_t=LAYERS_R, penalty_orthogonal=PENALTY_ORTHOGONAL),
+        first_stage_args={'n_units_r_small': DEFAULT_UNITS_R_SMALL_S,
+                          'penalty_orthogonal': PENALTY_ORTHOGONAL}),
     PSEUDOOUT_NAME + SEP + RA_TRANSFORMATION + SEP + S_STRATEGY:
         PseudoOutcomeNet(
             transformation=RA_TRANSFORMATION, first_stage_strategy=S_STRATEGY,
-            n_units_r=DEFAULT_UNITS_R_BIG_S, n_units_r_small=DEFAULT_UNITS_R_SMALL_S,
-            penalty_orthogonal=PENALTY_ORTHOGONAL, n_layers_out=LAYERS_OUT, n_layers_r=LAYERS_R,
+            n_units_r=DEFAULT_UNITS_R_BIG_S, n_layers_out=LAYERS_OUT, n_layers_r=LAYERS_R,
             penalty_l2_t=PENALTY_L2, penalty_l2=PENALTY_L2, n_layers_out_t=LAYERS_OUT,
-            n_layers_r_t=LAYERS_R),
+            n_layers_r_t=LAYERS_R, first_stage_args={'n_units_r_small': DEFAULT_UNITS_R_SMALL_S,
+                          'penalty_orthogonal':PENALTY_ORTHOGONAL}),
     PSEUDOOUT_NAME + SEP + DR_TRANSFORMATION + SEP + S1_STRATEGY:
         PseudoOutcomeNet(
             transformation=DR_TRANSFORMATION, first_stage_strategy=S1_STRATEGY,

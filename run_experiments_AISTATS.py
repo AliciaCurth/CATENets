@@ -1,11 +1,11 @@
 """
 Author: Alicia Curth
-File to run experiments from shell
+File to run AISTATS experiments from shell
 """
 import argparse
 
-from catenets.experiments.simulations_AISTATS import main_AISTATS
-from catenets.experiments.ihdp_experiments import do_ihdp_experiments
+from experiments.experiments_AISTATS21.simulations_AISTATS import main_AISTATS
+from experiments.experiments_AISTATS21.ihdp_experiments import do_ihdp_experiments
 
 
 def init_arg():

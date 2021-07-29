@@ -113,6 +113,7 @@ class SNet1(BaseCATENet):
 
 class TARNet(SNet1):
     """Wrapper for TARNet"""
+
     def __init__(self, binary_y: bool = False, n_layers_r: int = DEFAULT_LAYERS_R,
                  n_units_r: int = DEFAULT_UNITS_R, n_layers_out: int = DEFAULT_LAYERS_OUT,
                  n_units_out: int = DEFAULT_UNITS_OUT, penalty_l2: float = DEFAULT_PENALTY_L2,
@@ -233,6 +234,35 @@ class SNet2(BaseCATENet):
 
     def _get_predict_function(self):
         return predict_snet2
+
+
+class DragonNet(SNet2):
+    """Wrapper for DragonNet"""
+    def __init__(self, binary_y: bool = False, n_layers_r: int = DEFAULT_LAYERS_R,
+                 n_units_r: int = DEFAULT_UNITS_R, n_layers_out: int = DEFAULT_LAYERS_OUT,
+                 n_units_out: int = DEFAULT_UNITS_OUT, penalty_l2: float = DEFAULT_PENALTY_L2,
+                 n_units_out_prop: int = DEFAULT_UNITS_OUT,
+                 n_layers_out_prop: int = 0,
+                 step_size: float = DEFAULT_STEP_SIZE,
+                 n_iter: int = DEFAULT_N_ITER, batch_size: int = DEFAULT_BATCH_SIZE,
+                 val_split_prop: float = DEFAULT_VAL_SPLIT, early_stopping: bool = True,
+                 patience: int = DEFAULT_PATIENCE, n_iter_min: int = DEFAULT_N_ITER_MIN,
+                 verbose: int = 1, n_iter_print: int = DEFAULT_N_ITER_PRINT,
+                 seed: int = DEFAULT_SEED, reg_diff: bool = False, same_init: bool = False,
+                 penalty_diff: float = DEFAULT_PENALTY_L2, nonlin: str = DEFAULT_NONLIN):
+        super().__init__(binary_y=binary_y, n_layers_r=n_layers_r,
+                         n_units_r=n_units_r, n_layers_out=n_layers_out,
+                         n_units_out=n_units_out, penalty_l2=penalty_l2,
+                         n_units_out_prop=n_units_out_prop,
+                         n_layers_out_prop=n_layers_out_prop,
+                         step_size=step_size,
+                         n_iter=n_iter, batch_size=batch_size,
+                         val_split_prop=val_split_prop,
+                         early_stopping=early_stopping,
+                         patience=patience, n_iter_min=n_iter_min,
+                         verbose=verbose, n_iter_print=n_iter_print,
+                         seed=seed, reg_diff=reg_diff, penalty_diff=penalty_diff,
+                         same_init=same_init, nonlin=nonlin)
 
 
 # Training functions for SNet1 -------------------------------------------------

@@ -8,16 +8,16 @@ import csv
 
 from sklearn import clone
 
-from catenets.experiments.experiment_utils import eval_root_mse, get_model_set
+from catenets.experiment_utils.base import eval_root_mse, get_model_set
 
 from catenets.models import PSEUDOOUT_NAME, PseudoOutcomeNet
 from catenets.models.transformation_utils import RA_TRANSFORMATION
 
 # Some constants
-DATA_DIR = 'data/'
+DATA_DIR = 'data/ihdp/'
 IHDP_TRAIN_NAME = 'ihdp_npci_1-100.train.npz'
 IHDP_TEST_NAME = 'ihdp_npci_1-100.test.npz'
-RESULT_DIR = 'results/ihdp/'
+RESULT_DIR = 'results/experiments_AISTATS21/ihdp/'
 SEP = '_'
 
 # Hyperparameters for experiments on IHDP

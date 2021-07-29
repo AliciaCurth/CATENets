@@ -15,6 +15,7 @@ from catenets.models.constants import *
 from catenets.models.representation_nets import mmd2_lin
 from catenets.models.disentangled_nets import DEFAULT_UNITS_R_BIG_S3, DEFAULT_UNITS_R_SMALL_S3, \
                                                 _get_absolute_rowsums, _concatenate_representations
+from catenets.models.flextenet import _get_cos_reg
 
 
 DEFAULT_UNITS_R_BIG_S = 100
@@ -85,6 +86,9 @@ class SNet(BaseCATENet):
         Nonlinearity to use in NN
     penalty_disc: float, default zero
         Discrepancy penalty. Defaults to zero as this feature is not tested.
+    ortho_reg_type: str, 'abs'
+        Which type of orthogonalization to use. 'abs' uses the (hard) disentanglement described
+        in AISTATS paper, 'fro' uses frobenius norm as in FlexTENet
     """
     def __init__(self, with_prop: bool = True, binary_y: bool = False,
                  n_layers_r: int = DEFAULT_LAYERS_R,
@@ -102,7 +106,8 @@ class SNet(BaseCATENet):
                  patience: int = DEFAULT_PATIENCE, n_iter_min: int = DEFAULT_N_ITER_MIN,
                  verbose: int = 1, n_iter_print: int = DEFAULT_N_ITER_PRINT,
                  reg_diff: bool = False, penalty_diff: float = DEFAULT_PENALTY_L2,
-                 seed: int = DEFAULT_SEED, nonlin: str = DEFAULT_NONLIN, same_init: bool = False
+                 seed: int = DEFAULT_SEED, nonlin: str = DEFAULT_NONLIN, same_init: bool = False,
+                 ortho_reg_type: str = 'abs'
                  ):
         self.with_prop = with_prop
         self.binary_y = binary_y
@@ -122,6 +127,7 @@ class SNet(BaseCATENet):
         self.reg_diff = reg_diff
         self.penalty_diff = penalty_diff
         self.same_init = same_init
+        self.ortho_reg_type = ortho_reg_type
 
         self.step_size = step_size
         self.n_iter = n_iter
@@ -166,7 +172,7 @@ def train_snet(X, y, w, binary_y: bool = False, n_layers_r: int = DEFAULT_LAYERS
                seed: int = DEFAULT_SEED, return_val_loss: bool = False,
                reg_diff: bool = False, penalty_diff: float = DEFAULT_PENALTY_L2,
                nonlin: str = DEFAULT_NONLIN, avg_objective: bool = DEFAULT_AVG_OBJECTIVE,
-               with_prop: bool = True, same_init: bool = False):
+               with_prop: bool = True, same_init: bool = False,  ortho_reg_type: str = 'abs'):
     # function to train a net with 5 representations
     if not with_prop:
         raise ValueError('train_snet works only withprop=True')
@@ -263,6 +269,34 @@ def train_snet(X, y, w, binary_y: bool = False, n_layers_r: int = DEFAULT_LAYERS
                          (1 - targets) * jnp.log(
             1 - preds))
 
+    # define ortho-reg function
+    if ortho_reg_type == 'abs':
+        def ortho_reg(params):
+            col_c = _get_absolute_rowsums(params[0][0][0])
+            col_o = _get_absolute_rowsums(params[1][0][0])
+            col_mu0 = _get_absolute_rowsums(params[2][0][0])
+            col_mu1 = _get_absolute_rowsums(params[3][0][0])
+            col_w = _get_absolute_rowsums(params[4][0][0])
+            return jnp.sum(col_c * col_o + col_c * col_w + col_c * col_mu1 + col_c * col_mu0 + col_w *
+                        col_o + col_mu0 * col_o + col_o * col_mu1 + col_mu0 * col_mu1 + col_mu0 * col_w +
+                        col_w * col_mu1)
+    elif ortho_reg_type == 'fro':
+        def ortho_reg(params):
+            return _get_cos_reg(params[0][0][0], params[1][0][0], False) + \
+                   _get_cos_reg(params[0][0][0], params[2][0][0], False) + \
+                   _get_cos_reg(params[0][0][0], params[3][0][0], False) + \
+                   _get_cos_reg(params[0][0][0], params[4][0][0], False) + \
+                   _get_cos_reg(params[1][0][0], params[2][0][0], False) + \
+                   _get_cos_reg(params[1][0][0], params[3][0][0], False) + \
+                   _get_cos_reg(params[1][0][0], params[4][0][0], False) + \
+                   _get_cos_reg(params[2][0][0], params[3][0][0], False) + \
+                   _get_cos_reg(params[2][0][0], params[4][0][0], False) + \
+                   _get_cos_reg(params[3][0][0], params[4][0][0], False)
+
+    else:
+        raise NotImplementedError('train_snet_noprop supports only orthogonal regularization '
+                                  'using absolute values or frobenious norms.')
+
     # complete loss function for all parts
     @jit
     def loss_snet(params, batch, penalty_l2, penalty_orthogonal, penalty_disc):
@@ -294,15 +328,7 @@ def train_snet(X, y, w, binary_y: bool = False, n_layers_r: int = DEFAULT_LAYERS
         loss_disc = penalty_disc * mmd2_lin(reps_o, w)
 
         # which variable has impact on which representation -- orthogonal loss
-        col_c = _get_absolute_rowsums(params[0][0][0])
-        col_o = _get_absolute_rowsums(params[1][0][0])
-        col_mu0 = _get_absolute_rowsums(params[2][0][0])
-        col_mu1 = _get_absolute_rowsums(params[3][0][0])
-        col_w = _get_absolute_rowsums(params[4][0][0])
-        loss_o = penalty_orthogonal * (
-            jnp.sum(col_c * col_o + col_c * col_w + col_c * col_mu1 + col_c * col_mu0 + col_w *
-                    col_o + col_mu0 * col_o + col_o * col_mu1 + col_mu0 * col_mu1 + col_mu0 * col_w +
-                    col_w * col_mu1))
+        loss_o = penalty_orthogonal * ortho_reg(params)
 
         # weight decay on representations
         weightsq_body = sum([sum([jnp.sum(params[j][i][0] ** 2) for i in
@@ -458,7 +484,7 @@ def train_snet_noprop(X, y, w, binary_y: bool = False, n_layers_r: int = DEFAULT
                       seed: int = DEFAULT_SEED, return_val_loss: bool = False,
                       reg_diff: bool = False, penalty_diff: float = DEFAULT_PENALTY_L2,
                       nonlin: str = DEFAULT_NONLIN, avg_objective: bool = DEFAULT_AVG_OBJECTIVE,
-                      with_prop: bool = False, same_init: bool = False):
+                      with_prop: bool = False, same_init: bool = False,  ortho_reg_type: str = 'abs'):
     """
     SNet but without the propensity head
     """
@@ -536,6 +562,22 @@ def train_snet_noprop(X, y, w, binary_y: bool = False, n_layers_r: int = DEFAULT
                                         (1 - targets) * jnp.log(
                         1 - preds)))
 
+    # define ortho-reg function
+    if ortho_reg_type == 'abs':
+        def ortho_reg(params):
+            col_o = _get_absolute_rowsums(params[0][0][0])
+            col_p0 = _get_absolute_rowsums(params[1][0][0])
+            col_p1 = _get_absolute_rowsums(params[2][0][0])
+            return jnp.sum(col_o * col_p0 + col_o * col_p1 + col_p1 * col_p0)
+    elif ortho_reg_type == 'fro':
+        def ortho_reg(params):
+            return _get_cos_reg(params[0][0][0], params[1][0][0], False) + \
+                   _get_cos_reg(params[0][0][0], params[2][0][0], False) + \
+                   _get_cos_reg(params[1][0][0], params[2][0][0], False)
+    else:
+        raise NotImplementedError('train_snet_noprop supports only orthogonal regularization '
+                                  'using absolute values or frobenious norms.')
+
     # complete loss function for all parts
     @jit
     def loss_snet_noprop(params, batch, penalty_l2, penalty_orthogonal):
@@ -557,11 +599,7 @@ def train_snet_noprop(X, y, w, binary_y: bool = False, n_layers_r: int = DEFAULT
         loss_1 = loss_head(params[4], (reps_po1, y, w), penalty_l2)
 
         # which variable has impact on which representation
-        col_o = _get_absolute_rowsums(params[0][0][0])
-        col_p0 = _get_absolute_rowsums(params[1][0][0])
-        col_p1 = _get_absolute_rowsums(params[2][0][0])
-        loss_o = penalty_orthogonal * (
-            jnp.sum(col_o * col_p0 + col_o * col_p1 + col_p1 * col_p0))
+        loss_o = penalty_orthogonal * ortho_reg(params)
 
         # weight decay on representations
         weightsq_body = sum([sum([jnp.sum(params[j][i][0] ** 2) for i in
