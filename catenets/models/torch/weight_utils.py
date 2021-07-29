@@ -22,9 +22,8 @@ def compute_importance_weights(
 ) -> torch.Tensor:
     if weighting_strategy not in ALL_WEIGHTING_STRATEGIES:
         raise ValueError(
-            "weighting_strategy should be in "
-            "simbiote.utils.weight_utils.ALL_WEIGHTING_STRATEGIES. "
-            "You passed {}".format(weighting_strategy)
+            f"weighting_strategy should be in {ALL_WEIGHTING_STRATEGIES}"
+            f"You passed {weighting_strategy}"
         )
     if weight_args is None:
         weight_args = {}

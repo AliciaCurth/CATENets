@@ -1,10 +1,12 @@
+import copy
+from typing import Any
+
 import torch
 
 import catenets.logger as log
 from catenets.models.constants import (
     DEFAULT_BATCH_SIZE,
     DEFAULT_LAYERS_OUT,
-    DEFAULT_LAYERS_R,
     DEFAULT_N_ITER,
     DEFAULT_N_ITER_PRINT,
     DEFAULT_NONLIN,
@@ -12,29 +14,25 @@ from catenets.models.constants import (
     DEFAULT_SEED,
     DEFAULT_STEP_SIZE,
     DEFAULT_UNITS_OUT,
-    DEFAULT_UNITS_R,
     DEFAULT_VAL_SPLIT,
 )
 from catenets.models.torch.base import BaseCATEEstimator, BasicNet
 
 
-class TNet(BaseCATEEstimator):
+class TLearner(BaseCATEEstimator):
     """
-    TNet class -- two separate functions learned for each Potential Outcome function
+    TLearner class -- two separate functions learned for each Potential Outcome function
 
     Parameters
     ----------
     binary_y: bool, default False
         Whether the outcome is binary
+    po_estimator: sklearn/PyTorch model, default: None
+        Custom plugin model. If this parameter is set, the rest of the parameters are ignored.
     n_layers_out: int
         Number of hypothesis layers (n_layers_out x n_units_out + 1 x Dense layer)
     n_units_out: int
         Number of hidden units in each hypothesis layer
-    n_layers_r: int
-        Number of representation layers before hypothesis layers (distinction between
-        hypothesis layers and representation layers is made to match TARNet & SNets)
-    n_units_r: int
-        Number of hidden units in each representation layer
     weight_decay: float
         l2 (ridge) penalty
     lr: float
@@ -56,11 +54,10 @@ class TNet(BaseCATEEstimator):
     def __init__(
         self,
         n_unit_in: int,
-        binary_y: bool = False,
+        binary_y: bool,
+        po_estimator: Any = None,
         n_layers_out: int = DEFAULT_LAYERS_OUT,
         n_units_out: int = DEFAULT_UNITS_OUT,
-        n_layers_r: int = DEFAULT_LAYERS_R,
-        n_units_r: int = DEFAULT_UNITS_R,
         weight_decay: float = DEFAULT_PENALTY_L2,
         lr: float = DEFAULT_STEP_SIZE,
         n_iter: int = DEFAULT_N_ITER,
@@ -70,43 +67,32 @@ class TNet(BaseCATEEstimator):
         seed: int = DEFAULT_SEED,
         nonlin: str = DEFAULT_NONLIN,
     ) -> None:
-        super(TNet, self).__init__(n_unit_in)
+        super(TLearner, self).__init__()
 
-        self._plug_in_0 = BasicNet(
-            "tnet_est_0",
-            n_unit_in,
-            binary_y=binary_y,
-            n_layers_out=n_layers_out,
-            n_units_out=n_units_out,
-            n_layers_r=n_layers_r,
-            n_units_r=n_units_r,
-            weight_decay=weight_decay,
-            lr=lr,
-            n_iter=n_iter,
-            batch_size=batch_size,
-            val_split_prop=val_split_prop,
-            n_iter_print=n_iter_print,
-            seed=seed,
-            nonlin=nonlin,
-        )
-
-        self._plug_in_1 = BasicNet(
-            "tnet_est_1",
-            n_unit_in,
-            binary_y=binary_y,
-            n_layers_out=n_layers_out,
-            n_units_out=n_units_out,
-            n_layers_r=n_layers_r,
-            n_units_r=n_units_r,
-            weight_decay=weight_decay,
-            lr=lr,
-            n_iter=n_iter,
-            batch_size=batch_size,
-            val_split_prop=val_split_prop,
-            n_iter_print=n_iter_print,
-            seed=seed,
-            nonlin=nonlin,
-        )
+        self._plug_in: Any = []
+        plugins = [f"tnet_po_estimator_{i}" for i in range(2)]
+        if po_estimator is not None:
+            for plugin in plugins:
+                self._plug_in.append(copy.deepcopy(po_estimator))
+        else:
+            for plugin in plugins:
+                self._plug_in.append(
+                    BasicNet(
+                        plugin,
+                        n_unit_in,
+                        binary_y=binary_y,
+                        n_layers_out=n_layers_out,
+                        n_units_out=n_units_out,
+                        weight_decay=weight_decay,
+                        lr=lr,
+                        n_iter=n_iter,
+                        batch_size=batch_size,
+                        val_split_prop=val_split_prop,
+                        n_iter_print=n_iter_print,
+                        seed=seed,
+                        nonlin=nonlin,
+                    )
+                )
 
     def forward(self, X: torch.Tensor) -> torch.Tensor:
         """
@@ -122,17 +108,21 @@ class TNet(BaseCATEEstimator):
         """
         X = torch.Tensor(X)
 
-        y_0 = self._plug_in_0(X)
-        y_1 = self._plug_in_1(X)
+        y_hat = []
+        for widx, plugin in enumerate(self._plug_in):
+            if hasattr(plugin, "forward"):
+                y_hat.append(plugin(X))
+            elif hasattr(plugin, "predict"):
+                y_hat.append(torch.Tensor(plugin.predict(X.detach().numpy())))
 
-        return y_1 - y_0
+        return y_hat[1] - y_hat[0]
 
     def train(
         self,
         X: torch.Tensor,
         y: torch.Tensor,
         w: torch.Tensor,
-    ) -> "TNet":
+    ) -> "TLearner":
         """
         Train plug-in models.
 
@@ -145,10 +135,16 @@ class TNet(BaseCATEEstimator):
         w: torch.Tensor (n_samples,)
             The treatment indicator
         """
-        log.info("Train first network")
-        self._plug_in_0.train(X[w == 0], y[w == 0])
+        X = torch.Tensor(X)
+        y = torch.Tensor(y)
+        w = torch.Tensor(w)
 
-        log.info("Train second network")
-        self._plug_in_1.train(X[w == 1], y[w == 1])
+        for widx, plugin in enumerate(self._plug_in):
+            if hasattr(plugin, "train"):
+                log.info(f"Train PyTorch network {plugin}")
+                plugin.train(X[w == widx], y[w == widx])
+            elif hasattr(plugin, "fit"):
+                log.info(f"Train sklearn estimator {plugin}")
+                plugin.fit(X[w == widx].detach().numpy(), y[w == widx].detach().numpy())
 
         return self

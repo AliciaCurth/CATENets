@@ -117,23 +117,7 @@ class PseudoOutcomeNet(BaseCATEEstimator):
         nonlin: str = DEFAULT_NONLIN,
         weighting_strategy: str = "prop",
     ):
-        super(PseudoOutcomeNet, self).__init__(
-            n_unit_in,
-            binary_y=binary_y,
-            n_layers_r=n_layers_r,
-            n_units_r=n_units_r,
-            n_units_out_prop=n_units_out_prop,
-            n_layers_out_prop=n_layers_out_prop,
-            weight_decay=weight_decay,
-            lr=lr,
-            n_iter=n_iter,
-            batch_size=batch_size,
-            val_split_prop=val_split_prop,
-            n_iter_print=n_iter_print,
-            seed=seed,
-            nonlin=nonlin,
-            weighting_strategy=weighting_strategy,
-        )
+        super(PseudoOutcomeNet, self).__init__()
         self.n_unit_in = n_unit_in
         self.binary_y = binary_y
         self.n_layers_out = n_layers_out
@@ -168,8 +152,6 @@ class PseudoOutcomeNet(BaseCATEEstimator):
             binary_y=False,
             n_layers_out=self.n_layers_out,
             n_units_out=self.n_units_out,
-            n_layers_r=self.n_layers_r,
-            n_units_r=self.n_units_r,
             weight_decay=self.weight_decay_t,
             lr=self.lr_t,
             n_iter=self.n_iter,
@@ -187,8 +169,6 @@ class PseudoOutcomeNet(BaseCATEEstimator):
             binary_y=False,
             n_layers_out=self.n_layers_out,
             n_units_out=self.n_units_out,
-            n_layers_r=self.n_layers_r,
-            n_units_r=self.n_units_r,
             weight_decay=self.weight_decay,
             lr=self.lr,
             n_iter=self.n_iter,

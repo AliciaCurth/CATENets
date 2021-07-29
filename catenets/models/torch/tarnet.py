@@ -74,7 +74,7 @@ class TARNet(BaseCATEEstimator):
         seed: int = DEFAULT_SEED,
         nonlin: str = DEFAULT_NONLIN,
     ) -> None:
-        super(TARNet, self).__init__(n_unit_in)
+        super(TARNet, self).__init__()
 
         self._representation_block = RepresentationNet(
             n_unit_in, n_units=n_units_r, nonlin=nonlin
@@ -94,8 +94,6 @@ class TARNet(BaseCATEEstimator):
                     binary_y=binary_y,
                     n_layers_out=n_layers_out,
                     n_units_out=n_units_out,
-                    n_layers_r=n_layers_r,
-                    n_units_r=n_units_r,
                     weight_decay=weight_decay,
                     lr=lr,
                     n_iter=n_iter,

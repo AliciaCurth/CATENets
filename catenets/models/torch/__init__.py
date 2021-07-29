@@ -1,10 +1,10 @@
 from .pseudo_outcome_nets import RANet, XNet
 from .slearner import SLearner
 from .tarnet import TARNet
-from .tnet import TNet
+from .tlearner import TLearner
 
 __all__ = [
-    "TNet",
+    "TLearner",
     "SLearner",
     "TARNet",
     "XNet",

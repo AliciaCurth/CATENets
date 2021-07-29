@@ -6,7 +6,6 @@ import catenets.logger as log
 from catenets.models.constants import (
     DEFAULT_BATCH_SIZE,
     DEFAULT_LAYERS_OUT,
-    DEFAULT_LAYERS_R,
     DEFAULT_N_ITER,
     DEFAULT_N_ITER_PRINT,
     DEFAULT_NONLIN,
@@ -14,7 +13,6 @@ from catenets.models.constants import (
     DEFAULT_SEED,
     DEFAULT_STEP_SIZE,
     DEFAULT_UNITS_OUT,
-    DEFAULT_UNITS_R_BIG_S,
     DEFAULT_VAL_SPLIT,
 )
 from catenets.models.torch.base import BaseCATEEstimator, BasicNet
@@ -66,8 +64,6 @@ class SLearner(BaseCATEEstimator):
         self,
         n_unit_in: int,
         binary_y: bool = False,
-        n_layers_r: int = DEFAULT_LAYERS_R,
-        n_units_r: int = DEFAULT_UNITS_R_BIG_S,
         n_layers_out: int = DEFAULT_LAYERS_OUT,
         n_units_out: int = DEFAULT_UNITS_OUT,
         n_units_out_prop: int = DEFAULT_UNITS_OUT,
@@ -82,23 +78,7 @@ class SLearner(BaseCATEEstimator):
         nonlin: str = DEFAULT_NONLIN,
         weighting_strategy: Optional[str] = None,
     ) -> None:
-        super(SLearner, self).__init__(
-            n_unit_in,
-            binary_y=binary_y,
-            n_layers_r=n_layers_r,
-            n_units_r=n_units_r,
-            n_units_out_prop=n_units_out_prop,
-            n_layers_out_prop=n_layers_out_prop,
-            weight_decay=weight_decay,
-            lr=lr,
-            n_iter=n_iter,
-            batch_size=batch_size,
-            val_split_prop=val_split_prop,
-            n_iter_print=n_iter_print,
-            seed=seed,
-            nonlin=nonlin,
-            weighting_strategy=weighting_strategy,
-        )
+        super(SLearner, self).__init__()
 
         self._output_estimator = BasicNet(
             "snet_est",
@@ -106,8 +86,6 @@ class SLearner(BaseCATEEstimator):
             binary_y=binary_y,
             n_layers_out=n_layers_out,
             n_units_out=n_units_out,
-            n_layers_r=n_layers_r,
-            n_units_r=n_units_r,
             weight_decay=weight_decay,
             lr=lr,
             n_iter=n_iter,
