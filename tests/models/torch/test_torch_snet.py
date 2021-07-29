@@ -56,7 +56,6 @@ def test_model_params_nonlin(nonlin: str, snet: Type) -> None:
         assert isinstance(mod.model[1], nonlins[nonlin])
 
 
-@pytest.mark.slow
 @pytest.mark.parametrize("dataset, pehe_threshold", [("twins", 0.4), ("ihdp", 1.5)])
 @pytest.mark.parametrize("snet", [TARNet, DragonNet])
 def test_model_sanity(dataset: str, pehe_threshold: float, snet: Type) -> None:

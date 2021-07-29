@@ -91,6 +91,7 @@ def test_nn_model_sanity(
     assert score["raw"]["pehe"][0] < pehe_threshold
 
 
+@pytest.mark.slow
 @pytest.mark.parametrize("dataset, pehe_threshold", [("twins", 0.4)])
 @pytest.mark.parametrize(
     "po_estimator",
@@ -143,6 +144,7 @@ def test_sklearn_model_sanity_binary_output(
     assert score["raw"]["pehe"][0] < pehe_threshold
 
 
+@pytest.mark.slow
 @pytest.mark.parametrize("dataset, pehe_threshold", [("ihdp", 1.5)])
 @pytest.mark.parametrize(
     "po_estimator",
