@@ -11,13 +11,13 @@ Schaar, 2021b; https://arxiv.org/abs/2106.03765).
 We implement the SNet-class we introduce in Curth & vd Schaar (2021a), as well as FlexTENet and 
 OffsetNet as discussed in Curth & vd Schaar (2021b), and re-implement a number of 
 NN-based algorithms from existing literature (Shalit et al (2017), Shi et al (2019), Hassanpour 
-& Greiner (2020)). We also provide NN-based instantiations of a number of so-called 
+& Greiner (2020)). We also provide Neural Network (NN)-based instantiations of a number of so-called 
 meta-learners for CATE estimation, including two-step pseudo-outcome regression estimators (the 
 DR-learner (Kennedy, 2020) and single-robust propensity-weighted (PW) and regression-adjusted  
 (RA) learners), Nie & Wager (2017)'s R-learner and Kuenzel et al (2019)'s X-learner. 
 
 ### Interface
-All implemented learning algorithms (``SNet, FlexTENet, OffsetNet, TNet, SNet1 (TARNet), SNet2 
+The repo contains a package ``catenets``, which contains all general code used for modeling and evaluation, and a folder ``experiments``, in which the code for replicating experimental results is contained. All implemented learning algorithms in catenets (``SNet, FlexTENet, OffsetNet, TNet, SNet1 (TARNet), SNet2 
 (DragonNet), SNet3, DRNet, RANet, PWNet, RNet, XNet``) come with a sklearn-style wrapper,  
 implementing a ``.fit(X, y, w)`` and a ``.predict(X)`` method, where predict returns CATE by  
 default. All hyperparameters are documented in detail in the respective files in the .models folder.
