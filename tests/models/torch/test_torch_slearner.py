@@ -5,10 +5,10 @@ import pytest
 from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
 from sklearn.linear_model import LogisticRegression
 from torch import nn
-from xgboost import XGBClassifier, XGBRegressor
+from xgboost import XGBClassifier
 
 from catenets.datasets import load
-from catenets.experiments.torch.metrics import sqrt_PEHE
+from catenets.experiments.torch.tester import evaluate_treatments_model
 from catenets.models.torch import SLearner
 
 
@@ -82,16 +82,12 @@ def test_nn_model_sanity(
         weighting_strategy=weighting_strategy,
     )
 
-    model.train(X=X_train, y=Y_train, w=W_train)
-
-    cate_pred = model(X_test).detach().numpy()
-
-    pehe = sqrt_PEHE(Y_test, cate_pred)
+    score = evaluate_treatments_model(model, X_train, Y_train, Y_train_full, W_train)
 
     print(
-        f"PEHE score for model torch.SLearner(NN)(weighting_strategy={weighting_strategy}) on {dataset} = {pehe}"
+        f"Evaluation for model torch.SLearner(NN)(weighting_strategy={weighting_strategy}) on {dataset} = {score['str']}"
     )
-    assert pehe < pehe_threshold
+    assert score["raw"]["pehe"][0] < pehe_threshold
 
 
 @pytest.mark.parametrize("dataset, pehe_threshold", [("twins", 0.4)])
@@ -112,6 +108,7 @@ def test_nn_model_sanity(
             max_bin=256,
             random_state=0,
             eval_metric="logloss",
+            use_label_encoder=False,
         ),
         RandomForestClassifier(
             n_estimators=100,
@@ -137,37 +134,18 @@ def test_sklearn_model_sanity_binary_output(
         po_estimator=po_estimator,
     )
 
-    model.train(X=X_train, y=Y_train, w=W_train)
-
-    cate_pred = model(X_test).detach().numpy()
-
-    pehe = sqrt_PEHE(Y_test, cate_pred)
+    score = evaluate_treatments_model(model, X_train, Y_train, Y_train_full, W_train)
 
     print(
-        f"PEHE score for model torch.SLearner {type(po_estimator)} on {dataset} = {pehe}"
+        f"Evaluation for model torch.SLearner with {po_estimator.__class__} on {dataset} = {score['str']}"
     )
-    assert pehe < pehe_threshold
+    assert score["raw"]["pehe"][0] < pehe_threshold
 
 
 @pytest.mark.parametrize("dataset, pehe_threshold", [("ihdp", 1.5)])
 @pytest.mark.parametrize(
     "po_estimator",
     [
-        XGBRegressor(
-            n_estimators=500,
-            reg_lambda=1e-3,
-            reg_alpha=1e-3,
-            colsample_bytree=0.1,
-            colsample_bynode=0.1,
-            colsample_bylevel=0.1,
-            max_depth=6,
-            tree_method="hist",
-            learning_rate=1e-2,
-            min_child_weight=0,
-            max_bin=256,
-            random_state=0,
-            eval_metric="logloss",
-        ),
         RandomForestRegressor(
             n_estimators=100,
             max_depth=6,
@@ -185,14 +163,9 @@ def test_sklearn_model_sanity_regression(
         binary_y=False,
         po_estimator=po_estimator,
     )
-
-    model.train(X=X_train, y=Y_train, w=W_train)
-
-    cate_pred = model(X_test).detach().numpy()
-
-    pehe = sqrt_PEHE(Y_test, cate_pred)
+    score = evaluate_treatments_model(model, X_train, Y_train, Y_train_full, W_train)
 
     print(
-        f"PEHE score for model torch.SLearner {type(po_estimator)} on {dataset} = {pehe}"
+        f"Evaluation for model torch.SLearner with {po_estimator.__class__} on {dataset} = {score['str']}"
     )
-    assert pehe < pehe_threshold
+    assert score["raw"]["pehe"][0] < pehe_threshold

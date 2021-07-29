@@ -140,7 +140,7 @@ def load(data_path: Path, train_split: float = 0.8) -> Tuple:
         X,
         w,
         y,
-        cate_true_in,
+        np.asarray([mu0, mu1]).squeeze().T,
         X_t,
         np.asarray([mu0_t, mu1_t]).squeeze().T,
     )

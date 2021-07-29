@@ -8,7 +8,7 @@ from torch import nn
 from xgboost import XGBClassifier, XGBRegressor
 
 from catenets.datasets import load
-from catenets.experiments.torch.metrics import sqrt_PEHE
+from catenets.experiments.torch.tester import evaluate_treatments_model
 from catenets.models.torch import TLearner
 
 
@@ -63,14 +63,10 @@ def test_nn_model_sanity(dataset: str, pehe_threshold: float) -> None:
         X_train.shape[1], binary_y=(len(np.unique(Y_train)) == 2), n_iter=500
     )
 
-    model.train(X=X_train, y=Y_train, w=W_train)
+    score = evaluate_treatments_model(model, X_train, Y_train, Y_train_full, W_train)
 
-    cate_pred = model(X_test).detach().numpy()
-
-    pehe = sqrt_PEHE(Y_test, cate_pred)
-
-    print(f"PEHE score for model torch.TLearner(NN) on {dataset} = {pehe}")
-    assert pehe < pehe_threshold
+    print(f"Evaluation for model torch.TLearner(NN) on {dataset} = {score['str']}")
+    assert score["raw"]["pehe"][0] < pehe_threshold
 
 
 @pytest.mark.parametrize("dataset, pehe_threshold", [("twins", 0.4)])
@@ -91,6 +87,7 @@ def test_nn_model_sanity(dataset: str, pehe_threshold: float) -> None:
             max_bin=256,
             random_state=0,
             eval_metric="logloss",
+            use_label_encoder=False,
         ),
         RandomForestClassifier(
             n_estimators=100,
@@ -116,16 +113,12 @@ def test_sklearn_model_sanity_binary_output(
         po_estimator=po_estimator,
     )
 
-    model.train(X=X_train, y=Y_train, w=W_train)
-
-    cate_pred = model(X_test).detach().numpy()
-
-    pehe = sqrt_PEHE(Y_test, cate_pred)
+    score = evaluate_treatments_model(model, X_train, Y_train, Y_train_full, W_train)
 
     print(
-        f"PEHE score for model torch.TLearner {type(po_estimator)} on {dataset} = {pehe}"
+        f"Evaluation for model torch.TLearner with {po_estimator.__class__} on {dataset} = {score['str']}"
     )
-    assert pehe < pehe_threshold
+    assert score["raw"]["pehe"][0] < pehe_threshold
 
 
 @pytest.mark.parametrize("dataset, pehe_threshold", [("ihdp", 1.5)])
@@ -133,13 +126,13 @@ def test_sklearn_model_sanity_binary_output(
     "po_estimator",
     [
         XGBRegressor(
-            n_estimators=500,
+            n_estimators=1000,
             reg_lambda=1e-3,
             reg_alpha=1e-3,
             colsample_bytree=0.1,
             colsample_bynode=0.1,
             colsample_bylevel=0.1,
-            max_depth=6,
+            max_depth=7,
             tree_method="hist",
             learning_rate=1e-2,
             min_child_weight=0,
@@ -164,14 +157,9 @@ def test_sklearn_model_sanity_regression(
         binary_y=False,
         po_estimator=po_estimator,
     )
-
-    model.train(X=X_train, y=Y_train, w=W_train)
-
-    cate_pred = model(X_test).detach().numpy()
-
-    pehe = sqrt_PEHE(Y_test, cate_pred)
+    score = evaluate_treatments_model(model, X_train, Y_train, Y_train_full, W_train)
 
     print(
-        f"PEHE score for model torch.TLearner {type(po_estimator)} on {dataset} = {pehe}"
+        f"Evaluation for model torch.TLearner with {po_estimator.__class__ } on {dataset} = {score['str']}"
     )
-    assert pehe < pehe_threshold
+    assert score["raw"]["pehe"][0] < pehe_threshold
