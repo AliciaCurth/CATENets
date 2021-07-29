@@ -25,6 +25,8 @@ class TLearner(BaseCATEEstimator):
 
     Parameters
     ----------
+    n_unit_in: int
+        Number of features
     binary_y: bool, default False
         Whether the outcome is binary
     po_estimator: sklearn/PyTorch model, default: None
@@ -70,7 +72,7 @@ class TLearner(BaseCATEEstimator):
         super(TLearner, self).__init__()
 
         self._plug_in: Any = []
-        plugins = [f"tnet_po_estimator_{i}" for i in range(2)]
+        plugins = [f"tlearner_po_estimator_{i}" for i in range(2)]
         if po_estimator is not None:
             for plugin in plugins:
                 self._plug_in.append(copy.deepcopy(po_estimator))
@@ -112,8 +114,20 @@ class TLearner(BaseCATEEstimator):
         for widx, plugin in enumerate(self._plug_in):
             if hasattr(plugin, "forward"):
                 y_hat.append(plugin(X))
+            elif hasattr(plugin, "predict_proba"):
+                X_np = X.detach().numpy()
+                no_event_proba = plugin.predict_proba(X_np)[
+                    :, 0
+                ]  # no event probability
+
+                y_hat.append(torch.Tensor(no_event_proba))
             elif hasattr(plugin, "predict"):
-                y_hat.append(torch.Tensor(plugin.predict(X.detach().numpy())))
+                X_np = X.detach().numpy()
+                no_event_proba = plugin.predict(X_np)
+
+                y_hat.append(torch.Tensor(no_event_proba))
+            else:
+                raise NotImplementedError("Invalid po_estimator for the tlearner")
 
         return y_hat[1] - y_hat[0]
 
@@ -146,5 +160,7 @@ class TLearner(BaseCATEEstimator):
             elif hasattr(plugin, "fit"):
                 log.info(f"Train sklearn estimator {plugin}")
                 plugin.fit(X[w == widx].detach().numpy(), y[w == widx].detach().numpy())
+            else:
+                raise NotImplementedError("Invalid po_estimator for the tlearner")
 
         return self

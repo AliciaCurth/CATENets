@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Any, Optional
 
 import torch
 
@@ -15,7 +15,7 @@ from catenets.models.constants import (
     DEFAULT_UNITS_OUT,
     DEFAULT_VAL_SPLIT,
 )
-from catenets.models.torch.base import BaseCATEEstimator, BasicNet
+from catenets.models.torch.base import BaseCATEEstimator, BasicNet, PropensityNet
 
 
 class SLearner(BaseCATEEstimator):
@@ -23,7 +23,9 @@ class SLearner(BaseCATEEstimator):
 
     Parameters
     ----------
-    binary_y: bool, default False
+    n_unit_in: int
+        Number of features
+    binary_y: bool
         Whether the outcome is binary
     n_layers_out: int
         Number of hypothesis layers (n_layers_out x n_units_out + 1 x Dense layer)
@@ -34,12 +36,6 @@ class SLearner(BaseCATEEstimator):
         Number of hidden units in each hypothesis layer
     n_units_out_prop: int
         Number of hidden units in each propensity score hypothesis layer
-    n_layers_r: int
-        Number of shared & private representation layers before hypothesis layers
-    n_units_r: int
-        If withprop=True: Number of hidden units in representation layer shared by propensity score
-        and outcome  function (the 'confounding factor') and in the ('instrumental factor')
-        If withprop=False: Number of hidden units in representation shared across PO function
     penalty_l2: float
         l2 (ridge) penalty
     step_size: float
@@ -63,7 +59,8 @@ class SLearner(BaseCATEEstimator):
     def __init__(
         self,
         n_unit_in: int,
-        binary_y: bool = False,
+        binary_y: bool,
+        po_estimator: Any = None,
         n_layers_out: int = DEFAULT_LAYERS_OUT,
         n_units_out: int = DEFAULT_UNITS_OUT,
         n_units_out_prop: int = DEFAULT_UNITS_OUT,
@@ -80,21 +77,42 @@ class SLearner(BaseCATEEstimator):
     ) -> None:
         super(SLearner, self).__init__()
 
-        self._output_estimator = BasicNet(
-            "snet_est",
-            n_unit_in + 1,
-            binary_y=binary_y,
-            n_layers_out=n_layers_out,
-            n_units_out=n_units_out,
-            weight_decay=weight_decay,
-            lr=lr,
-            n_iter=n_iter,
-            batch_size=batch_size,
-            val_split_prop=val_split_prop,
-            n_iter_print=n_iter_print,
-            seed=seed,
-            nonlin=nonlin,
-        )
+        self._weighting_strategy = weighting_strategy
+        if po_estimator is not None:
+            self._po_estimator = po_estimator
+        else:
+            self._po_estimator = BasicNet(
+                "slearner_po_estimator",
+                n_unit_in + 1,
+                binary_y=binary_y,
+                n_layers_out=n_layers_out,
+                n_units_out=n_units_out,
+                weight_decay=weight_decay,
+                lr=lr,
+                n_iter=n_iter,
+                batch_size=batch_size,
+                val_split_prop=val_split_prop,
+                n_iter_print=n_iter_print,
+                seed=seed,
+                nonlin=nonlin,
+            )
+        if weighting_strategy is not None:
+            self._propensity_estimator = PropensityNet(
+                "slearner_prop_estimator",
+                n_unit_in,
+                2,  # number of treatments
+                weighting_strategy,
+                n_units_out_prop=n_units_out_prop,
+                n_layers_out_prop=n_layers_out_prop,
+                weight_decay=weight_decay,
+                lr=lr,
+                n_iter=n_iter,
+                batch_size=batch_size,
+                n_iter_print=n_iter_print,
+                seed=seed,
+                nonlin=nonlin,
+                val_split_prop=val_split_prop,
+            )
 
     def train(
         self,
@@ -122,17 +140,27 @@ class SLearner(BaseCATEEstimator):
         # add indicator as additional variable
         X_ext = torch.cat((X, w.reshape((-1, 1))), dim=1)
 
-        if self.weighting_strategy is None:
+        if not (
+            hasattr(self._po_estimator, "train") or hasattr(self._po_estimator, "fit")
+        ):
+            raise NotImplementedError("invalid po_estimator for the slearner")
+
+        if hasattr(self._po_estimator, "fit"):
+            log.info("Fit the sklearn po_estimator")
+            self._po_estimator.fit(X_ext.detach().numpy(), y.detach().numpy())
+            return self
+
+        if self._weighting_strategy is None:
             # fit standard S-learner
-            log.info("Fit the outcome estimator")
-            self._output_estimator.train(X_ext, y)
-        else:
-            # use reweighting within the outcome model
-            log.info("Fit the propensity estimator")
-            self._propensity_estimator.train(X, w)
-            weights = self._get_importance_weights(X, w)
-            log.info("Fit the outcome estimator with weights")
-            self._output_estimator.train(X_ext, y, weight=weights)
+            log.info("Fit the PyTorch po_estimator")
+            self._po_estimator.train(X_ext, y)
+            return self
+
+        # use reweighting within the outcome model
+        log.info("Fit the PyTorch po_estimator with the propensity estimator")
+        self._propensity_estimator.train(X, w)
+        weights = self._propensity_estimator.get_importance_weights(X, w)
+        self._po_estimator.train(X_ext, y, weight=weights)
 
         return self
 
@@ -165,6 +193,21 @@ class SLearner(BaseCATEEstimator):
 
         y = []
         for ext_mat in X_ext:
-            y.append(self._output_estimator(ext_mat))
+            if hasattr(self._po_estimator, "forward"):
+                y.append(self._po_estimator(ext_mat))
+            elif hasattr(self._po_estimator, "predict_proba"):
+                ext_mat_np = ext_mat.detach().numpy()
+                no_event_proba = self._po_estimator.predict_proba(ext_mat_np)[
+                    :, 0
+                ]  # no event probability
+
+                y.append(torch.Tensor(no_event_proba))
+            elif hasattr(self._po_estimator, "predict"):
+                ext_mat_np = ext_mat.detach().numpy()
+                no_event_proba = self._po_estimator.predict(ext_mat_np)
+
+                y.append(torch.Tensor(no_event_proba))
+            else:
+                raise NotImplementedError("Invalid po_estimator for slearner")
 
         return y[1] - y[0]
