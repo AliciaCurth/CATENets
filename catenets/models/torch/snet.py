@@ -11,14 +11,17 @@ from catenets.models.constants import (
     DEFAULT_LAYERS_OUT,
     DEFAULT_LAYERS_R,
     DEFAULT_N_ITER,
+    DEFAULT_N_ITER_MIN,
     DEFAULT_N_ITER_PRINT,
     DEFAULT_NONLIN,
+    DEFAULT_PATIENCE,
     DEFAULT_PENALTY_L2,
     DEFAULT_SEED,
     DEFAULT_STEP_SIZE,
     DEFAULT_UNITS_OUT,
     DEFAULT_UNITS_R,
     DEFAULT_VAL_SPLIT,
+    LARGE_VAL,
 )
 from catenets.models.torch.base import (
     DEVICE,
@@ -192,7 +195,8 @@ class BaseSNet(BaseCATEEstimator):
         optimizer = torch.optim.Adam(params, lr=self.lr, weight_decay=self.weight_decay)
 
         # training
-
+        val_loss_best = LARGE_VAL
+        patience = 0
         for i in range(self.n_iter):
             # shuffle data for minibatches
             np.random.shuffle(train_indices)
@@ -223,6 +227,14 @@ class BaseSNet(BaseCATEEstimator):
                 with torch.no_grad():
                     po_preds, prop_preds = self._step(X_val)
                     val_loss = self.loss(po_preds, prop_preds, y_val, w_val)
+                    if val_loss_best > val_loss:
+                        val_loss_best = val_loss
+                        patience = 0
+                    else:
+                        patience += 1
+                    if patience > DEFAULT_PATIENCE and i > DEFAULT_N_ITER_MIN:
+                        break
+
                     log.info(
                         f"[{self.name}] Epoch: {i}, current {val_string} loss: {val_loss} train_loss: {torch.mean(train_loss)}"
                     )
