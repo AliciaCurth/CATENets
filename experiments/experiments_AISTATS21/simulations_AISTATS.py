@@ -9,8 +9,8 @@ from typing import Any, Optional, Union
 from sklearn import clone
 
 import catenets.logger as log
-from catenets.experiments.experiment_utils import eval_root_mse, get_model_set
-from catenets.experiments.simulation_utils import simulate_treatment_setup
+from catenets.experiment_utils.base import eval_root_mse, get_model_set
+from catenets.experiment_utils.simulation_utils import simulate_treatment_setup
 from catenets.models.jax import PSEUDOOUT_NAME, PseudoOutcomeNet
 from catenets.models.jax.pseudo_outcome_nets import S1_STRATEGY, S_STRATEGY
 from catenets.models.jax.snet import DEFAULT_UNITS_R_BIG_S, DEFAULT_UNITS_R_SMALL_S
@@ -20,7 +20,7 @@ from catenets.models.jax.transformation_utils import (
 )
 
 # some constants
-RESULT_DIR = "results/simulations/"
+RESULT_DIR = "results/experiments_AISTATS21/simulations/"
 CSV_STRING = ".csv"
 SEP = "_"
 
@@ -55,14 +55,15 @@ COMBINED_MODELS = {
         transformation=DR_TRANSFORMATION,
         first_stage_strategy=S_STRATEGY,
         n_units_r=DEFAULT_UNITS_R_BIG_S,
-        n_units_r_small=DEFAULT_UNITS_R_SMALL_S,
         n_layers_out=LAYERS_OUT,
         n_layers_r=LAYERS_R,
         penalty_l2_t=PENALTY_L2,
         penalty_l2=PENALTY_L2,
         n_layers_out_t=LAYERS_OUT,
-        n_layers_r_t=LAYERS_R,
-        penalty_orthogonal=PENALTY_ORTHOGONAL,
+        first_stage_args={
+            "n_units_r_small": DEFAULT_UNITS_R_SMALL_S,
+            "penalty_orthogonal": PENALTY_ORTHOGONAL,
+        },
     ),
     PSEUDOOUT_NAME
     + SEP
@@ -72,14 +73,16 @@ COMBINED_MODELS = {
         transformation=RA_TRANSFORMATION,
         first_stage_strategy=S_STRATEGY,
         n_units_r=DEFAULT_UNITS_R_BIG_S,
-        n_units_r_small=DEFAULT_UNITS_R_SMALL_S,
-        penalty_orthogonal=PENALTY_ORTHOGONAL,
         n_layers_out=LAYERS_OUT,
         n_layers_r=LAYERS_R,
         penalty_l2_t=PENALTY_L2,
         penalty_l2=PENALTY_L2,
         n_layers_out_t=LAYERS_OUT,
         n_layers_r_t=LAYERS_R,
+        first_stage_args={
+            "n_units_r_small": DEFAULT_UNITS_R_SMALL_S,
+            "penalty_orthogonal": PENALTY_ORTHOGONAL,
+        },
     ),
     PSEUDOOUT_NAME
     + SEP
@@ -140,18 +143,18 @@ def simulation_experiment_loop(
     n_t: int = 0,
     file_base: str = "results",
     xi: float = BASE_XI,
-    mu_1_model: Any = None,
+    mu_1_model: Optional[dict] = None,
     correlated_x: bool = False,
     mu_1_model_params: Optional[dict] = None,
     mu_0_model_params: Optional[dict] = None,
-    models: Any = None,
+    models: Optional[dict] = None,
     nonlinear_prop: bool = True,
     prop_offset: Union[float, str] = "center",
     target_prop: Optional[float] = TARGET_PROP_BASE,
 ) -> None:
     if change_dim is N_STRING:
         for n in range_change:
-            log.info(f"Running experiments for {N_STRING} set to {n}")
+            log.debug(f"Running experiments for {N_STRING} set to {n}")
             do_one_experiment_repeat(
                 n_train=n,
                 n_test=n_test,
@@ -174,7 +177,7 @@ def simulation_experiment_loop(
             )
     elif change_dim is XI_STRING:
         for xi_temp in range_change:
-            log.info(f"Running experiments for {XI_STRING} set to {xi_temp}")
+            log.debug(f"Running experiments for {XI_STRING} set to {xi_temp}")
             do_one_experiment_repeat(
                 n_train=n_train,
                 n_test=n_test,
@@ -198,7 +201,7 @@ def simulation_experiment_loop(
 
     elif change_dim is D_T_STRING:
         for d_t_temp in range_change:
-            log.info(f"Running experiments for {D_T_STRING} set to {d_t_temp}")
+            log.debug(f"Running experiments for {D_T_STRING} set to {d_t_temp}")
             do_one_experiment_repeat(
                 n_train=n_train,
                 n_test=n_test,
@@ -222,7 +225,7 @@ def simulation_experiment_loop(
 
     elif change_dim is TARGET_STRING:
         for target_prop_temp in range_change:
-            log.info(
+            log.debug(
                 f"Running experiments for {TARGET_STRING} set to {target_prop_temp}"
             )
             do_one_experiment_repeat(
@@ -258,11 +261,11 @@ def do_one_experiment_repeat(
     n_t: int = 0,
     file_base: str = "results",
     xi: float = BASE_XI,
-    mu_1_model: Any = None,
+    mu_1_model: Optional[dict] = None,
     correlated_x: bool = True,
     mu_1_model_params: Optional[dict] = None,
     mu_0_model_params: Optional[dict] = None,
-    models: Any = None,
+    models: Optional[dict] = None,
     nonlinear_prop: bool = True,
     range_exp: Optional[list] = None,
     prop_offset: Union[float, str] = 0,
@@ -310,7 +313,7 @@ def do_one_experiment_repeat(
     writer.writerow(header)
 
     for i in range_exp:
-        log.info(f"Running experiment {i}.")
+        log.debug(f"Running experiment {i}.")
         mses = one_simulation_experiment(
             n_train=n_train,
             n_test=n_test,
@@ -346,12 +349,12 @@ def one_simulation_experiment(
     n_t: int = 0,
     xi: float = BASE_XI,
     seed: int = 42,
-    mu_1_model: Any = None,
-    propensity_model: Any = None,
+    mu_1_model: Optional[dict] = None,
+    propensity_model: Optional[dict] = None,
     correlated_x: bool = False,
     mu_1_model_params: Optional[dict] = None,
     mu_0_model_params: Optional[dict] = None,
-    models: Any = None,
+    models: Optional[dict] = None,
     nonlinear_prop: bool = False,
     prop_offset: Union[float, str] = 0,
     target_prop: Optional[float] = None,
@@ -391,7 +394,7 @@ def one_simulation_experiment(
 
     rmses = []
     for model_name, model in models.items():
-        log.info(f"Training model {model_name}")
+        log.debug(f"Training model {model_name}")
 
         estimator = clone(model)
         estimator.fit(X=X_train, y=y_train, w=w_train)
@@ -403,7 +406,10 @@ def one_simulation_experiment(
 
 
 def main_AISTATS(
-    setting: int = 1, models: Any = None, file_name: str = "res", n_repeats: int = 10
+    setting: int = 1,
+    models: Any = None,
+    file_name: str = "res",
+    n_repeats: int = 10,
 ) -> None:
     if models is None:
         models = FULL_MODEL_SET_AISTATS

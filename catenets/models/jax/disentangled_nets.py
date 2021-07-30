@@ -27,6 +27,8 @@ from catenets.models.constants import (
     DEFAULT_SEED,
     DEFAULT_STEP_SIZE,
     DEFAULT_UNITS_OUT,
+    DEFAULT_UNITS_R_BIG_S3,
+    DEFAULT_UNITS_R_SMALL_S3,
     DEFAULT_VAL_SPLIT,
     LARGE_VAL,
 )
@@ -37,9 +39,6 @@ from catenets.models.jax.model_utils import (
     make_val_split,
 )
 from catenets.models.jax.representation_nets import mmd2_lin
-
-DEFAULT_UNITS_R_BIG_S3 = 150
-DEFAULT_UNITS_R_SMALL_S3 = 50
 
 
 # helper functions to avoid abstract tracer values in jit

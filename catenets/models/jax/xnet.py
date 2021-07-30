@@ -2,11 +2,12 @@
 Author: Alicia Curth
 Module implements X-learner from Kuenzel et al (2019) using NNs
 """
-from typing import Any, Callable, Optional
+from typing import Callable, Optional, Tuple
 
-import numpy as np
+import jax.numpy as jnp
 
 import catenets.logger as log
+from catenets.models.base import BaseCATENet, train_output_net_only
 from catenets.models.constants import (
     DEFAULT_AVG_OBJECTIVE,
     DEFAULT_BATCH_SIZE,
@@ -29,8 +30,31 @@ from catenets.models.constants import (
     DEFAULT_UNITS_R_T,
     DEFAULT_VAL_SPLIT,
 )
-from catenets.models.jax.base import BaseCATENet, train_output_net_only
-from catenets.models.jax.model_utils import check_shape_1d_data, check_X_is_np
+from catenets.models.model_utils import check_shape_1d_data, check_X_is_np
+from catenets.models.pseudo_outcome_nets import (  # same strategies as other nets
+    ALL_STRATEGIES,
+    FLEX_STRATEGY,
+    OFFSET_STRATEGY,
+    S1_STRATEGY,
+    S2_STRATEGY,
+    S3_STRATEGY,
+    S_STRATEGY,
+    T_STRATEGY,
+    predict_flextenet,
+    predict_offsetnet,
+    predict_snet,
+    predict_snet1,
+    predict_snet2,
+    predict_snet3,
+    predict_t_net,
+    train_flextenet,
+    train_offsetnet,
+    train_snet,
+    train_snet1,
+    train_snet2,
+    train_snet3,
+    train_tnet,
+)
 
 
 class XNet(BaseCATENet):
@@ -96,6 +120,8 @@ class XNet(BaseCATENet):
     def __init__(
         self,
         weight_strategy: Optional[int] = None,
+        first_stage_strategy: str = T_STRATEGY,
+        first_stage_args: Optional[dict] = None,
         binary_y: bool = False,
         n_layers_out: int = DEFAULT_LAYERS_OUT,
         n_layers_r: int = DEFAULT_LAYERS_R,
@@ -118,9 +144,11 @@ class XNet(BaseCATENet):
         n_iter_print: int = DEFAULT_N_ITER_PRINT,
         seed: int = DEFAULT_SEED,
         nonlin: str = DEFAULT_NONLIN,
-    ) -> None:
+    ):
         # settings
         self.weight_strategy = weight_strategy
+        self.first_stage_strategy = first_stage_strategy
+        self.first_stage_args = first_stage_args
         self.binary_y = binary_y
 
         # model architecture hyperparams
@@ -156,15 +184,15 @@ class XNet(BaseCATENet):
         return predict_x_net
 
     def predict(
-        self, X: np.ndarray, return_po: bool = False, return_prop: bool = False
-    ) -> np.ndarray:
+        self, X: jnp.ndarray, return_po: bool = False, return_prop: bool = False
+    ) -> jnp.ndarray:
         """
         Predict treatment effect estimates using a CATENet. Depending on method, can also return
         potential outcome estimate and propensity score estimate.
 
         Parameters
         ----------
-        X: pd.DataFrame or np.array
+        X: pd.DataFrame or onp.array
             Covariate matrix
         return_po: bool, default False
             Whether to return potential outcome estimate
@@ -188,10 +216,12 @@ class XNet(BaseCATENet):
 
 
 def train_x_net(
-    X: np.ndarray,
-    y: np.ndarray,
-    w: np.ndarray,
+    X: jnp.ndarray,
+    y: jnp.ndarray,
+    w: jnp.ndarray,
     weight_strategy: Optional[int] = None,
+    first_stage_strategy: str = T_STRATEGY,
+    first_stage_args: Optional[dict] = None,
     binary_y: bool = False,
     n_layers_out: int = DEFAULT_LAYERS_OUT,
     n_layers_r: int = DEFAULT_LAYERS_R,
@@ -216,7 +246,7 @@ def train_x_net(
     nonlin: str = DEFAULT_NONLIN,
     return_val_loss: bool = False,
     avg_objective: bool = DEFAULT_AVG_OBJECTIVE,
-) -> Any:
+) -> Tuple:
     y = check_shape_1d_data(y)
     if len(w.shape) > 1:
         w = w.reshape((len(w),))
@@ -229,62 +259,40 @@ def train_x_net(
         # weight_strategy=-1 sets g(x)=(1-pi(x))
         raise ValueError("XNet only implements weight_strategy in [0, 1, -1, None]")
 
+    if first_stage_strategy not in ALL_STRATEGIES:
+        raise ValueError(
+            "Parameter first stage should be in "
+            "catenets.models.twostep_nets.ALL_STRATEGIES. "
+            "You passed {}".format(first_stage_strategy)
+        )
+
     # first stage: get estimates of PO regression
     log.debug("Training first stage")
 
-    if not weight_strategy == 1:
-        log.debug("Training PO_0 Net")
-        params_0, predict_fun_0 = train_output_net_only(
-            X[w == 0],
-            y[w == 0],
-            binary_y=binary_y,
-            n_layers_out=n_layers_out,
-            n_units_out=n_units_out,
-            n_layers_r=n_layers_r,
-            n_units_r=n_units_r,
-            penalty_l2=penalty_l2,
-            step_size=step_size,
-            n_iter=n_iter,
-            batch_size=batch_size,
-            val_split_prop=val_split_prop,
-            early_stopping=early_stopping,
-            patience=patience,
-            n_iter_min=n_iter_min,
-            n_iter_print=n_iter_print,
-            seed=seed,
-            nonlin=nonlin,
-            avg_objective=avg_objective,
-        )
-        mu_hat_0 = predict_fun_0(params_0, X[w == 1])
-    else:
-        mu_hat_0 = None
-
-    if not weight_strategy == 0:
-        log.debug("Training PO_1 Net")
-        params_1, predict_fun_1 = train_output_net_only(
-            X[w == 1],
-            y[w == 1],
-            binary_y=binary_y,
-            n_layers_out=n_layers_out,
-            n_units_out=n_units_out,
-            n_layers_r=n_layers_r,
-            n_units_r=n_units_r,
-            penalty_l2=penalty_l2,
-            step_size=step_size,
-            n_iter=n_iter,
-            batch_size=batch_size,
-            val_split_prop=val_split_prop,
-            early_stopping=early_stopping,
-            patience=patience,
-            n_iter_min=n_iter_min,
-            n_iter_print=n_iter_print,
-            seed=seed,
-            nonlin=nonlin,
-            avg_objective=avg_objective,
-        )
-        mu_hat_1 = predict_fun_1(params_1, X[w == 0])
-    else:
-        mu_hat_1 = None
+    mu_hat_0, mu_hat_1 = _get_first_stage_pos(
+        X,
+        y,
+        w,
+        binary_y=binary_y,
+        n_layers_out=n_layers_out,
+        n_units_out=n_units_out,
+        n_layers_r=n_layers_r,
+        n_units_r=n_units_r,
+        penalty_l2=penalty_l2,
+        step_size=step_size,
+        n_iter=n_iter,
+        batch_size=batch_size,
+        val_split_prop=val_split_prop,
+        early_stopping=early_stopping,
+        patience=patience,
+        n_iter_min=n_iter_min,
+        n_iter_print=n_iter_print,
+        seed=seed,
+        nonlin=nonlin,
+        avg_objective=avg_objective,
+        first_stage_strategy=first_stage_strategy,
+        first_stage_args=first_stage_args,
+    )
 
     if weight_strategy is None or weight_strategy == -1:
         # also fit propensity estimator
@@ -381,14 +389,85 @@ def train_x_net(
     return params, predict_funs
 
 
+def _get_first_stage_pos(
+    X: jnp.ndarray,
+    y: jnp.ndarray,
+    w: jnp.ndarray,
+    first_stage_strategy: str = T_STRATEGY,
+    first_stage_args: Optional[dict] = None,
+    binary_y: bool = False,
+    n_layers_out: int = DEFAULT_LAYERS_OUT,
+    n_layers_r: int = DEFAULT_LAYERS_R,
+    n_units_out: int = DEFAULT_UNITS_OUT,
+    n_units_r: int = DEFAULT_UNITS_R,
+    penalty_l2: float = DEFAULT_PENALTY_L2,
+    step_size: float = DEFAULT_STEP_SIZE,
+    n_iter: int = DEFAULT_N_ITER,
+    batch_size: int = DEFAULT_BATCH_SIZE,
+    n_iter_min: int = DEFAULT_N_ITER_MIN,
+    val_split_prop: float = DEFAULT_VAL_SPLIT,
+    early_stopping: bool = True,
+    patience: int = DEFAULT_PATIENCE,
+    n_iter_print: int = DEFAULT_N_ITER_PRINT,
+    seed: int = DEFAULT_SEED,
+    nonlin: str = DEFAULT_NONLIN,
+    avg_objective: bool = DEFAULT_AVG_OBJECTIVE,
+) -> Tuple[jnp.ndarray, jnp.ndarray]:
+    if first_stage_args is None:
+        first_stage_args = {}
+
+    if first_stage_strategy == T_STRATEGY:
+        train_fun, predict_fun = train_tnet, predict_t_net
+    elif first_stage_strategy == S_STRATEGY:
+        train_fun, predict_fun = train_snet, predict_snet
+    elif first_stage_strategy == S1_STRATEGY:
+        train_fun, predict_fun = train_snet1, predict_snet1
+    elif first_stage_strategy == S2_STRATEGY:
+        train_fun, predict_fun = train_snet2, predict_snet2
+    elif first_stage_strategy == S3_STRATEGY:
+        train_fun, predict_fun = train_snet3, predict_snet3
+    elif first_stage_strategy == OFFSET_STRATEGY:
+        train_fun, predict_fun = train_offsetnet, predict_offsetnet
+    elif first_stage_strategy == FLEX_STRATEGY:
+        train_fun, predict_fun = train_flextenet, predict_flextenet
+
+    trained_params, pred_fun = train_fun(
+        X,
+        y,
+        w,
+        binary_y=binary_y,
+        n_layers_r=n_layers_r,
+        n_units_r=n_units_r,
+        n_layers_out=n_layers_out,
+        n_units_out=n_units_out,
+        penalty_l2=penalty_l2,
+        step_size=step_size,
+        n_iter=n_iter,
+        batch_size=batch_size,
+        val_split_prop=val_split_prop,
+        early_stopping=early_stopping,
+        patience=patience,
+        n_iter_min=n_iter_min,
+        n_iter_print=n_iter_print,
+        seed=seed,
+        nonlin=nonlin,
+        avg_objective=avg_objective,
+        **first_stage_args
+    )
+
+    _, mu_0, mu_1 = predict_fun(X, trained_params, pred_fun, return_po=True)
+
+    return mu_0[w == 1], mu_1[w == 0]
+
+
 def predict_x_net(
-    X: np.ndarray,
+    X: jnp.ndarray,
     trained_params: dict,
     predict_funs: list,
     return_po: bool = False,
     return_prop: bool = False,
     weight_strategy: Optional[int] = None,
-) -> np.ndarray:
+) -> jnp.ndarray:
     if return_po:
         raise NotImplementedError("TwoStepNets have no Potential outcome predictors.")
 

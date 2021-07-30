@@ -3,7 +3,7 @@ Author: Alicia Curth
 Module implements SNet class as discussed in Curth & van der Schaar (2021)
 """
 
-from typing import Any, Callable, List, Tuple
+from typing import Callable, List, Tuple
 
 import jax.numpy as jnp
 import numpy as onp
@@ -11,6 +11,7 @@ from jax import grad, jit, random
 from jax.experimental import optimizers
 
 import catenets.logger as log
+from catenets.models.base import BaseCATENet, OutputHead, ReprBlock
 from catenets.models.constants import (
     DEFAULT_AVG_OBJECTIVE,
     DEFAULT_BATCH_SIZE,
@@ -27,22 +28,22 @@ from catenets.models.constants import (
     DEFAULT_SEED,
     DEFAULT_STEP_SIZE,
     DEFAULT_UNITS_OUT,
+    DEFAULT_UNITS_R_BIG_S3,
+    DEFAULT_UNITS_R_SMALL_S3,
     DEFAULT_VAL_SPLIT,
     LARGE_VAL,
 )
-from catenets.models.jax.base import BaseCATENet, OutputHead, ReprBlock
-from catenets.models.jax.disentangled_nets import (
-    DEFAULT_UNITS_R_BIG_S3,
-    DEFAULT_UNITS_R_SMALL_S3,
+from catenets.models.disentangled_nets import (
     _concatenate_representations,
     _get_absolute_rowsums,
 )
-from catenets.models.jax.model_utils import (
+from catenets.models.flextenet import _get_cos_reg
+from catenets.models.model_utils import (
     check_shape_1d_data,
     heads_l2_penalty,
     make_val_split,
 )
-from catenets.models.jax.representation_nets import mmd2_lin
+from catenets.models.representation_nets import mmd2_lin
 
 DEFAULT_UNITS_R_BIG_S = 100
 DEFAULT_UNITS_R_SMALL_S = 50
@@ -110,6 +111,9 @@ class SNet(BaseCATENet):
         Nonlinearity to use in NN
     penalty_disc: float, default zero
         Discrepancy penalty. Defaults to zero as this feature is not tested.
+    ortho_reg_type: str, 'abs'
+        Which type of orthogonalization to use. 'abs' uses the (hard) disentanglement described
+        in AISTATS paper, 'fro' uses frobenius norm as in FlexTENet
     """
 
     def __init__(
@@ -139,7 +143,8 @@ class SNet(BaseCATENet):
         seed: int = DEFAULT_SEED,
         nonlin: str = DEFAULT_NONLIN,
         same_init: bool = False,
-    ) -> None:
+        ortho_reg_type: str = "abs",
+    ):
         self.with_prop = with_prop
         self.binary_y = binary_y
 
@@ -158,6 +163,7 @@ class SNet(BaseCATENet):
         self.reg_diff = reg_diff
         self.penalty_diff = penalty_diff
         self.same_init = same_init
+        self.ortho_reg_type = ortho_reg_type
 
         self.step_size = step_size
         self.n_iter = n_iter
@@ -214,7 +220,8 @@ def train_snet(
     avg_objective: bool = DEFAULT_AVG_OBJECTIVE,
     with_prop: bool = True,
     same_init: bool = False,
-) -> Any:
+    ortho_reg_type: str = "abs",
+) -> Tuple:
     # function to train a net with 5 representations
     if not with_prop:
         raise ValueError("train_snet works only withprop=True")
@@ -309,7 +316,7 @@ def train_snet(
     if not binary_y:
 
         def loss_head(
-            params: List,
+            params: jnp.ndarray,
             batch: Tuple[jnp.ndarray, jnp.ndarray, jnp.ndarray],
             penalty: float,
         ) -> jnp.ndarray:
@@ -321,7 +328,7 @@ def train_snet(
     else:
 
         def loss_head(
-            params: List,
+            params: jnp.ndarray,
             batch: Tuple[jnp.ndarray, jnp.ndarray, jnp.ndarray],
             penalty: float,
         ) -> jnp.ndarray:
@@ -334,17 +341,61 @@ def train_snet(
             )
 
     def loss_head_prop(
-        params: List, batch: Tuple[jnp.ndarray, jnp.ndarray], penalty: float
+        params: jnp.ndarray, batch: Tuple[jnp.ndarray, jnp.ndarray], penalty: float
     ) -> jnp.ndarray:
         # log loss function for propensities
         inputs, targets = batch
         preds = predict_fun_head_prop(params, inputs)
         return -jnp.sum(targets * jnp.log(preds) + (1 - targets) * jnp.log(1 - preds))
 
+    # define ortho-reg function
+    if ortho_reg_type == "abs":
+
+        def ortho_reg(params: jnp.ndarray) -> jnp.ndarray:
+            col_c = _get_absolute_rowsums(params[0][0][0])
+            col_o = _get_absolute_rowsums(params[1][0][0])
+            col_mu0 = _get_absolute_rowsums(params[2][0][0])
+            col_mu1 = _get_absolute_rowsums(params[3][0][0])
+            col_w = _get_absolute_rowsums(params[4][0][0])
+            return jnp.sum(
+                col_c * col_o
+                + col_c * col_w
+                + col_c * col_mu1
+                + col_c * col_mu0
+                + col_w * col_o
+                + col_mu0 * col_o
+                + col_o * col_mu1
+                + col_mu0 * col_mu1
+                + col_mu0 * col_w
+                + col_w * col_mu1
+            )
+
+    elif ortho_reg_type == "fro":
+
+        def ortho_reg(params: jnp.ndarray) -> jnp.ndarray:
+            return (
+                _get_cos_reg(params[0][0][0], params[1][0][0], False)
+                + _get_cos_reg(params[0][0][0], params[2][0][0], False)
+                + _get_cos_reg(params[0][0][0], params[3][0][0], False)
+                + _get_cos_reg(params[0][0][0], params[4][0][0], False)
+                + _get_cos_reg(params[1][0][0], params[2][0][0], False)
+                + _get_cos_reg(params[1][0][0], params[3][0][0], False)
+                + _get_cos_reg(params[1][0][0], params[4][0][0], False)
+                + _get_cos_reg(params[2][0][0], params[3][0][0], False)
+                + _get_cos_reg(params[2][0][0], params[4][0][0], False)
+                + _get_cos_reg(params[3][0][0], params[4][0][0], False)
+            )
+
+    else:
+        raise NotImplementedError(
+            "train_snet_noprop supports only orthogonal regularization "
+            "using absolute values or frobenious norms."
+        )
+
     # complete loss function for all parts
     @jit
     def loss_snet(
-        params: List,
+        params: jnp.ndarray,
         batch: Tuple[jnp.ndarray, jnp.ndarray, jnp.ndarray],
         penalty_l2: float,
         penalty_orthogonal: float,
@@ -378,25 +429,7 @@ def train_snet(
         loss_disc = penalty_disc * mmd2_lin(reps_o, w)
 
         # which variable has impact on which representation -- orthogonal loss
-        col_c = _get_absolute_rowsums(params[0][0][0])
-        col_o = _get_absolute_rowsums(params[1][0][0])
-        col_mu0 = _get_absolute_rowsums(params[2][0][0])
-        col_mu1 = _get_absolute_rowsums(params[3][0][0])
-        col_w = _get_absolute_rowsums(params[4][0][0])
-        loss_o = penalty_orthogonal * (
-            jnp.sum(
-                col_c * col_o
-                + col_c * col_w
-                + col_c * col_mu1
-                + col_c * col_mu0
-                + col_w * col_o
-                + col_mu0 * col_o
-                + col_o * col_mu1
-                + col_mu0 * col_mu1
-                + col_mu0 * col_w
-                + col_w * col_mu1
-            )
-        )
+        loss_o = penalty_orthogonal * ortho_reg(params)
 
         # weight decay on representations
         weightsq_body = sum(
@@ -554,7 +587,7 @@ def train_snet(
 
 def predict_snet(
     X: jnp.ndarray,
-    trained_params: dict,
+    trained_params: jnp.ndarray,
     predict_funs: list,
     return_po: bool = False,
     return_prop: bool = False,
@@ -631,7 +664,8 @@ def train_snet_noprop(
     avg_objective: bool = DEFAULT_AVG_OBJECTIVE,
     with_prop: bool = False,
     same_init: bool = False,
-) -> Any:
+    ortho_reg_type: str = "abs",
+) -> Tuple:
     """
     SNet but without the propensity head
     """
@@ -711,7 +745,7 @@ def train_snet_noprop(
     if not binary_y:
 
         def loss_head(
-            params: List,
+            params: jnp.ndarray,
             batch: Tuple[jnp.ndarray, jnp.ndarray, jnp.ndarray],
             penalty: float,
         ) -> jnp.ndarray:
@@ -723,7 +757,7 @@ def train_snet_noprop(
     else:
 
         def loss_head(
-            params: List,
+            params: jnp.ndarray,
             batch: Tuple[jnp.ndarray, jnp.ndarray, jnp.ndarray],
             penalty: float,
         ) -> jnp.ndarray:
@@ -735,10 +769,34 @@ def train_snet_noprop(
                 * (targets * jnp.log(preds) + (1 - targets) * jnp.log(1 - preds))
             )
 
+    # define ortho-reg function
+    if ortho_reg_type == "abs":
+
+        def ortho_reg(params: jnp.ndarray) -> jnp.ndarray:
+            col_o = _get_absolute_rowsums(params[0][0][0])
+            col_p0 = _get_absolute_rowsums(params[1][0][0])
+            col_p1 = _get_absolute_rowsums(params[2][0][0])
+            return jnp.sum(col_o * col_p0 + col_o * col_p1 + col_p1 * col_p0)
+
+    elif ortho_reg_type == "fro":
+
+        def ortho_reg(params: jnp.ndarray) -> jnp.ndarray:
+            return (
+                _get_cos_reg(params[0][0][0], params[1][0][0], False)
+                + _get_cos_reg(params[0][0][0], params[2][0][0], False)
+                + _get_cos_reg(params[1][0][0], params[2][0][0], False)
+            )
+
+    else:
+        raise NotImplementedError(
+            "train_snet_noprop supports only orthogonal regularization "
+            "using absolute values or frobenious norms."
+        )
+
     # complete loss function for all parts
     @jit
     def loss_snet_noprop(
-        params: List,
+        params: jnp.ndarray,
         batch: Tuple[jnp.ndarray, jnp.ndarray, jnp.ndarray],
         penalty_l2: float,
         penalty_orthogonal: float,
@@ -761,12 +819,7 @@ def train_snet_noprop(
         loss_1 = loss_head(params[4], (reps_po1, y, w), penalty_l2)
 
         # which variable has impact on which representation
-        col_o = _get_absolute_rowsums(params[0][0][0])
-        col_p0 = _get_absolute_rowsums(params[1][0][0])
-        col_p1 = _get_absolute_rowsums(params[2][0][0])
-        loss_o = penalty_orthogonal * (
-            jnp.sum(col_o * col_p0 + col_o * col_p1 + col_p1 * col_p0)
-        )
+        loss_o = penalty_orthogonal * ortho_reg(params)
 
         # weight decay on representations
         weightsq_body = sum(
@@ -881,7 +934,7 @@ def train_snet_noprop(
 
 def predict_snet_noprop(
     X: jnp.ndarray,
-    trained_params: dict,
+    trained_params: jnp.ndarray,
     predict_funs: list,
     return_po: bool = False,
     return_prop: bool = False,

@@ -1,13 +1,15 @@
 from typing import Any
 
 from catenets.models.jax.disentangled_nets import SNet3
+from catenets.models.jax.flextenet import FlexTENet
+from catenets.models.jax.offsetnet import OffsetNet
 from catenets.models.jax.pseudo_outcome_nets import (
     DRNet,
     PseudoOutcomeNet,
     PWNet,
     RANet,
 )
-from catenets.models.jax.representation_nets import SNet1, SNet2, TARNet
+from catenets.models.jax.representation_nets import DragonNet, SNet1, SNet2, TARNet
 from catenets.models.jax.rnet import RNet
 from catenets.models.jax.snet import SNet
 from catenets.models.jax.tnet import TNet
@@ -25,6 +27,9 @@ DRNET_NAME = "DRNet"
 PWNET_NAME = "PWNet"
 RANET_NAME = "RANet"
 TARNET_NAME = "TARNet"
+FLEXTE_NAME = "FlexTENet"
+OFFSET_NAME = "OffsetNet"
+DRAGON_NAME = "DragonNet"
 
 ALL_MODELS = [
     T_NAME,
@@ -39,6 +44,8 @@ ALL_MODELS = [
     PWNET_NAME,
     RANET_NAME,
     TARNET_NAME,
+    FLEXTE_NAME,
+    OFFSET_NAME,
 ]
 MODEL_DICT = {
     T_NAME: TNet,
@@ -53,6 +60,9 @@ MODEL_DICT = {
     PWNET_NAME: PWNet,
     RANET_NAME: RANet,
     TARNET_NAME: TARNet,
+    DRAGON_NAME: DragonNet,
+    OFFSET_NAME: OffsetNet,
+    FLEXTE_NAME: FlexTENet,
 }
 
 __all__ = [
@@ -68,6 +78,9 @@ __all__ = [
     PWNET_NAME,
     RANET_NAME,
     TARNET_NAME,
+    DRAGON_NAME,
+    FLEXTE_NAME,
+    OFFSET_NAME,
 ]
 
 

@@ -2,7 +2,7 @@
 Author: Alicia Curth
 Some utils for experiments
 """
-from typing import Callable, Optional, Union
+from typing import Callable, Dict, Optional, Union
 
 import jax.numpy as jnp
 
@@ -31,7 +31,10 @@ SEP = "_"
 
 
 def eval_mse_model(
-    inputs: jnp.ndarray, targets: jnp.ndarray, predict_fun: Callable, params: dict
+    inputs: jnp.ndarray,
+    targets: jnp.ndarray,
+    predict_fun: Callable,
+    params: jnp.ndarray,
 ) -> jnp.ndarray:
     # evaluate the mse of a model given its function and params
     preds = predict_fun(params, inputs)
@@ -52,22 +55,21 @@ def eval_root_mse(cate_pred: jnp.ndarray, cate_true: jnp.ndarray) -> jnp.ndarray
 
 def get_model_set(
     model_selection: Union[str, list] = "all", model_params: Optional[dict] = None
-) -> dict:
+) -> Dict:
     """Helper function to retrieve a set of models"""
     # get model selection
-    models: dict
-    if isinstance(model_selection, str):
-        if model_selection == "plug":
-            models = get_all_plugin_models()
+    if type(model_selection) is str:
+        if model_selection == "snet":
+            models = get_all_snets()
         elif model_selection == "pseudo":
             models = get_all_pseudoout_models()
         elif model_selection == "twostep":
             models = get_all_twostep_models()
         elif model_selection == "all":
-            models = dict(**get_all_plugin_models(), **get_all_pseudoout_models())
+            models = dict(**get_all_snets(), **get_all_pseudoout_models())
         else:
-            models = {model_selection: get_catenet(model_selection)()}
-    elif isinstance(model_selection, list):
+            models = {model_selection: get_catenet(model_selection)()}  # type: ignore
+    elif type(model_selection) is list:
         models = {}
         for model in model_selection:
             models.update({model: get_catenet(model)()})
@@ -88,19 +90,19 @@ def get_model_set(
     return models
 
 
-ALL_PLUGIN_MODELS: list = [T_NAME, SNET1_NAME, SNET2_NAME, SNET3_NAME, SNET_NAME]
-ALL_PSEUDOOUT_MODELS: list = [DR_TRANSFORMATION, PW_TRANSFORMATION, RA_TRANSFORMATION]
-ALL_TWOSTEP_MODELS: list = [DRNET_NAME, RANET_NAME, XNET_NAME, RNET_NAME]
+ALL_SNETS = [T_NAME, SNET1_NAME, SNET2_NAME, SNET3_NAME, SNET_NAME]
+ALL_PSEUDOOUT_MODELS = [DR_TRANSFORMATION, PW_TRANSFORMATION, RA_TRANSFORMATION]
+ALL_TWOSTEP_MODELS = [DRNET_NAME, RANET_NAME, XNET_NAME, RNET_NAME]
 
 
-def get_all_plugin_models() -> dict:
+def get_all_snets() -> Dict:
     model_dict = {}
-    for name in ALL_PLUGIN_MODELS:
+    for name in ALL_SNETS:
         model_dict.update({name: get_catenet(name)()})
     return model_dict
 
 
-def get_all_pseudoout_models() -> dict:  # DR, RA, PW learner
+def get_all_pseudoout_models() -> Dict:  # DR, RA, PW learner
     model_dict = {}
     for trans in ALL_PSEUDOOUT_MODELS:
         model_dict.update(
@@ -109,7 +111,7 @@ def get_all_pseudoout_models() -> dict:  # DR, RA, PW learner
     return model_dict
 
 
-def get_all_twostep_models() -> dict:  # DR, RA, R, X learner
+def get_all_twostep_models() -> Dict:  # DR, RA, R, X learner
     model_dict = {}
     for name in ALL_TWOSTEP_MODELS:
         model_dict.update({name: get_catenet(name)()})
