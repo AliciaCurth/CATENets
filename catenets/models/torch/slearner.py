@@ -193,7 +193,7 @@ class SLearner(BaseCATEEstimator):
         -------
         y: array-like of shape (n_samples,)
         """
-        X = torch.Tensor(X).to(DEVICE)
+        X = self._check_tensor(X)
         X_ext = self._create_extended_matrices(X)
 
         y = []

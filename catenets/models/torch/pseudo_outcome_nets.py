@@ -271,7 +271,7 @@ class PseudoOutcomeLearner(BaseCATEEstimator):
         te_est: array-like of shape (n_samples,)
             Predicted treatment effects
         """
-        X = torch.Tensor(X).to(DEVICE)
+        X = self._check_tensor(X)
         return predict_wrapper(self._te_estimator, X)
 
     @abc.abstractmethod

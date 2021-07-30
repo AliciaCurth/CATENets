@@ -108,7 +108,7 @@ class TLearner(BaseCATEEstimator):
         -------
         y: torch.Tensor of shape (n_samples,)
         """
-        X = torch.Tensor(X).to(DEVICE)
+        X = self._check_tensor(X)
 
         y_hat = []
         for widx, plugin in enumerate(self._plug_in):

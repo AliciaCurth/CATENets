@@ -404,3 +404,9 @@ class BaseCATEEstimator(nn.Module):
         X: torch.Tensor,
     ) -> torch.Tensor:
         return self.forward(X)
+
+    def _check_tensor(self, X: torch.Tensor) -> torch.Tensor:
+        if isinstance(X, torch.Tensor):
+            return X.to(DEVICE)
+        else:
+            return torch.from_numpy(np.asarray(X)).to(DEVICE)
