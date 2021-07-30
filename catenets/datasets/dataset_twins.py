@@ -113,7 +113,7 @@ def load(data_path: Path, train_split: float = 0.8) -> Tuple:
     """
     csv = data_path / DATASET
 
-    download_if_needed(csv, URL)
+    download_if_needed(csv, http_url=URL)
 
     log.debug(f"load dataset {csv}")
 

@@ -170,8 +170,8 @@ def load_raw(data_path: Path) -> Tuple:
 
     log.debug(f"load raw dataset f{train_csv}")
 
-    download_if_needed(train_csv, TRAIN_URL)
-    download_if_needed(test_csv, TEST_URL)
+    download_if_needed(train_csv, http_url=TRAIN_URL)
+    download_if_needed(test_csv, http_url=TEST_URL)
 
     data_train = load_data_npz(train_csv, get_po=True)
     data_test = load_data_npz(test_csv, get_po=True)
