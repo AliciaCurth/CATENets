@@ -8,7 +8,7 @@ from torch import nn
 from xgboost import XGBClassifier
 
 from catenets.datasets import load
-from catenets.experiments.torch.tester import evaluate_treatments_model
+from catenets.experiment_utils.tester import evaluate_treatments_model
 from catenets.models.torch import SLearner
 
 

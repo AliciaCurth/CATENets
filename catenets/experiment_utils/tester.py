@@ -49,7 +49,11 @@ def evaluate_treatments_model(
         model = copy.deepcopy(estimator)
         model.fit(X_train, Y_train, W_train)
 
-        y_pred = np.asarray(model.predict(X_test))
+        try:
+            y_pred = model.predict(X_test).detach().numpy()
+        except BaseException:
+            y_pred = np.asarray(model.predict(X_test))
+
         metric_ate[indx] = abs_error_ATE(Y_full_test, y_pred)
         metric_pehe[indx] = sqrt_PEHE(Y_full_test, y_pred)
         indx += 1
