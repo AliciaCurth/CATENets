@@ -127,8 +127,8 @@ class BasicNet(nn.Module):
     def train(
         self, X: torch.Tensor, y: torch.Tensor, weight: Optional[torch.Tensor] = None
     ) -> "BasicNet":
-        X = torch.Tensor(X).to(DEVICE)
-        y = torch.Tensor(y).to(DEVICE).squeeze()
+        X = torch.Tensor(X, device=DEVICE)
+        y = torch.Tensor(y, device=DEVICE).squeeze()
 
         # get validation split (can be none)
         X, y, X_val, y_val, val_string = make_val_split(
@@ -175,7 +175,7 @@ class BasicNet(nn.Module):
 
                 train_loss.append(batch_loss.detach())
 
-            train_loss = torch.Tensor(train_loss).to(DEVICE)
+            train_loss = torch.Tensor(train_loss, device=DEVICE)
 
             if i % self.n_iter_print == 0:
                 loss = nn.BCELoss() if self.binary_y else nn.MSELoss()
@@ -278,8 +278,8 @@ class PropensityNet(nn.Module):
         return nn.NLLLoss()(torch.log(y_pred + EPS), y_target)
 
     def train(self, X: torch.Tensor, y: torch.Tensor) -> "PropensityNet":
-        X = torch.Tensor(X).to(DEVICE)
-        y = torch.Tensor(y).to(DEVICE).long()
+        X = torch.Tensor(X, device=DEVICE)
+        y = torch.Tensor(y, device=DEVICE)
 
         # get validation split (can be none)
         X, y, X_val, y_val, val_string = make_val_split(
@@ -319,7 +319,7 @@ class PropensityNet(nn.Module):
                 self.optimizer.step()
                 train_loss.append(batch_loss.detach())
 
-            train_loss = torch.Tensor(train_loss).to(DEVICE)
+            train_loss = torch.Tensor(train_loss, device=DEVICE)
 
             if i % self.n_iter_print == 0:
                 with torch.no_grad():

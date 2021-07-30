@@ -219,17 +219,17 @@ class PseudoOutcomeLearner(BaseCATEEstimator):
     def train(
         self, X: torch.Tensor, y: torch.Tensor, w: torch.Tensor
     ) -> "PseudoOutcomeLearner":
-        X = torch.Tensor(X).to(DEVICE)
-        y = torch.Tensor(y).squeeze().to(DEVICE)
-        w = torch.Tensor(w).squeeze().to(DEVICE)
+        X = torch.Tensor(X, device=DEVICE)
+        y = torch.Tensor(y, device=DEVICE).squeeze()
+        w = torch.Tensor(w, device=DEVICE).squeeze()
 
         n = len(y)
 
         # STEP 1: fit plug-in estimators via cross-fitting
         mu_0_pred, mu_1_pred, p_pred = (
-            torch.zeros(n).to(DEVICE),
-            torch.zeros(n).to(DEVICE),
-            torch.zeros(n).to(DEVICE),
+            torch.zeros(n, device=DEVICE),
+            torch.zeros(n, device=DEVICE),
+            torch.zeros(n, device=DEVICE),
         )
 
         # create folds stratified by treatment assignment to ensure balance
@@ -239,7 +239,7 @@ class PseudoOutcomeLearner(BaseCATEEstimator):
 
         for train_index, test_index in splitter.split(X, w):
             # create masks
-            pred_mask = torch.zeros(n, dtype=bool).to(DEVICE)
+            pred_mask = torch.zeros(n, dtype=bool, device=DEVICE)
             pred_mask[test_index] = 1
 
             # fit plug-in te_estimator
@@ -271,7 +271,7 @@ class PseudoOutcomeLearner(BaseCATEEstimator):
         te_est: array-like of shape (n_samples,)
             Predicted treatment effects
         """
-        X = torch.Tensor(X).to(DEVICE)
+        X = torch.Tensor(X, device=DEVICE)
         return predict_wrapper(self._te_estimator, X)
 
     @abc.abstractmethod
@@ -582,7 +582,7 @@ class XLearner(PseudoOutcomeLearner):
         te_est: array-like of shape (n_samples,)
             Predicted treatment effects
         """
-        X = torch.Tensor(X).to(DEVICE)
+        X = torch.Tensor(X, device=DEVICE)
         tau0_pred = predict_wrapper(self._te_estimator_0, X)
         tau1_pred = predict_wrapper(self._te_estimator_1, X)
 

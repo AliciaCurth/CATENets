@@ -170,9 +170,9 @@ class BaseSNet(BaseCATEEstimator):
         w: torch.Tensor of shape (n_samples,)
             The treatment indicator
         """
-        X = torch.Tensor(X).to(DEVICE)
-        y = torch.Tensor(y).squeeze().to(DEVICE)
-        w = torch.Tensor(w).squeeze().long().to(DEVICE)
+        X = torch.Tensor(X, device=DEVICE)
+        y = torch.Tensor(y, device=DEVICE).squeeze()
+        w = torch.Tensor(w, device=DEVICE).squeeze().long()
 
         X, y, w, X_val, y_val, w_val, val_string = make_val_split(
             X, y, w=w, val_split_prop=self.val_split_prop, seed=self.seed
@@ -220,7 +220,7 @@ class BaseSNet(BaseCATEEstimator):
 
                 train_loss.append(batch_loss.detach())
 
-            train_loss = torch.Tensor(train_loss).to(DEVICE)
+            train_loss = torch.Tensor(train_loss, device=DEVICE)
 
             if i % self.n_iter_print == 0:
                 with torch.no_grad():
@@ -245,7 +245,7 @@ class BaseSNet(BaseCATEEstimator):
         ...
 
     def _forward(self, X: torch.Tensor) -> torch.Tensor:
-        X = torch.Tensor(X).to(DEVICE)
+        X = torch.Tensor(X, device=DEVICE)
         repr_preds = self._repr_estimator(X).squeeze()
         y0_preds = self._po_estimators[0](repr_preds).squeeze()
         y1_preds = self._po_estimators[1](repr_preds).squeeze()
@@ -340,7 +340,7 @@ class DragonNet(BaseSNet):
         )
 
     def _step(self, X: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
-        X = torch.Tensor(X).to(DEVICE)
+        X = torch.Tensor(X, device=DEVICE)
         repr_preds = self._repr_estimator(X).squeeze()
 
         y0_preds = self._po_estimators[0](repr_preds).squeeze()

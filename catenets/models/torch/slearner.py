@@ -138,9 +138,9 @@ class SLearner(BaseCATEEstimator):
             The treatment indicator
         """
 
-        X = torch.Tensor(X).to(DEVICE)
-        y = torch.Tensor(y).to(DEVICE)
-        w = torch.Tensor(w).to(DEVICE)
+        X = torch.Tensor(X, device=DEVICE)
+        y = torch.Tensor(y, device=DEVICE)
+        w = torch.Tensor(w, device=DEVICE)
 
         # add indicator as additional variable
         X_ext = torch.cat((X, w.reshape((-1, 1))), dim=1).to(DEVICE)
@@ -171,7 +171,7 @@ class SLearner(BaseCATEEstimator):
 
     def _create_extended_matrices(self, X: torch.Tensor) -> torch.Tensor:
         n = X.shape[0]
-        X = torch.Tensor(X).to(DEVICE)
+        X = torch.Tensor(X, device=DEVICE)
 
         # create extended matrices
         w_1 = torch.ones((n, 1))
@@ -193,7 +193,7 @@ class SLearner(BaseCATEEstimator):
         -------
         y: array-like of shape (n_samples,)
         """
-        X = torch.Tensor(X).to(DEVICE)
+        X = torch.Tensor(X, device=DEVICE)
         X_ext = self._create_extended_matrices(X)
 
         y = []
@@ -206,12 +206,12 @@ class SLearner(BaseCATEEstimator):
                     :, 0
                 ]  # no event probability
 
-                y.append(torch.Tensor(no_event_proba).to(DEVICE))
+                y.append(torch.Tensor(no_event_proba, device=DEVICE))
             elif hasattr(self._po_estimator, "predict"):
                 ext_mat_np = ext_mat.detach().numpy()
                 no_event_proba = self._po_estimator.predict(ext_mat_np)
 
-                y.append(torch.Tensor(no_event_proba).to(DEVICE))
+                y.append(torch.Tensor(no_event_proba, device=DEVICE))
             else:
                 raise NotImplementedError("Invalid po_estimator for slearner")
 
