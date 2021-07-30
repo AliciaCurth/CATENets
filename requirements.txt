@@ -1,3 +1,4 @@
+google_drive_downloader
 jax>=0.1
 jaxlib>=0.1
 loguru>=0.5.3
@@ -6,4 +7,5 @@ pandas>=1.1.2
 pytest>=6.2.4
 scikit_learn>=0.24.2
 scipy>=1.2
+tarfile
 torch
