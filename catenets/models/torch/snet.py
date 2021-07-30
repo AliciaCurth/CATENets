@@ -245,7 +245,6 @@ class BaseSNet(BaseCATEEstimator):
         ...
 
     def _forward(self, X: torch.Tensor) -> torch.Tensor:
-        X = torch.Tensor(X).to(DEVICE)
         repr_preds = self._repr_estimator(X).squeeze()
         y0_preds = self._po_estimators[0](repr_preds).squeeze()
         y1_preds = self._po_estimators[1](repr_preds).squeeze()
