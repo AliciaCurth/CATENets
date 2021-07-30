@@ -341,7 +341,6 @@ class DragonNet(BaseSNet):
         )
 
     def _step(self, X: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
-        X = torch.Tensor(X).to(DEVICE)
         repr_preds = self._repr_estimator(X).squeeze()
 
         y0_preds = self._po_estimators[0](repr_preds).squeeze()
