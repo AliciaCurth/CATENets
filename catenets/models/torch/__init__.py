@@ -6,8 +6,8 @@ from .pseudo_outcome_nets import (
     ULearner,
     XLearner,
 )
+from .representation_nets import DragonNet, TARNet
 from .slearner import SLearner
-from .snet import DragonNet, TARNet
 from .tlearner import TLearner
 
 __all__ = [

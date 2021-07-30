@@ -35,7 +35,7 @@ from catenets.models.torch.utils.model_utils import make_val_split
 EPS = 1e-8
 
 
-class BaseSNet(BaseCATEEstimator):
+class BasicDragonNet(BaseCATEEstimator):
     """
 
     Parameters
@@ -100,7 +100,7 @@ class BaseSNet(BaseCATEEstimator):
         nonlin: str = DEFAULT_NONLIN,
         weighting_strategy: Optional[str] = None,
     ) -> None:
-        super(BaseSNet, self).__init__()
+        super(BasicDragonNet, self).__init__()
 
         self.name = name
         self.val_split_prop = val_split_prop
@@ -110,6 +110,7 @@ class BaseSNet(BaseCATEEstimator):
         self.n_iter_print = n_iter_print
         self.lr = lr
         self.weight_decay = weight_decay
+        self.binary_y = binary_y
 
         self._repr_estimator = RepresentationNet(
             n_unit_in, n_units=n_units_r, n_layers=n_layers_r, nonlin=nonlin
@@ -135,14 +136,20 @@ class BaseSNet(BaseCATEEstimator):
         y_true: torch.Tensor,
         t_true: torch.Tensor,
     ) -> torch.Tensor:
+        def head_loss(y_pred: torch.Tensor, y_true: torch.Tensor) -> torch.Tensor:
+            if self.binary_y:
+                return nn.BCELoss()(y_pred, y_true)
+            else:
+                return nn.MSELoss()(y_pred, y_true)
+
         def po_loss(
             po_pred: torch.Tensor, y_true: torch.Tensor, t_true: torch.Tensor
         ) -> torch.Tensor:
             y0_pred = po_pred[:, 0]
             y1_pred = po_pred[:, 1]
 
-            loss0 = torch.mean((1.0 - t_true) * torch.square(y_true - y0_pred))
-            loss1 = torch.mean(t_true * torch.square(y_true - y1_pred))
+            loss0 = torch.mean((1.0 - t_true) * head_loss(y0_pred, y_true))
+            loss1 = torch.mean(t_true * head_loss(y1_pred, y_true))
 
             return loss0 + loss1
 
@@ -157,7 +164,7 @@ class BaseSNet(BaseCATEEstimator):
         X: torch.Tensor,
         y: torch.Tensor,
         w: torch.Tensor,
-    ) -> "BaseSNet":
+    ) -> "BasicDragonNet":
         """
         Fit treatment models.
 
@@ -272,7 +279,7 @@ class BaseSNet(BaseCATEEstimator):
         return y1_preds - y0_preds
 
 
-class TARNet(BaseSNet):
+class TARNet(BasicDragonNet):
     def __init__(
         self,
         n_unit_in: int,
@@ -309,7 +316,7 @@ class TARNet(BaseSNet):
         return po_preds, prop_preds
 
 
-class DragonNet(BaseSNet):
+class DragonNet(BasicDragonNet):
     def __init__(
         self,
         n_unit_in: int,
