@@ -8,6 +8,7 @@ from .pseudo_outcome_nets import (
 )
 from .representation_nets import DragonNet, TARNet
 from .slearner import SLearner
+from .snet import SNet
 from .tlearner import TLearner
 
 __all__ = [
@@ -21,4 +22,5 @@ __all__ = [
     "RALearner",
     "PWLearner",
     "DRLearner",
+    "SNet",
 ]

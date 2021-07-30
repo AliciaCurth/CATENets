@@ -82,6 +82,8 @@ class BasicNet(nn.Module):
         n_iter_print: int = DEFAULT_N_ITER_PRINT,
         seed: int = DEFAULT_SEED,
         val_split_prop: float = DEFAULT_VAL_SPLIT,
+        patience: int = DEFAULT_PATIENCE,
+        n_iter_min: int = DEFAULT_N_ITER_MIN,
     ) -> None:
         super(BasicNet, self).__init__()
 
@@ -116,6 +118,8 @@ class BasicNet(nn.Module):
         self.n_iter_print = n_iter_print
         self.seed = seed
         self.val_split_prop = val_split_prop
+        self.patience = patience
+        self.n_iter_min = n_iter_min
 
         self.optimizer = torch.optim.Adam(
             self.parameters(), lr=lr, weight_decay=weight_decay
@@ -187,7 +191,7 @@ class BasicNet(nn.Module):
                         patience = 0
                     else:
                         patience += 1
-                    if patience > DEFAULT_PATIENCE and i > DEFAULT_N_ITER_MIN:
+                    if patience > self.patience and i > self.n_iter_min:
                         break
                     log.info(
                         f"[{self.name}] Epoch: {i}, current {val_string} loss: {val_loss}, train_loss: {torch.mean(train_loss)}"
@@ -246,6 +250,8 @@ class PropensityNet(nn.Module):
         seed: int = DEFAULT_SEED,
         nonlin: str = DEFAULT_NONLIN,
         val_split_prop: float = DEFAULT_VAL_SPLIT,
+        patience: int = DEFAULT_PATIENCE,
+        n_iter_min: int = DEFAULT_N_ITER_MIN,
     ) -> None:
         super(PropensityNet, self).__init__()
 
@@ -280,6 +286,8 @@ class PropensityNet(nn.Module):
         self.n_iter_print = n_iter_print
         self.seed = seed
         self.val_split_prop = val_split_prop
+        self.patience = patience
+        self.n_iter_min = n_iter_min
 
         self.optimizer = torch.optim.Adam(
             self.parameters(), lr=lr, weight_decay=weight_decay
@@ -350,7 +358,7 @@ class PropensityNet(nn.Module):
                         patience = 0
                     else:
                         patience += 1
-                    if patience > DEFAULT_PATIENCE and i > DEFAULT_N_ITER_MIN:
+                    if patience > self.patience and i > self.n_iter_min:
                         break
                     log.info(
                         f"[{self.name}] Epoch: {i}, current {val_string} loss: {val_loss}, train_loss: {torch.mean(train_loss)}"
