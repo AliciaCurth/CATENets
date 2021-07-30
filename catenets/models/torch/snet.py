@@ -17,7 +17,7 @@ from catenets.models.constants import (
     DEFAULT_SEED,
     DEFAULT_STEP_SIZE,
     DEFAULT_UNITS_OUT,
-    DEFAULT_UNITS_R_BIG_S,
+    DEFAULT_UNITS_R,
     DEFAULT_VAL_SPLIT,
 )
 from catenets.models.torch.base import (
@@ -32,7 +32,7 @@ from catenets.models.torch.utils.model_utils import make_val_split
 EPS = 1e-8
 
 
-class SNet(BaseCATEEstimator):
+class BaseSNet(BaseCATEEstimator):
     """
 
     Parameters
@@ -82,7 +82,7 @@ class SNet(BaseCATEEstimator):
         propensity_estimator: nn.Module,
         binary_y: bool = False,
         n_layers_r: int = DEFAULT_LAYERS_R,
-        n_units_r: int = DEFAULT_UNITS_R_BIG_S,
+        n_units_r: int = DEFAULT_UNITS_R,
         n_layers_out: int = DEFAULT_LAYERS_OUT,
         n_units_out: int = DEFAULT_UNITS_OUT,
         weight_decay: float = DEFAULT_PENALTY_L2,
@@ -97,7 +97,7 @@ class SNet(BaseCATEEstimator):
         nonlin: str = DEFAULT_NONLIN,
         weighting_strategy: Optional[str] = None,
     ) -> None:
-        super(SNet, self).__init__()
+        super(BaseSNet, self).__init__()
 
         self.name = name
         self.val_split_prop = val_split_prop
@@ -154,7 +154,7 @@ class SNet(BaseCATEEstimator):
         X: torch.Tensor,
         y: torch.Tensor,
         w: torch.Tensor,
-    ) -> "SNet":
+    ) -> "BaseSNet":
         """
         Fit treatment models.
 
@@ -260,13 +260,13 @@ class SNet(BaseCATEEstimator):
         return y1_preds - y0_preds
 
 
-class TARNet(SNet):
+class TARNet(BaseSNet):
     def __init__(
         self,
         n_unit_in: int,
         binary_y: bool = False,
-        n_layers_out: int = DEFAULT_LAYERS_OUT,
-        n_units_out: int = DEFAULT_UNITS_OUT,
+        n_units_out_prop: int = DEFAULT_UNITS_OUT,
+        n_layers_out_prop: int = DEFAULT_LAYERS_OUT,
         nonlin: str = DEFAULT_NONLIN,
         **kwargs: Any,
     ) -> None:
@@ -275,8 +275,8 @@ class TARNet(SNet):
             n_unit_in,
             2,
             "prop",
-            n_layers_out_prop=n_layers_out,
-            n_units_out_prop=n_units_out,
+            n_layers_out_prop=n_layers_out_prop,
+            n_units_out_prop=n_units_out_prop,
             nonlin=nonlin,
         ).to(DEVICE)
         super(TARNet, self).__init__(
@@ -284,8 +284,8 @@ class TARNet(SNet):
             n_unit_in,
             propensity_estimator,
             binary_y=binary_y,
-            n_layers_out=n_layers_out,
-            n_units_out=n_units_out,
+            n_layers_out_prop=n_layers_out_prop,
+            n_units_out_prop=n_units_out_prop,
             nonlin=nonlin,
             **kwargs,
         )
@@ -297,15 +297,15 @@ class TARNet(SNet):
         return po_preds, prop_preds
 
 
-class DragonNet(SNet):
+class DragonNet(BaseSNet):
     def __init__(
         self,
         n_unit_in: int,
         binary_y: bool = False,
-        n_layers_out: int = DEFAULT_LAYERS_OUT,
-        n_units_out: int = DEFAULT_UNITS_OUT,
+        n_units_out_prop: int = DEFAULT_UNITS_OUT,
+        n_layers_out_prop: int = DEFAULT_LAYERS_OUT,
         nonlin: str = DEFAULT_NONLIN,
-        n_units_r: int = DEFAULT_UNITS_R_BIG_S,
+        n_units_r: int = DEFAULT_UNITS_R,
         **kwargs: Any,
     ) -> None:
         propensity_estimator = PropensityNet(
@@ -313,8 +313,8 @@ class DragonNet(SNet):
             n_units_r,
             2,
             "prop",
-            n_layers_out_prop=n_layers_out,
-            n_units_out_prop=n_units_out,
+            n_layers_out_prop=n_layers_out_prop,
+            n_units_out_prop=n_units_out_prop,
             nonlin=nonlin,
         ).to(DEVICE)
         super(DragonNet, self).__init__(
@@ -322,8 +322,8 @@ class DragonNet(SNet):
             n_unit_in,
             propensity_estimator,
             binary_y=binary_y,
-            n_layers_out=n_layers_out,
-            n_units_out=n_units_out,
+            n_layers_out_prop=n_layers_out_prop,
+            n_units_out_prop=n_units_out_prop,
             nonlin=nonlin,
             **kwargs,
         )
