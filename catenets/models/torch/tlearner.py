@@ -108,7 +108,7 @@ class TLearner(BaseCATEEstimator):
         -------
         y: torch.Tensor of shape (n_samples,)
         """
-        X = torch.Tensor(X, device=DEVICE)
+        X = torch.Tensor(X).to(DEVICE)
 
         y_hat = []
         for widx, plugin in enumerate(self._plug_in):
@@ -134,9 +134,9 @@ class TLearner(BaseCATEEstimator):
         w: torch.Tensor (n_samples,)
             The treatment indicator
         """
-        X = torch.Tensor(X, device=DEVICE)
-        y = torch.Tensor(y, device=DEVICE)
-        w = torch.Tensor(w, device=DEVICE)
+        X = torch.Tensor(X).to(DEVICE)
+        y = torch.Tensor(y).to(DEVICE)
+        w = torch.Tensor(w).to(DEVICE)
 
         for widx, plugin in enumerate(self._plug_in):
             train_wrapper(plugin, X[w == widx], y[w == widx])
