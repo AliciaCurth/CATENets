@@ -240,7 +240,7 @@ def train_flextenet(
         @jit
         def loss(
             params: jnp.ndarray,
-            batch: jnp.ndaray,
+            batch: jnp.ndarray,
             penalty_l2: float,
             penalty_l2_p: float,
             penalty_orthogonal: float,
