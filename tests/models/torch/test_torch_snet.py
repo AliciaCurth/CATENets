@@ -63,7 +63,7 @@ def test_model_sanity(dataset: str, pehe_threshold: float, snet: Type) -> None:
     X_train, W_train, Y_train, Y_train_full, X_test, Y_test = load(dataset)
     W_train = W_train.ravel()
 
-    model = snet(X_train.shape[1])
+    model = snet(X_train.shape[1], batch_size=1024)
 
     score = evaluate_treatments_model(
         model, X_train, Y_train, Y_train_full, W_train, n_folds=3

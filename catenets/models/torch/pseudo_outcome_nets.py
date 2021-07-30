@@ -271,7 +271,7 @@ class PseudoOutcomeLearner(BaseCATEEstimator):
         te_est: array-like of shape (n_samples,)
             Predicted treatment effects
         """
-        X = self._check_tensor(X)
+        X = self._check_tensor(X).float()
         return predict_wrapper(self._te_estimator, X)
 
     @abc.abstractmethod

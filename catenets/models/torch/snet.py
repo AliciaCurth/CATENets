@@ -264,7 +264,7 @@ class BaseSNet(BaseCATEEstimator):
         -------
         y: array-like of shape (n_samples,)
         """
-        X = self._check_tensor(X)
+        X = self._check_tensor(X).float()
         preds = self._forward(X)
         y0_preds = preds[:, 0]
         y1_preds = preds[:, 1]

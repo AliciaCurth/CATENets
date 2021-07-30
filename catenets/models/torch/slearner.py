@@ -193,7 +193,7 @@ class SLearner(BaseCATEEstimator):
         -------
         y: array-like of shape (n_samples,)
         """
-        X = self._check_tensor(X)
+        X = self._check_tensor(X).float()
         X_ext = self._create_extended_matrices(X)
 
         y = []
