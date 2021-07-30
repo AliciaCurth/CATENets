@@ -175,7 +175,7 @@ class BasicNet(nn.Module):
 
                 train_loss.append(batch_loss.detach())
 
-            train_loss = torch.Tensor(train_loss)
+            train_loss = torch.Tensor(train_loss).to(DEVICE)
 
             if i % self.n_iter_print == 0:
                 loss = nn.BCELoss() if self.binary_y else nn.MSELoss()

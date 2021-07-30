@@ -206,12 +206,12 @@ class SLearner(BaseCATEEstimator):
                     :, 0
                 ]  # no event probability
 
-                y.append(torch.Tensor(no_event_proba))
+                y.append(torch.Tensor(no_event_proba).to(DEVICE))
             elif hasattr(self._po_estimator, "predict"):
                 ext_mat_np = ext_mat.detach().numpy()
                 no_event_proba = self._po_estimator.predict(ext_mat_np)
 
-                y.append(torch.Tensor(no_event_proba))
+                y.append(torch.Tensor(no_event_proba).to(DEVICE))
             else:
                 raise NotImplementedError("Invalid po_estimator for slearner")
 

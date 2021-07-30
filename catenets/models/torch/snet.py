@@ -220,7 +220,7 @@ class BaseSNet(BaseCATEEstimator):
 
                 train_loss.append(batch_loss.detach())
 
-            train_loss = torch.Tensor(train_loss)
+            train_loss = torch.Tensor(train_loss).to(DEVICE)
 
             if i % self.n_iter_print == 0:
                 with torch.no_grad():
@@ -245,7 +245,7 @@ class BaseSNet(BaseCATEEstimator):
         ...
 
     def _forward(self, X: torch.Tensor) -> torch.Tensor:
-        X = torch.Tensor(X)
+        X = torch.Tensor(X).to(DEVICE)
         repr_preds = self._repr_estimator(X).squeeze()
         y0_preds = self._po_estimators[0](repr_preds).squeeze()
         y1_preds = self._po_estimators[1](repr_preds).squeeze()
@@ -340,7 +340,7 @@ class DragonNet(BaseSNet):
         )
 
     def _step(self, X: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
-        X = torch.Tensor(X)
+        X = torch.Tensor(X).to(DEVICE)
         repr_preds = self._repr_estimator(X).squeeze()
 
         y0_preds = self._po_estimators[0](repr_preds).squeeze()
