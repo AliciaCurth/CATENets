@@ -127,8 +127,8 @@ class BasicNet(nn.Module):
     def train(
         self, X: torch.Tensor, y: torch.Tensor, weight: Optional[torch.Tensor] = None
     ) -> "BasicNet":
-        X = torch.Tensor(X).to(DEVICE)
-        y = torch.Tensor(y).to(DEVICE).squeeze()
+        X = self._check_tensor(X)
+        y = self._check_tensor(y).squeeze()
 
         # get validation split (can be none)
         X, y, X_val, y_val, val_string = make_val_split(
@@ -194,6 +194,12 @@ class BasicNet(nn.Module):
                     )
 
         return self
+
+    def _check_tensor(self, X: torch.Tensor) -> torch.Tensor:
+        if isinstance(X, torch.Tensor):
+            return X.to(DEVICE)
+        else:
+            return torch.from_numpy(np.asarray(X)).to(DEVICE)
 
 
 class RepresentationNet(nn.Module):
@@ -278,8 +284,8 @@ class PropensityNet(nn.Module):
         return nn.NLLLoss()(torch.log(y_pred + EPS), y_target)
 
     def train(self, X: torch.Tensor, y: torch.Tensor) -> "PropensityNet":
-        X = torch.Tensor(X).to(DEVICE)
-        y = torch.Tensor(y).to(DEVICE).long()
+        X = self._check_tensor(X)
+        y = self._check_tensor(y).long()
 
         # get validation split (can be none)
         X, y, X_val, y_val, val_string = make_val_split(
@@ -337,6 +343,12 @@ class PropensityNet(nn.Module):
                     )
 
         return self
+
+    def _check_tensor(self, X: torch.Tensor) -> torch.Tensor:
+        if isinstance(X, torch.Tensor):
+            return X.to(DEVICE)
+        else:
+            return torch.from_numpy(np.asarray(X)).to(DEVICE)
 
 
 class BaseCATEEstimator(nn.Module):
