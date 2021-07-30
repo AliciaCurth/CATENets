@@ -237,7 +237,7 @@ class PropensityNet(nn.Module):
         n_unit_out: int,
         weighting_strategy: str,
         n_units_out_prop: int = DEFAULT_UNITS_OUT,
-        n_layers_out_prop: int = DEFAULT_LAYERS_OUT,
+        n_layers_out_prop: int = 0,
         weight_decay: float = DEFAULT_PENALTY_L2,
         lr: float = DEFAULT_STEP_SIZE,
         n_iter: int = DEFAULT_N_ITER,
