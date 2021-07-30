@@ -171,7 +171,7 @@ class SLearner(BaseCATEEstimator):
 
     def _create_extended_matrices(self, X: torch.Tensor) -> torch.Tensor:
         n = X.shape[0]
-        X = torch.Tensor(X).to(DEVICE)
+        X = self._check_tensor(X)
 
         # create extended matrices
         w_1 = torch.ones((n, 1))
