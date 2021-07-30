@@ -79,7 +79,6 @@ def test_nn_model_sanity(
     model = SLearner(
         X_train.shape[1],
         binary_y=(len(np.unique(Y_train)) == 2),
-        n_iter=250,
         weighting_strategy=weighting_strategy,
     )
 

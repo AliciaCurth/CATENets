@@ -57,9 +57,7 @@ def test_nn_model_sanity(dataset: str, pehe_threshold: float, model_t: Any) -> N
     X_train, W_train, Y_train, Y_train_full, X_test, Y_test = load(dataset)
     W_train = W_train.ravel()
 
-    model = model_t(
-        X_train.shape[1], binary_y=(len(np.unique(Y_train)) == 2), n_iter=250
-    )
+    model = model_t(X_train.shape[1], binary_y=(len(np.unique(Y_train)) == 2))
 
     score = evaluate_treatments_model(model, X_train, Y_train, Y_train_full, W_train)
 
@@ -117,7 +115,6 @@ def test_sklearn_model_pseudo_outcome_binary(
         binary_y=True,
         po_estimator=po_estimator,
         te_estimator=te_estimator,
-        n_iter=200,  # for the NN-based models
     )
 
     score = evaluate_treatments_model(

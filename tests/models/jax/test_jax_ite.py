@@ -1,11 +1,21 @@
 from copy import deepcopy
 
-import numpy as np
 import pytest
 
 from catenets.datasets import load
-from catenets.experiment_utils.base import get_model_set
 from catenets.experiment_utils.tester import evaluate_treatments_model
+from catenets.models.jax import (
+    DRNET_NAME,
+    FLEXTE_NAME,
+    OFFSET_NAME,
+    T_NAME,
+    TARNET_NAME,
+    DRNet,
+    FlexTENet,
+    OffsetNet,
+    TARNet,
+    TNet,
+)
 
 LAYERS_OUT = 2
 LAYERS_R = 3
@@ -21,16 +31,35 @@ MODEL_PARAMS = {
     "n_layers_r_t": LAYERS_R,
     "penalty_l2_t": PENALTY_L2,
 }
+PARAMS_DEPTH: dict = {"n_layers_r": 2, "n_layers_out": 2}
+PARAMS_DEPTH_2: dict = {
+    "n_layers_r": 2,
+    "n_layers_out": 2,
+    "n_layers_r_t": 2,
+    "n_layers_out_t": 2,
+}
+PENALTY_DIFF = 0.01
+PENALTY_ORTHOGONAL = 0.1
 
-ALL_MODELS = get_model_set(model_selection="all", model_params=MODEL_PARAMS)
-
-
-def sqrt_PEHE(y: np.ndarray, hat_y: np.ndarray) -> float:
-    return np.sqrt(np.mean(((y[:, 1] - y[:, 0]) - hat_y) ** 2))
-
+ALL_MODELS = {
+    T_NAME: TNet(**PARAMS_DEPTH),
+    T_NAME
+    + "_reg": TNet(train_separate=False, penalty_diff=PENALTY_DIFF, **PARAMS_DEPTH),
+    TARNET_NAME: TARNet(**PARAMS_DEPTH),
+    TARNET_NAME
+    + "_reg": TARNet(
+        reg_diff=True, penalty_diff=PENALTY_DIFF, same_init=True, **PARAMS_DEPTH
+    ),
+    OFFSET_NAME: OffsetNet(penalty_l2_p=PENALTY_DIFF, **PARAMS_DEPTH),
+    FLEXTE_NAME: FlexTENet(
+        penalty_orthogonal=PENALTY_ORTHOGONAL, penalty_l2_p=PENALTY_DIFF, **PARAMS_DEPTH
+    ),
+    FLEXTE_NAME + "_noortho_reg_same": FlexTENet(penalty_orthogonal=0, **PARAMS_DEPTH),
+    DRNET_NAME: DRNet(**PARAMS_DEPTH_2),
+    DRNET_NAME + "_TAR": DRNet(first_stage_strategy="Tar", **PARAMS_DEPTH_2),
+}
 
 models = list(ALL_MODELS.keys())
-models.remove("PseudoOutcomeNet_PW")
 
 
 @pytest.mark.parametrize("dataset, pehe_threshold", [("twins", 0.4), ("ihdp", 1.5)])

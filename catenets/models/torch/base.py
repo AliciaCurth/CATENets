@@ -11,6 +11,7 @@ from catenets.models.constants import (
     DEFAULT_LAYERS_OUT,
     DEFAULT_LAYERS_R,
     DEFAULT_N_ITER,
+    DEFAULT_N_ITER_MIN,
     DEFAULT_N_ITER_PRINT,
     DEFAULT_NONLIN,
     DEFAULT_PATIENCE,
@@ -186,7 +187,7 @@ class BasicNet(nn.Module):
                         patience = 0
                     else:
                         patience += 1
-                    if patience > DEFAULT_PATIENCE:
+                    if patience > DEFAULT_PATIENCE and i > DEFAULT_N_ITER_MIN:
                         break
                     log.info(
                         f"[{self.name}] Epoch: {i}, current {val_string} loss: {val_loss}, train_loss: {torch.mean(train_loss)}"
@@ -329,7 +330,7 @@ class PropensityNet(nn.Module):
                         patience = 0
                     else:
                         patience += 1
-                    if patience > DEFAULT_PATIENCE:
+                    if patience > DEFAULT_PATIENCE and i > DEFAULT_N_ITER_MIN:
                         break
                     log.info(
                         f"[{self.name}] Epoch: {i}, current {val_string} loss: {val_loss}, train_loss: {torch.mean(train_loss)}"
