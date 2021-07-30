@@ -138,9 +138,9 @@ class BasicDragonNet(BaseCATEEstimator):
     ) -> torch.Tensor:
         def head_loss(y_pred: torch.Tensor, y_true: torch.Tensor) -> torch.Tensor:
             if self.binary_y:
-                return nn.BCELoss()(y_pred, y_true)
+                return nn.BCELoss(y_pred, y_true)
             else:
-                return nn.MSELoss()(y_pred, y_true)
+                return (y_pred - y_true) ** 2
 
         def po_loss(
             po_pred: torch.Tensor, y_true: torch.Tensor, t_true: torch.Tensor
