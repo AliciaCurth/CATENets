@@ -49,7 +49,7 @@ def test_nn_model_params() -> None:
     assert model._propensity_estimator.seed == 11
     assert model._propensity_estimator.val_split_prop == 0.9
     assert (
-        len(model._propensity_estimator.model) == 4
+        len(model._propensity_estimator.model) == 28
     )  # 1 in + NL + 2 * n_layers_hidden + out + Softmax
 
 
