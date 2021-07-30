@@ -40,6 +40,7 @@ ALL_MODELS = {
 models = list(ALL_MODELS.keys())
 
 
+@pytest.mark.slow
 @pytest.mark.parametrize("dataset, pehe_threshold", [("twins", 0.4), ("ihdp", 3)])
 @pytest.mark.parametrize("model_name", models)
 def test_model_sanity(dataset: str, pehe_threshold: float, model_name: str) -> None:

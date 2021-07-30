@@ -10,6 +10,8 @@ from sklearn.model_selection import train_test_split
 import catenets.logger as log
 from catenets.models.constants import DEFAULT_SEED, DEFAULT_VAL_SPLIT
 
+DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
 TRAIN_STRING = "training"
 VALIDATION_STRING = "validation"
 
@@ -29,13 +31,22 @@ def make_val_split(
 
         return X, y, w, X, y, w, TRAIN_STRING
 
+    X = X.cpu()
+    y = y.cpu()
     # make actual split
     if w is None:
         X_t, X_val, y_t, y_val = train_test_split(
             X, y, test_size=val_split_prop, random_state=seed, shuffle=True
         )
-        return X_t, y_t, X_val, y_val, VALIDATION_STRING
+        return (
+            X_t.to(DEVICE),
+            y_t.to(DEVICE),
+            X_val.to(DEVICE),
+            y_val.to(DEVICE),
+            VALIDATION_STRING,
+        )
 
+    w = w.cpu()
     if stratify_w:
         # split to stratify by group
         X_t, X_val, y_t, y_val, w_t, w_val = train_test_split(
@@ -52,7 +63,15 @@ def make_val_split(
             X, y, w, test_size=val_split_prop, random_state=seed, shuffle=True
         )
 
-    return X_t, y_t, w_t, X_val, y_val, w_val, VALIDATION_STRING
+    return (
+        X_t.to(DEVICE),
+        y_t.to(DEVICE),
+        w_t.to(DEVICE),
+        X_val.to(DEVICE),
+        y_val.to(DEVICE),
+        w_val.to(DEVICE),
+        VALIDATION_STRING,
+    )
 
 
 def train_wrapper(

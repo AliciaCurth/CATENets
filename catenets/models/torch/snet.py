@@ -170,7 +170,6 @@ class BaseSNet(BaseCATEEstimator):
         w: torch.Tensor of shape (n_samples,)
             The treatment indicator
         """
-
         X = torch.Tensor(X).to(DEVICE)
         y = torch.Tensor(y).squeeze().to(DEVICE)
         w = torch.Tensor(w).squeeze().long().to(DEVICE)
@@ -178,7 +177,7 @@ class BaseSNet(BaseCATEEstimator):
         X, y, w, X_val, y_val, w_val, val_string = make_val_split(
             X, y, w=w, val_split_prop=self.val_split_prop, seed=self.seed
         )
-        y_val = y_val.squeeze()
+
         n = X.shape[0]  # could be different from before due to split
 
         # calculate number of batches per epoch
