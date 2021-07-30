@@ -113,6 +113,7 @@ def test_sklearn_model_pseudo_outcome_binary(
         binary_y=True,
         po_estimator=po_estimator,
         te_estimator=te_estimator,
+        batch_size=1024,
     )
 
     score = evaluate_treatments_model(

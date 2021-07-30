@@ -237,7 +237,7 @@ class PseudoOutcomeLearner(BaseCATEEstimator):
             n_splits=self.n_folds, shuffle=True, random_state=self.seed
         )
 
-        for train_index, test_index in splitter.split(X, w):
+        for train_index, test_index in splitter.split(X.cpu(), w.cpu()):
             # create masks
             pred_mask = torch.zeros(n, dtype=bool).to(DEVICE)
             pred_mask[test_index] = 1
