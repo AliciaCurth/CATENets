@@ -315,7 +315,7 @@ class DragonNet(BaseSNet):
         n_unit_in: int,
         binary_y: bool = False,
         n_units_out_prop: int = DEFAULT_UNITS_OUT,
-        n_layers_out_prop: int = DEFAULT_LAYERS_OUT,
+        n_layers_out_prop: int = 0,
         nonlin: str = DEFAULT_NONLIN,
         n_units_r: int = DEFAULT_UNITS_R,
         **kwargs: Any,

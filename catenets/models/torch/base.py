@@ -254,9 +254,23 @@ class PropensityNet(nn.Module):
         layers = [
             nn.Linear(in_features=n_unit_in, out_features=n_units_out_prop),
             NL(),
-            nn.Linear(in_features=n_units_out_prop, out_features=n_unit_out),
-            nn.Softmax(dim=-1),
         ]
+
+        for i in range(n_layers_out_prop):
+            layers.extend(
+                [
+                    nn.Linear(
+                        in_features=n_units_out_prop, out_features=n_units_out_prop
+                    ),
+                    NL(),
+                ]
+            )
+        layers.extend(
+            [
+                nn.Linear(in_features=n_units_out_prop, out_features=n_unit_out),
+                nn.Softmax(dim=-1),
+            ]
+        )
 
         self.model = nn.Sequential(*layers).to(DEVICE)
         self.name = name
