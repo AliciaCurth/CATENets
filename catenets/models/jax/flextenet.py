@@ -12,7 +12,6 @@ from jax.experimental import optimizers
 from jax.experimental.stax import Dense, Sigmoid, elu, glorot_normal, normal, serial
 
 import catenets.logger as log
-from catenets.models.base import BaseCATENet
 from catenets.models.constants import (
     DEFAULT_BATCH_SIZE,
     DEFAULT_LAYERS_OUT,
@@ -29,7 +28,8 @@ from catenets.models.constants import (
     DEFAULT_VAL_SPLIT,
     LARGE_VAL,
 )
-from catenets.models.model_utils import check_shape_1d_data, make_val_split
+from catenets.models.jax.base import BaseCATENet
+from catenets.models.jax.model_utils import check_shape_1d_data, make_val_split
 
 N_SUBSPACES = 3
 DEFAULT_DIM_S_OUT = 50

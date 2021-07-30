@@ -7,7 +7,6 @@ from typing import Callable, Optional, Tuple
 import jax.numpy as jnp
 
 import catenets.logger as log
-from catenets.models.base import BaseCATENet, train_output_net_only
 from catenets.models.constants import (
     DEFAULT_AVG_OBJECTIVE,
     DEFAULT_BATCH_SIZE,
@@ -30,8 +29,9 @@ from catenets.models.constants import (
     DEFAULT_UNITS_R_T,
     DEFAULT_VAL_SPLIT,
 )
-from catenets.models.model_utils import check_shape_1d_data, check_X_is_np
-from catenets.models.pseudo_outcome_nets import (  # same strategies as other nets
+from catenets.models.jax.base import BaseCATENet, train_output_net_only
+from catenets.models.jax.model_utils import check_shape_1d_data, check_X_is_np
+from catenets.models.jax.pseudo_outcome_nets import (  # same strategies as other nets
     ALL_STRATEGIES,
     FLEX_STRATEGY,
     OFFSET_STRATEGY,
@@ -416,6 +416,9 @@ def _get_first_stage_pos(
     if first_stage_args is None:
         first_stage_args = {}
 
+    train_fun: Callable
+    predict_fun: Callable
+
     if first_stage_strategy == T_STRATEGY:
         train_fun, predict_fun = train_tnet, predict_t_net
     elif first_stage_strategy == S_STRATEGY:
@@ -476,6 +479,9 @@ def predict_x_net(
 
     params_tau0, params_tau1, params_prop = trained_params
     predict_fun_tau0, predict_fun_tau1, predict_fun_prop = predict_funs
+
+    tau0_pred: jnp.ndarray
+    tau1_pred: jnp.ndarray
 
     if not weight_strategy == 0:
         tau0_pred = predict_fun_tau0(params_tau0, X)

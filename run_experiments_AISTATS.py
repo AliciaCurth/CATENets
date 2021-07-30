@@ -3,10 +3,14 @@ Author: Alicia Curth
 File to run AISTATS experiments from shell
 """
 import argparse
+import sys
 from typing import Any
 
+import catenets.logger as log
 from experiments.experiments_AISTATS21.ihdp_experiments import do_ihdp_experiments
 from experiments.experiments_AISTATS21.simulations_AISTATS import main_AISTATS
+
+log.add(sink=sys.stderr, level="DEBUG")
 
 
 def init_arg() -> Any:

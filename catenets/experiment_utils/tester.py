@@ -7,7 +7,7 @@ import numpy as np
 import torch
 from sklearn.model_selection import KFold, StratifiedKFold
 
-from catenets.experiments.torch.metrics import abs_error_ATE, sqrt_PEHE
+from catenets.experiment_utils.metrics import abs_error_ATE, sqrt_PEHE
 
 
 def generate_score(metric: np.ndarray) -> Tuple[float, float]:
@@ -47,9 +47,9 @@ def evaluate_treatments_model(
         Y_full_test = Y_full[test_index]
 
         model = copy.deepcopy(estimator)
-        model.train(X_train, Y_train, W_train)
+        model.fit(X_train, Y_train, W_train)
 
-        y_pred = model(X_test)
+        y_pred = np.asarray(model.predict(X_test))
         metric_ate[indx] = abs_error_ATE(Y_full_test, y_pred)
         metric_pehe[indx] = sqrt_PEHE(Y_full_test, y_pred)
         indx += 1

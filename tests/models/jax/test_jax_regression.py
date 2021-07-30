@@ -5,7 +5,7 @@ import numpy as np
 import pytest
 from sklearn.model_selection import train_test_split
 
-from catenets.experiments.jax.experiment_utils import get_model_set
+from catenets.experiment_utils.base import get_model_set
 
 try:
     from medicaldata.Twins import download, load

@@ -4,7 +4,8 @@ import numpy as np
 import pytest
 
 from catenets.datasets import load
-from catenets.experiments.jax.experiment_utils import get_model_set
+from catenets.experiment_utils.base import get_model_set
+from catenets.experiment_utils.tester import evaluate_treatments_model
 
 LAYERS_OUT = 2
 LAYERS_R = 3
@@ -39,10 +40,6 @@ def test_model_sanity(dataset: str, pehe_threshold: float, model_name: str) -> N
 
     X_train, W_train, Y_train, Y_train_full, X_test, Y_test = load(dataset)
 
-    model.fit(X=X_train, y=Y_train, w=W_train)
-
-    cate_pred = model.predict(X_test, return_po=False)
-
-    pehe = sqrt_PEHE(Y_test, cate_pred)
-    print(f"PEHE score for model jax.{model_name} on {dataset} = {pehe}")
-    assert pehe < pehe_threshold
+    score = evaluate_treatments_model(model, X_train, Y_train, Y_train_full, W_train)
+    print(f"Evaluation for model jax.{model_name} on {dataset} = {score['str']}")
+    assert score["raw"]["pehe"][0] < pehe_threshold

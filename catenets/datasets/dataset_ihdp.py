@@ -42,7 +42,11 @@ def load_data_npz(fname: Path, get_po: bool = True) -> dict:
 
 
 def prepare_ihdp_data(
-    data_train: dict, data_test: dict, rescale: bool = True, return_pos: bool = False
+    data_train: dict,
+    data_test: dict,
+    rescale: bool = True,
+    setting: str = "C",
+    return_pos: bool = False,
 ) -> Tuple:
     """Prepare data"""
 
@@ -61,6 +65,10 @@ def prepare_ihdp_data(
         data_test["mu0"],
         data_test["mu1"],
     )
+    if setting == "D":
+        y[w == 1] = y[w == 1] + mu0[w == 1]
+        mu1 = mu0 + mu1
+        mu1_t = mu0_t + mu1_t
 
     if rescale:
         # rescale all outcomes to have similar scale of CATEs if sd_cate > 1
