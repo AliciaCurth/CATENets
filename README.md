@@ -1,7 +1,6 @@
 # CATENets - Conditional Average Treatment Effect Estimation Using Neural Networks
 
 [![Tests](https://github.com/vanderschaarlab/mlforhealthlabpub/actions/workflows/test_catenets.yml/badge.svg)](https://github.com/vanderschaarlab/mlforhealthlabpub/actions/workflows/test_catenets.yml)
-[![Slack](https://img.shields.io/badge/chat-on%20slack-7A5979.svg)](https://vanderschaarlab.slack.com/messages/general)
 [![License](https://img.shields.io/badge/License-BSD%203--Clause-blue.svg)](https://github.com/vanderschaarlab/mlforhealthlabpub/blob/main/LICENSE.md)
 
 
@@ -28,7 +27,7 @@ The repo contains a package ``catenets``, which contains all general code used f
 Example usage:
 
 ```python
-from catenets.models import TNet, SNet
+from catenets.models.jax import TNet, SNet
 from catenets.experiment_utils.simulation_utils import simulate_treatment_setup
 
 # simulate some data (here: unconfounded, 10 prognostic variables and 5 predictive variables)
