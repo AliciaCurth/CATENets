@@ -1,6 +1,7 @@
 # CATENets - Conditional Average Treatment Effect Estimation Using Neural Networks
 
 [![Tests](https://github.com/vanderschaarlab/mlforhealthlabpub/actions/workflows/test_catenets.yml/badge.svg)](https://github.com/vanderschaarlab/mlforhealthlabpub/actions/workflows/test_catenets.yml)
+[![Documentation Status](https://readthedocs.org/projects/catenets/badge/?version=latest)](https://catenets.readthedocs.io/en/latest/?badge=latest)
 [![License](https://img.shields.io/badge/License-BSD%203--Clause-blue.svg)](https://github.com/vanderschaarlab/mlforhealthlabpub/blob/main/LICENSE.md)
 
 
