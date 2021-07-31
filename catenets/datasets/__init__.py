@@ -1,7 +1,7 @@
 # stdlib
 import os
 from pathlib import Path
-from typing import Tuple
+from typing import Any, Tuple
 
 from . import dataset_ihdp, dataset_twins
 
@@ -13,7 +13,7 @@ except BaseException:
     pass
 
 
-def load(dataset: str, train_split: float = 0.8) -> Tuple:
+def load(dataset: str, *args: Any, **kwargs: Any) -> Tuple:
     """
     Input:
         dataset: the name of the dataset to load
@@ -24,8 +24,8 @@ def load(dataset: str, train_split: float = 0.8) -> Tuple:
         - Test_Y: Potential outcomes.
     """
     if dataset == "twins":
-        return dataset_twins.load(DATA_PATH, train_split)
+        return dataset_twins.load(DATA_PATH, *args, **kwargs)
     if dataset == "ihdp":
-        return dataset_ihdp.load(DATA_PATH, train_split)
+        return dataset_ihdp.load(DATA_PATH, *args, **kwargs)
     else:
         raise Exception("Unsupported dataset")
