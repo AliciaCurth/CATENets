@@ -323,7 +323,7 @@ class SNet(BaseCATEEstimator):
         return self
 
     def _ortho_reg(self) -> float:
-        orth_loss = torch.zeros(1)
+        orth_loss = torch.zeros(1).to(DEVICE)
         for name, param in self.named_parameters():
             if "bias" in name:
                 continue
