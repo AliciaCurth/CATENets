@@ -41,7 +41,7 @@ def test_model_params() -> None:
     assert len(model._propensity_estimator.model) == 8
 
 
-@pytest.mark.parametrize("nonlin", ["elu", "relu", "sigmoid"])
+@pytest.mark.parametrize("nonlin", ["elu", "relu", "sigmoid", "selu", "leaky_relu"])
 def test_model_params_nonlin(nonlin: str) -> None:
     model = SNet(2, nonlin=nonlin)
 
@@ -49,6 +49,8 @@ def test_model_params_nonlin(nonlin: str) -> None:
         "elu": nn.ELU,
         "relu": nn.ReLU,
         "sigmoid": nn.Sigmoid,
+        "selu": nn.SELU,
+        "leaky_relu": nn.LeakyReLU,
     }
 
     for mod in [
@@ -70,7 +72,7 @@ def test_model_sanity(dataset: str, pehe_threshold: float) -> None:
     X_train, W_train, Y_train, Y_train_full, X_test, Y_test = load(dataset)
     W_train = W_train.ravel()
 
-    model = SNet(X_train.shape[1], batch_size=1024)
+    model = SNet(X_train.shape[1], batch_size=1024, n_iter=1500)
 
     score = evaluate_treatments_model(
         model, X_train, Y_train, Y_train_full, W_train, n_folds=3

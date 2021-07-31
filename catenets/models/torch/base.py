@@ -35,6 +35,7 @@ NONLIN = {
     "elu": nn.ELU,
     "relu": nn.ReLU,
     "leaky_relu": nn.LeakyReLU,
+    "selu": nn.SELU,
     "sigmoid": nn.Sigmoid,
 }
 
@@ -88,7 +89,7 @@ class BasicNet(nn.Module):
         super(BasicNet, self).__init__()
 
         self.name = name
-        if nonlin not in ["elu", "relu", "leaky_relu", "sigmoid"]:
+        if nonlin not in list(NONLIN.keys()):
             raise ValueError("Unknown nonlinearity")
 
         NL = NONLIN[nonlin]
@@ -215,7 +216,7 @@ class RepresentationNet(nn.Module):
         nonlin: str = DEFAULT_NONLIN,
     ) -> None:
         super(RepresentationNet, self).__init__()
-        if nonlin not in ["elu", "relu", "sigmoid"]:
+        if nonlin not in list(NONLIN.keys()):
             raise ValueError("Unknown nonlinearity")
 
         NL = NONLIN[nonlin]
@@ -254,6 +255,8 @@ class PropensityNet(nn.Module):
         n_iter_min: int = DEFAULT_N_ITER_MIN,
     ) -> None:
         super(PropensityNet, self).__init__()
+        if nonlin not in list(NONLIN.keys()):
+            raise ValueError("Unknown nonlinearity")
 
         NL = NONLIN[nonlin]
 

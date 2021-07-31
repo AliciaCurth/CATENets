@@ -126,8 +126,6 @@ class SNet(BaseCATEEstimator):
         penalty_diff: float = DEFAULT_PENALTY_L2,
         seed: int = DEFAULT_SEED,
         nonlin: str = DEFAULT_NONLIN,
-        same_init: bool = False,
-        ortho_reg_type: str = "abs",
     ) -> None:
         super(SNet, self).__init__()
 
@@ -142,7 +140,6 @@ class SNet(BaseCATEEstimator):
         self.reg_diff = reg_diff
         self.penalty_diff = penalty_diff
         self.seed = seed
-        self.ortho_reg_type = ortho_reg_type
 
         self._reps_c = RepresentationNet(
             n_unit_in, n_units=n_units_r, n_layers=n_layers_r, nonlin=nonlin
@@ -305,8 +302,12 @@ class SNet(BaseCATEEstimator):
                     y0_preds, y1_preds, prop_preds, discrepancy = self._step(
                         X_val, w_val
                     )
-                    val_loss = self.loss(
-                        y0_preds, y1_preds, prop_preds, discrepancy, y_val, w_val
+                    val_loss = (
+                        self.loss(
+                            y0_preds, y1_preds, prop_preds, discrepancy, y_val, w_val
+                        )
+                        .detach()
+                        .cpu()
                     )
                     if val_loss_best > val_loss:
                         val_loss_best = val_loss
