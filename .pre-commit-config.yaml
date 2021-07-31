@@ -1,4 +1,4 @@
-exclude: 'setup.py'
+exclude: "source/"
 
 repos:
 - repo: git://github.com/pre-commit/pre-commit-hooks

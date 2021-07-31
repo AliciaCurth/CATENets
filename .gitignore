@@ -17,7 +17,5 @@
 *.cfg
 .pytest_cache
 data/
-build/
 catenets.egg-info/
 dist/
-
