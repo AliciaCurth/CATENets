@@ -160,7 +160,10 @@ def preprocess(
 
     x = np.asarray(df_features[feat_list])
     y0 = np.asarray(df[["outcome(t=0)"]]).reshape((-1,))
+    y0 = np.array(y0 < 9999, dtype=int)
+
     y1 = np.asarray(df[["outcome(t=1)"]]).reshape((-1,))
+    y1 = np.array(y1 < 9999, dtype=int)
 
     # Preprocessing
     scaler = MinMaxScaler()
