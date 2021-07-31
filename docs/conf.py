@@ -18,8 +18,11 @@ import os
 import sys
 import shutil
 import sphinx_rtd_theme
+import subprocess
+
 sys.path.insert(0, os.path.abspath('..'))
 
+subprocess.run(["sphinx-apidoc", "-f", "-o", "generated", "../catenets/"])
 
 # -- Project information -----------------------------------------------------
 
@@ -36,12 +39,18 @@ author = 'Alicia Curth'
 extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.autosummary",
+    "sphinx.ext.napoleon",
     "m2r2",
 ]
 autodoc_default_options = {
     'members': True,
     'inherited-members': True
 }
+
+napoleon_google_docstring = False
+napoleon_use_param = False
+napoleon_use_ivar = True
+
 autosummary_generate = True
 numpydoc_show_class_members = False
 
@@ -75,3 +84,4 @@ def setup(app):
 
 def build_finished(app, exception):
     pass
+
