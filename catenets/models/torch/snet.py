@@ -329,7 +329,7 @@ class SNet(BaseCATEEstimator):
                 continue
             param_flat = param.view(param.shape[0], -1)
             sym = torch.mm(param_flat, torch.t(param_flat))
-            sym -= torch.eye(param_flat.shape[0])
+            sym -= torch.eye(param_flat.shape[0]).to(DEVICE)
             orth_loss += self.penalty_orthogonal * sym.abs().sum()
         return orth_loss
 
