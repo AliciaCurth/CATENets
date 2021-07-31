@@ -6,4 +6,7 @@ Welcome to CATENets's documentation!
 .. toctree::
    :maxdepth: 2
    
-   api
+    JAX models <generated/catenets.models.jax.rst>
+    PyTorch models <generated/catenets.models.torch.rst>
+    Datasets <generated/catenets.datasets.rst>
+    Experiment helpers <generated/catenets.experiment_utils.rst>
