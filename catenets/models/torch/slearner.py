@@ -25,6 +25,7 @@ from catenets.models.torch.base import (
 
 class SLearner(BaseCATEEstimator):
     """
+    S-learner for treatment effect estimation (single learner, treatment indicator just another feature).
 
     Parameters
     ----------
@@ -32,18 +33,20 @@ class SLearner(BaseCATEEstimator):
         Number of features
     binary_y: bool
         Whether the outcome is binary
+    po_estimator: sklearn/PyTorch model, default: None
+        Custom potential outcome model. If this parameter is set, the rest of the parameters are ignored.
     n_layers_out: int
-        Number of hypothesis layers (n_layers_out x n_units_out + 1 x Dense layer)
+        Number of hypothesis layers (n_layers_out x n_units_out + 1 x Linear layer)
     n_layers_out_prop: int
-        Number of hypothesis layers for propensity score(n_layers_out x n_units_out + 1 x Dense
+        Number of hypothesis layers for propensity score(n_layers_out x n_units_out + 1 x Linear
         layer)
     n_units_out: int
         Number of hidden units in each hypothesis layer
     n_units_out_prop: int
         Number of hidden units in each propensity score hypothesis layer
-    penalty_l2: float
+    weight_decay: float
         l2 (ridge) penalty
-    step_size: float
+    lr: float
         learning rate for optimizer
     n_iter: int
         Maximum number of iterations
@@ -56,7 +59,7 @@ class SLearner(BaseCATEEstimator):
     seed: int
         Seed used
     nonlin: string, default 'elu'
-        Nonlinearity to use in NN
+        Nonlinearity to use in the neural net. Can be 'elu', 'relu', 'selu' or 'leaky_relu'.
     weighting_strategy: optional str, None
         Whether to include propensity head and which weightening strategy to use
     """

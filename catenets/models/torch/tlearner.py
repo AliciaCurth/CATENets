@@ -32,7 +32,7 @@ class TLearner(BaseCATEEstimator):
     po_estimator: sklearn/PyTorch model, default: None
         Custom plugin model. If this parameter is set, the rest of the parameters are ignored.
     n_layers_out: int
-        Number of hypothesis layers (n_layers_out x n_units_out + 1 x Dense layer)
+        Number of hypothesis layers (n_layers_out x n_units_out + 1 x Linear layer)
     n_units_out: int
         Number of hidden units in each hypothesis layer
     weight_decay: float
@@ -50,7 +50,7 @@ class TLearner(BaseCATEEstimator):
     seed: int
         Seed used
     nonlin: string, default 'elu'
-        Nonlinearity to use in NN
+        Nonlinearity to use in the neural net. Cat be 'elu', 'relu', 'selu' or 'leaky_relu'.
     """
 
     def __init__(

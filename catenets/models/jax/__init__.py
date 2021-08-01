@@ -1,3 +1,6 @@
+"""
+JAX-based implementations for the CATE estimators.
+"""
 from typing import Any
 
 from catenets.models.jax.disentangled_nets import SNet3

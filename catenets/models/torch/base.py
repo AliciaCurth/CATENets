@@ -42,30 +42,38 @@ NONLIN = {
 
 class BasicNet(nn.Module):
     """
-    Basic NN stub
+    Basic hypothesis neural net.
 
     Parameters
     ----------
-    binary_y: bool, default False
-        Whether the outcome is binary
+    n_unit_in: int
+        Number of features
     n_layers_out: int
-        Number of hypothesis layers (n_layers_out x n_units_out + 1 x Dense layer)
+        Number of hypothesis layers (n_layers_out x n_units_out + 1 x Linear layer)
     n_units_out: int
         Number of hidden units in each hypothesis layer
-    weight_decay: float
-        l2 (ridge) penalty
+    binary_y: bool, default False
+        Whether the outcome is binary. Impacts the loss function.
+    nonlin: string, default 'elu'
+        Nonlinearity to use in NN. Can be 'elu', 'relu', 'selu' or 'leaky_relu'.
     lr: float
-        learning rate for optimizer
+        learning rate for optimizer. step_size equivalent in the JAX version.
+    weight_decay: float
+        l2 (ridge) penalty for the weights.
     n_iter: int
-        Maximum number of iterations
+        Maximum number of iterations.
     batch_size: int
         Batch size
     n_iter_print: int
-        Number of iterations after which to print updates
+        Number of iterations after which to print updates and check the validation loss.
     seed: int
         Seed used
-    nonlin: string, default 'elu'
-        Nonlinearity to use in NN
+    val_split_prop: float
+        Proportion of samples used for validation split (can be 0)
+    patience: int
+        Number of iterations to wait before early stopping after decrease in validation loss
+    n_iter_min: int
+        Minimum number of iterations to go through before starting early stopping
     """
 
     def __init__(
@@ -208,6 +216,21 @@ class BasicNet(nn.Module):
 
 
 class RepresentationNet(nn.Module):
+    """
+    Basic representation neural net
+
+    Parameters
+    ----------
+    n_unit_in: int
+        Number of features
+    n_layers: int
+        Number of shared representation layers before hypothesis layers
+    n_units: int
+        Number of hidden units in each representation layer
+    nonlin: string, default 'elu'
+        Nonlinearity to use in NN. Can be 'elu', 'relu', 'selu' or 'leaky_relu'.
+    """
+
     def __init__(
         self,
         n_unit_in: int,
@@ -235,6 +258,46 @@ class RepresentationNet(nn.Module):
 
 
 class PropensityNet(nn.Module):
+    """
+    Basic propensity neural net
+
+    Parameters
+    ----------
+    name: str
+        Display name
+    n_unit_in: int
+        Number of features
+    n_unit_out: int
+        Number of output features
+    weighting_strategy: str
+        Weighting strategy
+    n_units_out_prop: int
+        Number of hidden units in each propensity score hypothesis layer
+    n_layers_out_prop: int
+        Number of hypothesis layers for propensity score(n_layers_out x n_units_out + 1 x Dense
+        layer)
+    nonlin: string, default 'elu'
+        Nonlinearity to use in NN. Can be 'elu', 'relu', 'selu' or 'leaky_relu'.
+    lr: float
+        learning rate for optimizer. step_size equivalent in the JAX version.
+    weight_decay: float
+        l2 (ridge) penalty for the weights.
+    n_iter: int
+        Maximum number of iterations.
+    batch_size: int
+        Batch size
+    n_iter_print: int
+        Number of iterations after which to print updates and check the validation loss.
+    seed: int
+        Seed used
+    val_split_prop: float
+        Proportion of samples used for validation split (can be 0)
+    patience: int
+        Number of iterations to wait before early stopping after decrease in validation loss
+    n_iter_min: int
+        Minimum number of iterations to go through before starting early stopping
+    """
+
     def __init__(
         self,
         name: str,
@@ -243,13 +306,13 @@ class PropensityNet(nn.Module):
         weighting_strategy: str,
         n_units_out_prop: int = DEFAULT_UNITS_OUT,
         n_layers_out_prop: int = 0,
-        weight_decay: float = DEFAULT_PENALTY_L2,
+        nonlin: str = DEFAULT_NONLIN,
         lr: float = DEFAULT_STEP_SIZE,
+        weight_decay: float = DEFAULT_PENALTY_L2,
         n_iter: int = DEFAULT_N_ITER,
         batch_size: int = DEFAULT_BATCH_SIZE,
         n_iter_print: int = DEFAULT_N_ITER_PRINT,
         seed: int = DEFAULT_SEED,
-        nonlin: str = DEFAULT_NONLIN,
         val_split_prop: float = DEFAULT_VAL_SPLIT,
         patience: int = DEFAULT_PATIENCE,
         n_iter_min: int = DEFAULT_N_ITER_MIN,
@@ -378,7 +441,9 @@ class PropensityNet(nn.Module):
 
 class BaseCATEEstimator(nn.Module):
     """
-    Interface for estimators of CATE
+    Interface for estimators of CATE.
+
+    The interface has train/forward API for PyTorch-based models and fit/predict API for sklearn-based models.
     """
 
     def __init__(
@@ -422,7 +487,7 @@ class BaseCATEEstimator(nn.Module):
     @benchmark
     def forward(self, X: torch.Tensor) -> torch.Tensor:
         """
-        Predict treatment effect estimates using a CATEModel.
+        Predict treatment effect estimates using a CATE estimator.
 
         Parameters
         ----------

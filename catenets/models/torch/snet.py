@@ -48,28 +48,24 @@ class SNet(BaseCATEEstimator):
         Number of features
     binary_y: bool, default False
         Whether the outcome is binary
+    n_layers_r: int
+        Number of shared & private representation layers before the hypothesis layers.
+    n_units_r: int
+        Number of hidden units in representation shared before the hypothesis layer.
     n_layers_out: int
-        Number of hypothesis layers (n_layers_out x n_units_out + 1 x Dense layer)
+        Number of hypothesis layers (n_layers_out x n_units_out + 1 x Linear layer)
     n_layers_out_prop: int
-        Number of hypothesis layers for propensity score(n_layers_out x n_units_out + 1 x Dense
+        Number of hypothesis layers for propensity score(n_layers_out x n_units_out + 1 x Linear
         layer)
     n_units_out: int
         Number of hidden units in each hypothesis layer
     n_units_out_prop: int
         Number of hidden units in each propensity score hypothesis layer
-    n_layers_r: int
-        Number of shared & private representation layers before hypothesis layers
-    n_units_r: int
-        If withprop=True: Number of hidden units in representation layer shared by propensity score
-        and outcome  function (the 'confounding factor') and in the ('instrumental factor')
-        If withprop=False: Number of hidden units in representation shared across PO function
     n_units_r_small: int
-        If withprop=True: Number of hidden units in representation layer of the 'outcome factor'
-        and each PO functions private representation
-        if withprop=False: Number of hidden units in each PO functions private representation
-    penalty_l2: float
+        Number of hidden units in each PO functions private representation
+    weight_decay: float
         l2 (ridge) penalty
-    step_size: float
+    lr: float
         learning rate for optimizer
     n_iter: int
         Maximum number of iterations
@@ -77,8 +73,6 @@ class SNet(BaseCATEEstimator):
         Batch size
     val_split_prop: float
         Proportion of samples used for validation split (can be 0)
-    early_stopping: bool, default True
-        Whether to use early stopping
     patience: int
         Number of iterations to wait before early stopping after decrease in validation loss
     n_iter_min: int
@@ -87,20 +81,10 @@ class SNet(BaseCATEEstimator):
         Number of iterations after which to print updates
     seed: int
         Seed used
-    reg_diff: bool, default False
-        Whether to regularize the difference between the two potential outcome heads
-    penalty_diff: float
-        l2-penalty for regularizing the difference between output heads. used only if
-        train_separate=False
-    same_init: bool, False
-        Whether to initialise the two output heads with same values
     nonlin: string, default 'elu'
-        Nonlinearity to use in NN
+        Nonlinearity to use in the neural net. Can be 'elu', 'relu', 'selu' or 'leaky_relu'.
     penalty_disc: float, default zero
         Discrepancy penalty. Defaults to zero as this feature is not tested.
-    ortho_reg_type: str, 'abs'
-        Which type of orthogonalization to use. 'abs' uses the (hard) disentanglement described
-        in AISTATS paper, 'fro' uses frobenius norm as in FlexTENet
     """
 
     def __init__(
@@ -122,8 +106,6 @@ class SNet(BaseCATEEstimator):
         batch_size: int = DEFAULT_BATCH_SIZE,
         val_split_prop: float = DEFAULT_VAL_SPLIT,
         n_iter_print: int = DEFAULT_N_ITER_PRINT,
-        reg_diff: bool = False,
-        penalty_diff: float = DEFAULT_PENALTY_L2,
         seed: int = DEFAULT_SEED,
         nonlin: str = DEFAULT_NONLIN,
     ) -> None:
@@ -137,8 +119,6 @@ class SNet(BaseCATEEstimator):
         self.batch_size = batch_size
         self.val_split_prop = val_split_prop
         self.n_iter_print = n_iter_print
-        self.reg_diff = reg_diff
-        self.penalty_diff = penalty_diff
         self.seed = seed
 
         self._reps_c = RepresentationNet(

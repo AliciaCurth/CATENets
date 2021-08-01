@@ -1,3 +1,6 @@
+"""
+PyTorch-based implementations for the CATE estimators.
+"""
 from .pseudo_outcome_nets import (
     DRLearner,
     PWLearner,

@@ -1,3 +1,6 @@
+"""
+Utilities and helpers for retrieving the datasets
+"""
 # stdlib
 import tarfile
 import urllib.request
@@ -10,6 +13,13 @@ from google_drive_downloader import GoogleDriveDownloader as gdd
 def download_gdrive_if_needed(path: Path, file_id: str) -> None:
     """
     Helper for downloading a file from Google Drive, if it is now already on the disk.
+
+    Parameters
+    ----------
+    path: Path
+        Where to download the file
+    file_id: str
+        Google Drive File ID. Details: https://developers.google.com/drive/api/v3/about-files
     """
     path = Path(path)
 
@@ -22,6 +32,13 @@ def download_gdrive_if_needed(path: Path, file_id: str) -> None:
 def download_http_if_needed(path: Path, url: str) -> None:
     """
     Helper for downloading a file, if it is now already on the disk.
+
+    Parameters
+    ----------
+    path: Path
+        Where to download the file.
+    url: URL string
+        HTTP URL for the dataset.
     """
     path = Path(path)
 
@@ -38,6 +55,13 @@ def download_http_if_needed(path: Path, url: str) -> None:
 def unarchive_if_needed(path: Path, output_folder: Path) -> None:
     """
     Helper for uncompressing archives. Supports .tar.gz and .tar.
+
+    Parameters
+    ----------
+    path: Path
+        Source archive.
+    output_folder: Path
+        Where to unarchive.
     """
     if str(path).endswith(".tar.gz"):
         tar = tarfile.open(path, "r:gz")
@@ -61,17 +85,18 @@ def download_if_needed(
     """
     Helper for retrieving online datasets.
 
-    Args:
-        download_path: str
-            Where to download the archive
-        file_id: str, optional
-            Set this if you want to download from a public Google drive share
-        http_url: str, optional
-            Set this if you want to download from a HTTP URL
-        unarchive: bool
-            Set this if you want to try to unarchive the downloaded file
-        unarchive_folder: str
-            Mandatory if you set unarchive to True.
+    Parameters
+    ----------
+    download_path: str
+        Where to download the archive
+    file_id: str, optional
+        Set this if you want to download from a public Google drive share
+    http_url: str, optional
+        Set this if you want to download from a HTTP URL
+    unarchive: bool
+        Set this if you want to try to unarchive the downloaded file
+    unarchive_folder: str
+        Mandatory if you set unarchive to True.
     """
     if file_id is not None:
         download_gdrive_if_needed(download_path, file_id)

@@ -37,6 +37,7 @@ EPS = 1e-8
 
 class BasicDragonNet(BaseCATEEstimator):
     """
+    Base class for TARNet and DragonNet.
 
     Parameters
     ----------
@@ -53,14 +54,12 @@ class BasicDragonNet(BaseCATEEstimator):
     n_units_out: int
         Number of hidden units in each hypothesis layer
     n_layers_r: int
-        Number of shared & private representation layers before hypothesis layers
+        Number of shared & private representation layers before the hypothesis layers.
     n_units_r: int
-        If withprop=True: Number of hidden units in representation layer shared by propensity score
-        and outcome  function (the 'confounding factor') and in the ('instrumental factor')
-        If withprop=False: Number of hidden units in representation shared across PO function
-    penalty_l2: float
+        Number of hidden units in representation before the hypothesis layers.
+    weight_decay: float
         l2 (ridge) penalty
-    step_size: float
+    lr: float
         learning rate for optimizer
     n_iter: int
         Maximum number of iterations
@@ -73,7 +72,7 @@ class BasicDragonNet(BaseCATEEstimator):
     seed: int
         Seed used
     nonlin: string, default 'elu'
-        Nonlinearity to use in NN
+        Nonlinearity to use in the neural net. Can be 'elu', 'relu', 'selu', 'leaky_relu'.
     weighting_strategy: optional str, None
         Whether to include propensity head and which weightening strategy to use
     """
@@ -94,8 +93,6 @@ class BasicDragonNet(BaseCATEEstimator):
         batch_size: int = DEFAULT_BATCH_SIZE,
         val_split_prop: float = DEFAULT_VAL_SPLIT,
         n_iter_print: int = DEFAULT_N_ITER_PRINT,
-        n_units_out_prop: int = DEFAULT_UNITS_OUT,
-        n_layers_out_prop: int = DEFAULT_LAYERS_OUT,
         seed: int = DEFAULT_SEED,
         nonlin: str = DEFAULT_NONLIN,
         weighting_strategy: Optional[str] = None,
@@ -166,7 +163,7 @@ class BasicDragonNet(BaseCATEEstimator):
         w: torch.Tensor,
     ) -> "BasicDragonNet":
         """
-        Fit treatment models.
+        Fit the treatment models.
 
         Parameters
         ----------
@@ -261,7 +258,7 @@ class BasicDragonNet(BaseCATEEstimator):
 
     def forward(self, X: torch.Tensor) -> torch.Tensor:
         """
-        Predict treatment effects and potential outcomes
+        Predict the treatment effects
 
         Parameters
         ----------
@@ -280,6 +277,10 @@ class BasicDragonNet(BaseCATEEstimator):
 
 
 class TARNet(BasicDragonNet):
+    """
+    Class implements Shalit et al (2017)'s TARNet
+    """
+
     def __init__(
         self,
         n_unit_in: int,
@@ -303,8 +304,6 @@ class TARNet(BasicDragonNet):
             n_unit_in,
             propensity_estimator,
             binary_y=binary_y,
-            n_layers_out_prop=n_layers_out_prop,
-            n_units_out_prop=n_units_out_prop,
             nonlin=nonlin,
             **kwargs,
         )
@@ -317,6 +316,10 @@ class TARNet(BasicDragonNet):
 
 
 class DragonNet(BasicDragonNet):
+    """
+    Class implements a variant based on Shi et al (2019)'s DragonNet.
+    """
+
     def __init__(
         self,
         n_unit_in: int,
@@ -341,8 +344,6 @@ class DragonNet(BasicDragonNet):
             n_unit_in,
             propensity_estimator,
             binary_y=binary_y,
-            n_layers_out_prop=n_layers_out_prop,
-            n_units_out_prop=n_units_out_prop,
             nonlin=nonlin,
             **kwargs,
         )

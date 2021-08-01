@@ -15,8 +15,10 @@ from catenets.models.constants import (
     DEFAULT_LAYERS_R,
     DEFAULT_LAYERS_R_T,
     DEFAULT_N_ITER,
+    DEFAULT_N_ITER_MIN,
     DEFAULT_N_ITER_PRINT,
     DEFAULT_NONLIN,
+    DEFAULT_PATIENCE,
     DEFAULT_PENALTY_L2,
     DEFAULT_SEED,
     DEFAULT_STEP_SIZE,
@@ -57,12 +59,18 @@ class PseudoOutcomeLearner(BaseCATEEstimator):
         Custom potential outcome model. If this parameter is set, the rest of the parameters are ignored.
     te_estimator: sklearn/PyTorch model, default: None
         Custom treatment effects model. If this parameter is set, the rest of the parameters are ignored.
+    n_folds: int, default 1
+        Number of cross-fitting folds. If 1, no cross-fitting
     n_layers_out: int
-        First stage Number of hypothesis layers (n_layers_out x n_units_out + 1 x Dense layer)
+        First stage Number of hypothesis layers (n_layers_out x n_units_out + 1 x Linear layer)
     n_units_out: int
         First stage Number of hidden units in each hypothesis layer
+    n_layers_r: int
+        Number of shared & private representation layers before hypothesis layers
+    n_units_r: int
+        Number of hidden units in representation shared before the hypothesis layers.
     n_layers_out_t: int
-        Second stage Number of hypothesis layers (n_layers_out x n_units_out + 1 x Dense layer)
+        Second stage Number of hypothesis layers (n_layers_out x n_units_out + 1 x Linear layer)
     n_units_out_t: int
         Second stage Number of hidden units in each hypothesis layer
     n_layers_out_prop: int
@@ -70,13 +78,13 @@ class PseudoOutcomeLearner(BaseCATEEstimator):
         layer)
     n_units_out_prop: int
         Number of hidden units in each propensity score hypothesis layer
-    penalty_l2: float
+    weight_decay: float
         First stage l2 (ridge) penalty
-    penalty_l2_t: float
+    weight_decay_t: float
         Second stage l2 (ridge) penalty
-    step_size: float
+    lr: float
         First stage learning rate for optimizer
-    step_size_t: float
+    lr_: float
         Second stage learning rate for optimizer
     n_iter: int
         Maximum number of iterations
@@ -84,16 +92,18 @@ class PseudoOutcomeLearner(BaseCATEEstimator):
         Batch size
     val_split_prop: float
         Proportion of samples used for validation split (can be 0)
-    early_stopping: bool, default True
-        Whether to use early stopping
     n_iter_print: int
         Number of iterations after which to print updates
     seed: int
         Seed used
     nonlin: string, default 'elu'
-        Nonlinearity to use in NN
-    n_folds: int, default 1
-        Number of cross-fitting folds. If 1, no cross-fitting
+        Nonlinearity to use in NN. Can be 'elu', 'relu', 'selu' or 'leaky_relu'.
+    weighting_strategy: str, default "prop"
+        Weighting strategy. Can be "prop" or "1-prop".
+    patience: int
+        Number of iterations to wait before early stopping after decrease in validation loss
+    n_iter_min: int
+        Minimum number of iterations to go through before starting early stopping
     """
 
     def __init__(
@@ -124,6 +134,8 @@ class PseudoOutcomeLearner(BaseCATEEstimator):
         seed: int = DEFAULT_SEED,
         nonlin: str = DEFAULT_NONLIN,
         weighting_strategy: Optional[str] = "prop",
+        patience: int = DEFAULT_PATIENCE,
+        n_iter_min: int = DEFAULT_N_ITER_MIN,
     ):
         super(PseudoOutcomeLearner, self).__init__()
         self.n_unit_in = n_unit_in
@@ -145,6 +157,10 @@ class PseudoOutcomeLearner(BaseCATEEstimator):
         self.nonlin = nonlin
         self.lr = lr
         self.n_folds = n_folds
+        self.patience = patience
+        self.n_iter_min = n_iter_min
+        self.n_layers_out_t = n_layers_out_t
+        self.n_units_out_t = n_units_out_t
 
         # set estimators
         self._te_template = te_estimator
@@ -164,14 +180,16 @@ class PseudoOutcomeLearner(BaseCATEEstimator):
             binary_y=False,
             n_layers_out=self.n_layers_out,
             n_units_out=self.n_units_out,
-            weight_decay=self.weight_decay_t,
-            lr=self.lr_t,
+            weight_decay=self.weight_decay,
+            lr=self.lr,
             n_iter=self.n_iter,
             batch_size=self.batch_size,
             val_split_prop=self.val_split_prop,
             n_iter_print=self.n_iter_print,
             seed=self.seed,
             nonlin=self.nonlin,
+            patience=self.patience,
+            n_iter_min=self.n_iter_min,
         ).to(DEVICE)
 
     def _generate_po_estimator(self, name: str = "po_estimator") -> nn.Module:
@@ -182,16 +200,18 @@ class PseudoOutcomeLearner(BaseCATEEstimator):
             name,
             self.n_unit_in,
             binary_y=self.binary_y,
-            n_layers_out=self.n_layers_out,
-            n_units_out=self.n_units_out,
-            weight_decay=self.weight_decay,
-            lr=self.lr,
+            n_layers_out=self.n_layers_out_t,
+            n_units_out=self.n_units_out_t,
+            weight_decay=self.weight_decay_t,
+            lr=self.lr_t,
             n_iter=self.n_iter,
             batch_size=self.batch_size,
             val_split_prop=self.val_split_prop,
             n_iter_print=self.n_iter_print,
             seed=self.seed,
             nonlin=self.nonlin,
+            patience=self.patience,
+            n_iter_min=self.n_iter_min,
         ).to(DEVICE)
 
     def _generate_propensity_estimator(
@@ -219,6 +239,18 @@ class PseudoOutcomeLearner(BaseCATEEstimator):
     def train(
         self, X: torch.Tensor, y: torch.Tensor, w: torch.Tensor
     ) -> "PseudoOutcomeLearner":
+        """
+        Train treatment effects nets.
+
+        Parameters
+        ----------
+        X: array-like of shape (n_samples, n_features)
+            Train-sample features
+        y: array-like of shape (n_samples,)
+            Train-sample labels
+        w: array-like of shape (n_samples,)
+            Train-sample treatments
+        """
         X = torch.Tensor(X).to(DEVICE)
         y = torch.Tensor(y).squeeze().to(DEVICE)
         w = torch.Tensor(w).squeeze().to(DEVICE)

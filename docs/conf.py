@@ -22,8 +22,16 @@ import subprocess
 
 sys.path.insert(0, os.path.abspath('..'))
 
-subprocess.run(["sphinx-apidoc", "-f", "-o", "generated", "../catenets/"])
-
+subprocess.run([
+    "sphinx-apidoc",
+    "--ext-autodoc",
+    "--ext-doctest",
+    "--ext-mathjax",
+    "--ext-viewcode",
+    "-e", "-T", "-M",
+    "-F", "-P", "-f",
+    "-o", "generated", "../catenets/"
+    ])
 # -- Project information -----------------------------------------------------
 
 project = 'CATENets'

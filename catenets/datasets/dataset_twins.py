@@ -1,21 +1,8 @@
-""".
-Reference: Jinsung Yoon, James Jordon, Mihaela van der Schaar,
-"GANITE: Estimation of Individualized Treatment Effects using Generative Adversarial Nets",
-International Conference on Learning Representations (ICLR), 2018.
+"""
+Twins dataset
+Load real-world individualized treatment effects estimation datasets
 
-Paper link: https://openreview.net/forum?id=ByKWUeWA-
-
-Last updated Date: April 25th 2020
-Code author: Jinsung Yoon (jsyoon0823@gmail.com)
-
------------------------------
-
-data_loading.py
-
-Note: Load real-world individualized treatment effects estimation datasets
-
-(1) data_loading_twin: Load twins data.
-  - Reference: http://data.nber.org/data/linked-birth-infant-death-data-vital-statistics-data.html
+- Reference: http://data.nber.org/data/linked-birth-infant-death-data-vital-statistics-data.html
 """
 # stdlib
 import random
@@ -45,21 +32,33 @@ def preprocess(
     seed: int = 42,
     treat_prop: float = 0.5,
 ) -> Tuple:
-    """Load twins data.
+    """Helper for preprocessing the Twins dataset.
 
-    Args:
-      - fn_csv: dataset csv
-      - train_ratio: the ratio of training data
-      - treatment_type: the treatment selection strategy
-      - seed: random seed
+    Parameters
+    ----------
+    fn_csv: Path
+        Dataset CSV file path.
+    train_ratio: float
+        The ratio of training data.
+    treatment_type: string
+        The treatment selection strategy.
+    seed: float
+        Random seed.
 
-    Returns:
-      - train_x: features in training data
-      - train_t: treatments in training data
-      - train_y: observed outcomes in training data
-      - train_potential_y: potential outcomes in training data
-      - test_x: features in testing data
-      - test_potential_y: potential outcomes in testing data
+    Returns
+    -------
+    train_x: array or pd.DataFrame
+        Features in training data.
+    train_t: array or pd.DataFrame
+        Treatments in training data.
+    train_y: array or pd.DataFrame
+        Observed outcomes in training data.
+    train_potential_y: array or pd.DataFrame
+        Potential outcomes in training data.
+    test_x: array or pd.DataFrame
+        Features in testing data.
+    test_potential_y: array or pd.DataFrame
+        Potential outcomes in testing data.
     """
 
     # Load original data (11400 patients, 30 features, 2 dimensional potential outcomes)
@@ -209,10 +208,39 @@ def load(
     treat_prop: float = 0.5,
 ) -> Tuple:
     """
-    Download the dataset if needed.
-    Load the dataset.
-    Preprocess the data.
-    Return train/test split.
+    Twins dataset dataloader.
+        - Download the dataset if needed.
+        - Load the dataset.
+        - Preprocess the data.
+        - Return train/test split.
+
+    Parameters
+    ----------
+    data_path: Path
+        Path to the CSV. If it is missing, it will be downloaded.
+    train_ratio: float
+        Train/test ratio
+    treatment_type: str
+        Treatment generation strategy
+    seed: float
+        Random seed
+    treat_prop: float
+        Treatment proportion
+
+    Returns
+    -------
+    train_x: array or pd.DataFrame
+        Features in training data.
+    train_t: array or pd.DataFrame
+        Treatments in training data.
+    train_y: array or pd.DataFrame
+        Observed outcomes in training data.
+    train_potential_y: array or pd.DataFrame
+        Potential outcomes in training data.
+    test_x: array or pd.DataFrame
+        Features in testing data.
+    test_potential_y: array or pd.DataFrame
+        Potential outcomes in testing data.
     """
     csv = data_path / DATASET
 
