@@ -53,6 +53,12 @@ def eval_root_mse(cate_pred: jnp.ndarray, cate_true: jnp.ndarray) -> jnp.ndarray
     return jnp.sqrt(eval_mse(cate_pred, cate_true))
 
 
+def eval_abs_error_ate(cate_pred: jnp.ndarray, cate_true: jnp.ndarray) -> jnp.ndarray:
+    cate_true = check_shape_1d_data(cate_true)
+    cate_pred = check_shape_1d_data(cate_pred)
+    return jnp.abs(jnp.mean(cate_pred) - jnp.mean(cate_true))
+
+
 def get_model_set(
     model_selection: Union[str, list] = "all", model_params: Optional[dict] = None
 ) -> Dict:

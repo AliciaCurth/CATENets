@@ -90,6 +90,6 @@ __all__ = [
 def get_catenet(name: str) -> Any:
     if name not in ALL_MODELS:
         raise ValueError(
-            f"Model name should be in catenets.models.ALL_MODELS You passed {name}"
+            f"Model name should be in catenets.models.jax.ALL_MODELS You passed {name}"
         )
     return MODEL_DICT[name]
