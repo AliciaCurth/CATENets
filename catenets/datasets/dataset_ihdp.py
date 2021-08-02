@@ -203,7 +203,7 @@ def load(data_path: Path, *args: Any, **kwargs: Any) -> Tuple:
     if "exp" in kwargs:
         exp = kwargs["exp"]
     else:
-        exp = random.randint(1, 100)
+        exp = 1
     data_exp = get_one_data_set(data_train, i_exp=exp, get_po=True)
     data_exp_test = get_one_data_set(data_test, i_exp=exp, get_po=True)
 
