@@ -72,7 +72,7 @@ def prepare_ihdp_data(
         Train dataset
     data_test: pd.DataFrame or dict
         Test dataset
-    rescale: bool, default True
+    rescale: bool, default False
         Rescale the outcomes to have similar scale
     setting: str, default C
         Experiment setting
@@ -172,7 +172,7 @@ def get_one_data_set(D: dict, i_exp: int, get_po: bool = True) -> dict:
     return D_exp
 
 
-def load(data_path: Path, *args: Any, **kwargs: Any) -> Tuple:
+def load(data_path: Path, exp: int = 1, rescale: bool = False, **kwargs: Any) -> Tuple:
     """
     Get IHDP train/test datasets with treatments and labels.
 
@@ -199,11 +199,6 @@ def load(data_path: Path, *args: Any, **kwargs: Any) -> Tuple:
     """
     data_train, data_test = load_raw(data_path)
 
-    exp = 1
-    if "exp" in kwargs:
-        exp = kwargs["exp"]
-    else:
-        exp = 1
     data_exp = get_one_data_set(data_train, i_exp=exp, get_po=True)
     data_exp_test = get_one_data_set(data_test, i_exp=exp, get_po=True)
 
@@ -221,7 +216,7 @@ def load(data_path: Path, *args: Any, **kwargs: Any) -> Tuple:
     ) = prepare_ihdp_data(
         data_exp,
         data_exp_test,
-        rescale=True,
+        rescale=rescale,
         return_pos=True,
     )
 
