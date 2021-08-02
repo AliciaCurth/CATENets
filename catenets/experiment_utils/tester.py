@@ -7,7 +7,7 @@ import numpy as np
 import torch
 from sklearn.model_selection import KFold, StratifiedKFold
 
-from catenets.experiment_utils.metrics import abs_error_ATE, sqrt_PEHE
+from catenets.experiment_utils.torch_metrics import abs_error_ATE, sqrt_PEHE
 
 
 def generate_score(metric: np.ndarray) -> Tuple[float, float]:
