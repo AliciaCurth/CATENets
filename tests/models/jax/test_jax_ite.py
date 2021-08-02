@@ -51,3 +51,18 @@ def test_model_sanity(dataset: str, pehe_threshold: float, model_name: str) -> N
     score = evaluate_treatments_model(model, X_train, Y_train, Y_train_full, W_train)
     print(f"Evaluation for model jax.{model_name} on {dataset} = {score['str']}")
     assert score["raw"]["pehe"][0] < pehe_threshold
+
+
+def test_model_score() -> None:
+    model = OffsetNet()
+
+    X_train, W_train, Y_train, Y_train_full, X_test, Y_test = load("ihdp")
+
+    model.fit(X_train[:10], Y_train[:10], W_train[:10])
+
+    result = model.score(X_test, Y_test)
+
+    assert result > 0
+
+    with pytest.raises(ValueError):
+        model.score(X_train, Y_train)  # Y_train has just one outcome

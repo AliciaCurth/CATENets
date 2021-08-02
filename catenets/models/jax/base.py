@@ -107,7 +107,26 @@ class BaseCATENet(BaseEstimator, RegressorMixin, abc.ABC):
         y: jnp.ndarray,
         sample_weight: Optional[jnp.ndarray] = None,
     ) -> float:
-        pass
+        """
+        Return the sqrt PEHE error.
+
+        Parameters
+        ----------
+        X: pd.DataFrame or np.array
+            Covariate matrix
+        y: np.array
+            Expected outcome vector
+        """
+        X = check_X_is_np(X)
+        y = check_X_is_np(y)
+        if len(X) != len(y):
+            raise ValueError("X/y length mismatch for score")
+        if y.shape[-1] != 2:
+            raise ValueError(f"y has invalid shape {y.shape}")
+
+        hat_te = self.predict(X)
+
+        return jnp.sqrt(jnp.mean(((y[:, 1] - y[:, 0]) - hat_te) ** 2))
 
     @abc.abstractmethod
     def _get_train_function(self) -> Callable:
