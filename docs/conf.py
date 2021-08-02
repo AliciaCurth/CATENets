@@ -19,6 +19,7 @@ import sys
 import shutil
 import sphinx_rtd_theme
 import subprocess
+import datetime
 
 sys.path.insert(0, os.path.abspath('..'))
 
@@ -33,10 +34,11 @@ subprocess.run([
     "-o", "generated", "../catenets/"
     ])
 # -- Project information -----------------------------------------------------
+now = datetime.datetime.now()
 
 project = 'CATENets'
-copyright = '2021, Alicia Curth'
 author = 'Alicia Curth'
+copyright = f'{now.year}, {author}'
 
 
 # -- General configuration ---------------------------------------------------
@@ -52,15 +54,13 @@ extensions = [
 ]
 autodoc_default_options = {
     'members': True,
-    'inherited-members': True
+    'inherited-members': False,
+    'inherit_docstrings': False,
 }
 
-napoleon_google_docstring = False
-napoleon_use_param = False
-napoleon_use_ivar = True
 
+add_module_names = False
 autosummary_generate = True
-numpydoc_show_class_members = False
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -82,14 +82,3 @@ html_theme = 'sphinx_rtd_theme'
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ['_static']
-
-def setup(app):
-    import catenets
-
-    catenets.datasets.__name__ = "Datasets"
-    app.connect('build-finished', build_finished)
-
-
-def build_finished(app, exception):
-    pass
-

@@ -59,7 +59,7 @@ def load_data_npz(fname: Path, get_po: bool = True) -> dict:
 def prepare_ihdp_data(
     data_train: dict,
     data_test: dict,
-    rescale: bool = True,
+    rescale: bool = False,
     setting: str = "C",
     return_pos: bool = False,
 ) -> Tuple:
@@ -200,6 +200,10 @@ def load(data_path: Path, *args: Any, **kwargs: Any) -> Tuple:
     data_train, data_test = load_raw(data_path)
 
     exp = 1
+    if "exp" in kwargs:
+        exp = kwargs["exp"]
+    else:
+        exp = random.randint(1, 100)
     data_exp = get_one_data_set(data_train, i_exp=exp, get_po=True)
     data_exp_test = get_one_data_set(data_test, i_exp=exp, get_po=True)
 

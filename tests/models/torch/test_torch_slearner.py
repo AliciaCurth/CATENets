@@ -144,7 +144,7 @@ def test_sklearn_model_sanity_binary_output(
 
 
 @pytest.mark.slow
-@pytest.mark.parametrize("dataset, pehe_threshold", [("ihdp", 1.5)])
+@pytest.mark.parametrize("exp", [1, 10, 40, 50, 99])
 @pytest.mark.parametrize(
     "po_estimator",
     [
@@ -154,10 +154,8 @@ def test_sklearn_model_sanity_binary_output(
         ),
     ],
 )
-def test_sklearn_model_sanity_regression(
-    dataset: str, pehe_threshold: float, po_estimator: Any
-) -> None:
-    X_train, W_train, Y_train, Y_train_full, X_test, Y_test = load(dataset)
+def test_slearner_sklearn_model_ihdp(po_estimator: Any, exp: int) -> None:
+    X_train, W_train, Y_train, Y_train_full, X_test, Y_test = load("ihdp", exp=exp)
     W_train = W_train.ravel()
 
     model = SLearner(
@@ -168,6 +166,6 @@ def test_sklearn_model_sanity_regression(
     score = evaluate_treatments_model(model, X_train, Y_train, Y_train_full, W_train)
 
     print(
-        f"Evaluation for model torch.SLearner with {po_estimator.__class__} on {dataset} = {score['str']}"
+        f"Evaluation for model torch.SLearner with {po_estimator.__class__} on ihdp[{exp}] = {score['str']}"
     )
-    assert score["raw"]["pehe"][0] < pehe_threshold
+    assert score["raw"]["pehe"][0] < 1.5

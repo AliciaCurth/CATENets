@@ -8,7 +8,7 @@ API documentation
 =================
 
 JAX models
-========
+==========
 .. toctree::
     :glob:
     :maxdepth: 2
@@ -16,7 +16,7 @@ JAX models
     jax_models.rst
 
 PyTorch models
-========
+==============
 .. toctree::
     :glob:
     :maxdepth: 2
