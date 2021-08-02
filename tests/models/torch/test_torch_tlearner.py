@@ -173,7 +173,7 @@ def test_model_predict_api() -> None:
     model = TLearner(
         X_train.shape[1],
         binary_y=False,
-        po_estimator=XGBRegressor(),
+        n_iter=100,
     )
     model.fit(X_train, Y_train, W_train)
 
