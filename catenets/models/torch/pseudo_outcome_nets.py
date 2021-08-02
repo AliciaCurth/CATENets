@@ -251,35 +251,42 @@ class PseudoOutcomeLearner(BaseCATEEstimator):
         w: array-like of shape (n_samples,)
             Train-sample treatments
         """
-        X = torch.Tensor(X).to(DEVICE)
-        y = torch.Tensor(y).squeeze().to(DEVICE)
-        w = torch.Tensor(w).squeeze().to(DEVICE)
+        X = self._check_tensor(X).float()
+        y = self._check_tensor(y).squeeze().float()
+        w = self._check_tensor(w).squeeze()
 
         n = len(y)
 
         # STEP 1: fit plug-in estimators via cross-fitting
-        mu_0_pred, mu_1_pred, p_pred = (
-            torch.zeros(n).to(DEVICE),
-            torch.zeros(n).to(DEVICE),
-            torch.zeros(n).to(DEVICE),
-        )
+        if self.n_folds == 1:
+            pred_mask = np.ones(n, dtype=bool)
+            # fit plug-in models
+            mu_0_pred, mu_1_pred, p_pred = self._first_step(
+                X, y, w, pred_mask, pred_mask
+            )
+        else:
+            mu_0_pred, mu_1_pred, p_pred = (
+                torch.zeros(n).to(DEVICE),
+                torch.zeros(n).to(DEVICE),
+                torch.zeros(n).to(DEVICE),
+            )
 
-        # create folds stratified by treatment assignment to ensure balance
-        splitter = StratifiedKFold(
-            n_splits=self.n_folds, shuffle=True, random_state=self.seed
-        )
+            # create folds stratified by treatment assignment to ensure balance
+            splitter = StratifiedKFold(
+                n_splits=self.n_folds, shuffle=True, random_state=self.seed
+            )
 
-        for train_index, test_index in splitter.split(X.cpu(), w.cpu()):
-            # create masks
-            pred_mask = torch.zeros(n, dtype=bool).to(DEVICE)
-            pred_mask[test_index] = 1
+            for train_index, test_index in splitter.split(X.cpu(), w.cpu()):
+                # create masks
+                pred_mask = torch.zeros(n, dtype=bool).to(DEVICE)
+                pred_mask[test_index] = 1
 
-            # fit plug-in te_estimator
-            (
-                mu_0_pred[pred_mask],
-                mu_1_pred[pred_mask],
-                p_pred[pred_mask],
-            ) = self._first_step(X, y, w, ~pred_mask, pred_mask)
+                # fit plug-in te_estimator
+                (
+                    mu_0_pred[pred_mask],
+                    mu_1_pred[pred_mask],
+                    p_pred[pred_mask],
+                ) = self._first_step(X, y, w, ~pred_mask, pred_mask)
 
         # use estimated propensity scores
         if self.weighting_strategy is not None:
