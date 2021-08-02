@@ -108,6 +108,7 @@ class SNet(BaseCATEEstimator):
         n_iter_print: int = DEFAULT_N_ITER_PRINT,
         seed: int = DEFAULT_SEED,
         nonlin: str = DEFAULT_NONLIN,
+        ortho_reg_type: str = "abs",
     ) -> None:
         super(SNet, self).__init__()
 
@@ -120,6 +121,7 @@ class SNet(BaseCATEEstimator):
         self.val_split_prop = val_split_prop
         self.n_iter_print = n_iter_print
         self.seed = seed
+        self.ortho_reg_type = ortho_reg_type
 
         self._reps_c = RepresentationNet(
             n_unit_in, n_units=n_units_r, n_layers=n_layers_r, nonlin=nonlin
@@ -304,15 +306,55 @@ class SNet(BaseCATEEstimator):
         return self
 
     def _ortho_reg(self) -> float:
-        orth_loss = torch.zeros(1).to(DEVICE)
-        for name, param in self.named_parameters():
-            if "bias" in name:
-                continue
-            param_flat = param.view(param.shape[0], -1)
-            sym = torch.mm(param_flat, torch.t(param_flat))
-            sym -= torch.eye(param_flat.shape[0]).to(DEVICE)
-            orth_loss += self.penalty_orthogonal * sym.abs().sum()
-        return orth_loss
+        def _get_absolute_rowsums(mat: torch) -> torch.Tensor:
+            return torch.sum(torch.abs(mat), dim=0)
+
+        def _get_cos_reg(
+            params_0: torch.Tensor, params_1: torch.Tensor
+        ) -> torch.Tensor:
+            return torch.linalg.norm(torch.dot(params_0.T, params_1), "fro") ** 2
+
+        reps_c_params = self._reps_c.model[0].weight
+        reps_o_params = self._reps_o.model[0].weight
+        reps_mu0_params = self._reps_mu0.model[0].weight
+        reps_mu1_params = self._reps_mu1.model[0].weight
+        reps_prop_params = self._reps_prop.model[0].weight
+
+        # define ortho-reg function
+        if self.ortho_reg_type == "abs":
+            col_c = _get_absolute_rowsums(reps_c_params)
+            col_o = _get_absolute_rowsums(reps_o_params)
+            col_mu0 = _get_absolute_rowsums(reps_mu0_params)
+            col_mu1 = _get_absolute_rowsums(reps_mu1_params)
+            col_w = _get_absolute_rowsums(reps_prop_params)
+            return torch.sum(
+                col_c * col_o
+                + col_c * col_w
+                + col_c * col_mu1
+                + col_c * col_mu0
+                + col_w * col_o
+                + col_mu0 * col_o
+                + col_o * col_mu1
+                + col_mu0 * col_mu1
+                + col_mu0 * col_w
+                + col_w * col_mu1
+            )
+
+        elif self.ortho_reg_type == "fro":
+            return (
+                _get_cos_reg(reps_c_params, reps_o_params)
+                + _get_cos_reg(reps_c_params, reps_mu0_params)
+                + _get_cos_reg(reps_c_params, reps_mu1_params)
+                + _get_cos_reg(reps_c_params, reps_prop_params)
+                + _get_cos_reg(reps_o_params, reps_mu0_params)
+                + _get_cos_reg(reps_o_params, reps_mu1_params)
+                + _get_cos_reg(reps_o_params, reps_prop_params)
+                + _get_cos_reg(reps_mu0_params, reps_mu1_params)
+                + _get_cos_reg(reps_mu0_params, reps_prop_params)
+                + _get_cos_reg(reps_mu1_params, reps_prop_params)
+            )
+        else:
+            raise ValueError(f"Invalid orth_reg_typ {self.ortho_reg_type}")
 
     def _maximum_mean_discrepancy(
         self, X: torch.Tensor, w: torch.Tensor
