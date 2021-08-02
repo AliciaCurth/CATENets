@@ -297,7 +297,7 @@ class PseudoOutcomeLearner(BaseCATEEstimator):
 
         return self
 
-    def forward(self, X: torch.Tensor) -> torch.Tensor:
+    def predict(self, X: torch.Tensor) -> torch.Tensor:
         """
         Predict treatment effects
 
@@ -606,7 +606,7 @@ class XLearner(PseudoOutcomeLearner):
 
         train_wrapper(self._propensity_estimator, X, w)
 
-    def forward(self, X: torch.Tensor) -> torch.Tensor:
+    def predict(self, X: torch.Tensor, predict_po: bool = False) -> torch.Tensor:
         """
         Predict treatment effects
 
@@ -621,7 +621,7 @@ class XLearner(PseudoOutcomeLearner):
         te_est: array-like of shape (n_samples,)
             Predicted treatment effects
         """
-        X = torch.Tensor(X).to(DEVICE)
+        X = self._check_tensor(X).float().to(DEVICE)
         tau0_pred = predict_wrapper(self._te_estimator_0, X)
         tau1_pred = predict_wrapper(self._te_estimator_1, X)
 

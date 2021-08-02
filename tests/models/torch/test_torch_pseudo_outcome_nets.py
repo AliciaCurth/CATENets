@@ -124,3 +124,19 @@ def test_sklearn_model_pseudo_outcome_binary(
         f"Evaluation for model {model_t} with po_estimator = {type(po_estimator)},"
         f"te_estimator = {type(te_estimator)} on {dataset} = {score['str']}"
     )
+
+
+def test_model_predict_api() -> None:
+    X_train, W_train, Y_train, Y_train_full, X_test, Y_test = load("ihdp")
+    W_train = W_train.ravel()
+
+    model = XLearner(X_train.shape[1], binary_y=False, batch_size=1024, n_iter=100)
+    model.fit(X_train, Y_train, W_train)
+
+    out = model.predict(X_test)
+
+    assert len(out) == len(X_test)
+
+    score = model.score(X_test, Y_test)
+
+    assert score > 0

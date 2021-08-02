@@ -96,13 +96,15 @@ class TLearner(BaseCATEEstimator):
                     ).to(DEVICE),
                 )
 
-    def forward(self, X: torch.Tensor) -> torch.Tensor:
+    def predict(self, X: torch.Tensor, return_po: bool = False) -> torch.Tensor:
         """
         Predict treatment effects and potential outcomes
         Parameters
         ----------
         X: torch.Tensor of shape (n_samples, n_features)
             Test-sample features
+        return_po: bool
+            Return potential outcomes too
 
         Returns
         -------
@@ -114,7 +116,12 @@ class TLearner(BaseCATEEstimator):
         for widx, plugin in enumerate(self._plug_in):
             y_hat.append(predict_wrapper(plugin, X))
 
-        return y_hat[1] - y_hat[0]
+        outcome = y_hat[1] - y_hat[0]
+
+        if return_po:
+            return outcome, y_hat[0], y_hat[1]
+
+        return outcome
 
     def train(
         self,

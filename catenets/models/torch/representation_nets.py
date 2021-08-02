@@ -256,7 +256,7 @@ class BasicDragonNet(BaseCATEEstimator):
 
         return torch.vstack((y0_preds, y1_preds)).T
 
-    def forward(self, X: torch.Tensor) -> torch.Tensor:
+    def predict(self, X: torch.Tensor, return_po: bool = False) -> torch.Tensor:
         """
         Predict the treatment effects
 
@@ -273,7 +273,12 @@ class BasicDragonNet(BaseCATEEstimator):
         y0_preds = preds[:, 0]
         y1_preds = preds[:, 1]
 
-        return y1_preds - y0_preds
+        outcome = y1_preds - y0_preds
+
+        if return_po:
+            return outcome, y0_preds, y1_preds
+
+        return outcome
 
 
 class TARNet(BasicDragonNet):

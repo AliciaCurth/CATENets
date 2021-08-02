@@ -80,3 +80,24 @@ def test_model_sanity(dataset: str, pehe_threshold: float) -> None:
 
     print(f"Evaluation for model SNet on {dataset} = {score['str']}")
     assert score["raw"]["pehe"][0] < pehe_threshold
+
+
+def test_model_predict_api() -> None:
+    X_train, W_train, Y_train, Y_train_full, X_test, Y_test = load("ihdp")
+    W_train = W_train.ravel()
+
+    model = SNet(X_train.shape[1], batch_size=1024, n_iter=100)
+    model.fit(X_train, Y_train, W_train)
+
+    out = model.predict(X_test)
+
+    assert len(out) == len(X_test)
+
+    out, p0, p1 = model.predict(X_test, return_po=True)
+    assert len(out) == len(X_test)
+    assert len(p0) == len(X_test)
+    assert len(p1) == len(X_test)
+
+    score = model.score(X_test, Y_test)
+
+    assert score > 0

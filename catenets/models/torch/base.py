@@ -451,6 +451,32 @@ class BaseCATEEstimator(nn.Module):
     ) -> None:
         super(BaseCATEEstimator, self).__init__()
 
+    def score(
+        self,
+        X: torch.Tensor,
+        y: torch.Tensor,
+    ) -> float:
+        """
+        Return the sqrt PEHE error.
+
+        Parameters
+        ----------
+        X: torch.Tensor
+            Covariate matrix
+        y: torch.Tensor
+            Expected outcome vector
+        """
+        X = self._check_tensor(X)
+        y = self._check_tensor(y)
+        if len(X) != len(y):
+            raise ValueError("X/y length mismatch for score")
+        if y.shape[-1] != 2:
+            raise ValueError(f"y has invalid shape {y.shape}")
+
+        hat_te = self.predict(X)
+
+        return torch.sqrt(torch.mean(((y[:, 1] - y[:, 0]) - hat_te) ** 2))
+
     @abc.abstractmethod
     @check_input_train
     @benchmark
@@ -483,7 +509,6 @@ class BaseCATEEstimator(nn.Module):
     ) -> "BaseCATEEstimator":
         return self.train(X, y, w)
 
-    @abc.abstractmethod
     @benchmark
     def forward(self, X: torch.Tensor) -> torch.Tensor:
         """
@@ -493,19 +518,33 @@ class BaseCATEEstimator(nn.Module):
         ----------
         X: pd.DataFrame or np.array
             Covariate matrix
+        Returns
+        -------
+        potential outcomes probabilities
+        """
+        return self.predict(X, return_po=False)
 
+    @abc.abstractmethod
+    @benchmark
+    def predict(
+        self,
+        X: torch.Tensor,
+        return_po: bool = False,
+    ) -> torch.Tensor:
+        """
+        Predict treatment effect estimates using a CATE estimator.
+
+        Parameters
+        ----------
+        X: pd.DataFrame or np.array
+            Covariate matrix
+        return_po: bool, optional
+            Return the potential outcomes too
         Returns
         -------
         potential outcomes probabilities
         """
         ...
-
-    @benchmark
-    def predict(
-        self,
-        X: torch.Tensor,
-    ) -> torch.Tensor:
-        return self.forward(X)
 
     def _check_tensor(self, X: torch.Tensor) -> torch.Tensor:
         if isinstance(X, torch.Tensor):

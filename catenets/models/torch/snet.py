@@ -399,7 +399,7 @@ class SNet(BaseCATEEstimator):
 
         return y0_preds, y1_preds, prop_preds, reps_o
 
-    def forward(self, X: torch.Tensor) -> torch.Tensor:
+    def predict(self, X: torch.Tensor, return_po: bool = False) -> torch.Tensor:
         """
         Predict treatment effects and potential outcomes
 
@@ -414,4 +414,9 @@ class SNet(BaseCATEEstimator):
         X = self._check_tensor(X).float()
         y0_preds, y1_preds, _, _ = self._forward(X)
 
-        return y1_preds - y0_preds
+        outcome = y1_preds - y0_preds
+
+        if return_po:
+            return outcome, y0_preds, y1_preds
+
+        return outcome

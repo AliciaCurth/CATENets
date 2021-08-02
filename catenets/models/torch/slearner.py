@@ -21,6 +21,7 @@ from catenets.models.torch.base import (
     BasicNet,
     PropensityNet,
 )
+from catenets.models.torch.utils.model_utils import predict_wrapper
 
 
 class SLearner(BaseCATEEstimator):
@@ -184,7 +185,7 @@ class SLearner(BaseCATEEstimator):
 
         return [X_ext_0, X_ext_1]
 
-    def forward(self, X: torch.Tensor) -> torch.Tensor:
+    def predict(self, X: torch.Tensor, return_po: bool = False) -> torch.Tensor:
         """
         Predict treatment effects and potential outcomes
 
@@ -201,21 +202,11 @@ class SLearner(BaseCATEEstimator):
 
         y = []
         for ext_mat in X_ext:
-            if hasattr(self._po_estimator, "forward"):
-                y.append(self._po_estimator(ext_mat))
-            elif hasattr(self._po_estimator, "predict_proba"):
-                ext_mat_np = ext_mat.detach().numpy()
-                no_event_proba = self._po_estimator.predict_proba(ext_mat_np)[
-                    :, 0
-                ]  # no event probability
+            y.append(predict_wrapper(self._po_estimator, ext_mat).to(DEVICE))
 
-                y.append(torch.Tensor(no_event_proba).to(DEVICE))
-            elif hasattr(self._po_estimator, "predict"):
-                ext_mat_np = ext_mat.detach().numpy()
-                no_event_proba = self._po_estimator.predict(ext_mat_np)
+        outcome = y[1] - y[0]
 
-                y.append(torch.Tensor(no_event_proba).to(DEVICE))
-            else:
-                raise NotImplementedError("Invalid po_estimator for slearner")
+        if return_po:
+            return outcome, y[0], y[1]
 
-        return y[1] - y[0]
+        return outcome
