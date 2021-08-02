@@ -54,8 +54,8 @@ extensions = [
 ]
 autodoc_default_options = {
     'members': True,
-    'inherited-members': True,
-    'inherit_docstrings': True,
+    'inherited-members': False,
+    'inherit_docstrings': False,
 }
 
 
