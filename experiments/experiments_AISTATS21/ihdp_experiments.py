@@ -17,7 +17,7 @@ from catenets.models.jax.transformation_utils import RA_TRANSFORMATION
 
 # Some constants
 DATA_DIR = Path("data/")
-RESULT_DIR = Path("results/ihdp/")
+RESULT_DIR = Path("results/experiments_AISTATS21/ihdp/")
 SEP = "_"
 
 # Hyperparameters for experiments on IHDP
