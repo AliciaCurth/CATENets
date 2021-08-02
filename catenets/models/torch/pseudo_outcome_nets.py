@@ -122,7 +122,7 @@ class PseudoOutcomeLearner(BaseCATEEstimator):
         n_units_out_t: int = DEFAULT_UNITS_OUT_T,
         n_units_r_t: int = DEFAULT_UNITS_R_T,
         n_units_out_prop: int = DEFAULT_UNITS_OUT,
-        n_layers_out_prop: int = DEFAULT_LAYERS_OUT,
+        n_layers_out_prop: int = 0,
         weight_decay: float = DEFAULT_PENALTY_L2,
         weight_decay_t: float = DEFAULT_PENALTY_L2,
         lr: float = DEFAULT_STEP_SIZE,
@@ -253,7 +253,7 @@ class PseudoOutcomeLearner(BaseCATEEstimator):
         """
         X = self._check_tensor(X).float()
         y = self._check_tensor(y).squeeze().float()
-        w = self._check_tensor(w).squeeze()
+        w = self._check_tensor(w).squeeze().float()
 
         n = len(y)
 
