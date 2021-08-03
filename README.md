@@ -2,7 +2,7 @@
 
 [![CATENets Tests](https://github.com/AliciaCurth/CATENets/actions/workflows/test.yml/badge.svg)](https://github.com/AliciaCurth/CATENets/actions/workflows/test.yml)
 [![Documentation Status](https://readthedocs.org/projects/catenets/badge/?version=latest)](https://catenets.readthedocs.io/en/latest/?badge=latest)
-[![License](https://img.shields.io/badge/License-BSD%203--Clause-blue.svg)](https://github.com/vanderschaarlab/mlforhealthlabpub/blob/main/LICENSE.md)
+[![License](https://img.shields.io/badge/License-BSD%203--Clause-blue.svg)](https://github.com/AliciaCurth/CATENets/blob/main/LICENSE)
 
 
 Code Author: Alicia Curth (amc253@cam.ac.uk)
