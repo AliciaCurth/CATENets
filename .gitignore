@@ -20,4 +20,5 @@ data/
 build/
 catenets.egg-info/
 dist/
-
+generated/
+_build

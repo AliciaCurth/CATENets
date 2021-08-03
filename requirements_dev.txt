@@ -1,0 +1,10 @@
+-r ./requirements.txt
+
+bandit
+black
+catboost
+flake8
+pre-commit
+pytest
+sklearn
+xgboost
