@@ -1,8 +1,8 @@
 """
-Author: Alicia Curth
 Module implements FlexTENet, also referred to as the 'flexible approach' in "On inductive biases
 for heterogeneous treatment effect estimation", Curth & vd Schaar (2021).
 """
+# Author: Alicia Curth
 from typing import Any, Callable, Optional, Tuple
 
 import jax.numpy as jnp

@@ -1,7 +1,7 @@
 """
-Author: Alicia Curth
 Utils to replicate experiments C and D
 """
+# Author: Alicia Curth
 import csv
 import os
 from pathlib import Path

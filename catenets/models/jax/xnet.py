@@ -1,7 +1,7 @@
 """
-Author: Alicia Curth
 Module implements X-learner from Kuenzel et al (2019) using NNs
 """
+# Author: Alicia Curth
 from typing import Callable, Optional, Tuple
 
 import jax.numpy as jnp

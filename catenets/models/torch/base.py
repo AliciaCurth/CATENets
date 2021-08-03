@@ -457,14 +457,14 @@ class BaseCATEEstimator(nn.Module):
         y: torch.Tensor,
     ) -> float:
         """
-        Return the sqrt PEHE error.
+        Return the sqrt PEHE error (oracle metric).
 
         Parameters
         ----------
         X: torch.Tensor
             Covariate matrix
         y: torch.Tensor
-            Expected outcome vector
+            Expected potential outcome vector
         """
         X = self._check_tensor(X)
         y = self._check_tensor(y)

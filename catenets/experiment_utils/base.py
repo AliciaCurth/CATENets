@@ -1,7 +1,7 @@
 """
-Author: Alicia Curth
 Some utils for experiments
 """
+# Author: Alicia Curth
 from typing import Callable, Dict, Optional, Union
 
 import jax.numpy as jnp

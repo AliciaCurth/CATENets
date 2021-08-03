@@ -1,7 +1,7 @@
 """
-Author: Alicia Curth
 Script to run experiments on Johansson's IHDP dataset (retrieved via https://www.fredjo.com/)
 """
+# Author: Alicia Curth
 import csv
 import os
 from pathlib import Path

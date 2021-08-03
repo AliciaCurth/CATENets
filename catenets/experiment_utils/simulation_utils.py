@@ -1,7 +1,7 @@
 """
-Author: Alicia Curth
 Simulation utils, allowing to flexibly consider different DGPs
 """
+# Author: Alicia Curth
 from typing import Any, Optional, Tuple
 
 import numpy as np

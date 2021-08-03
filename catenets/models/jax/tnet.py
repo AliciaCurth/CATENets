@@ -1,7 +1,7 @@
 """
-Author: Alicia Curth
 Implements a T-Net: T-learner for CATE based on a dense NN
 """
+# Author: Alicia Curth
 from typing import Any, Callable, List, Tuple
 
 import jax.numpy as jnp

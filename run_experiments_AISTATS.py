@@ -1,7 +1,7 @@
 """
-Author: Alicia Curth
 File to run AISTATS experiments from shell
 """
+# Author: Alicia Curth
 import argparse
 import sys
 from typing import Any

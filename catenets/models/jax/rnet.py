@@ -1,7 +1,7 @@
 """
-Author: Alicia Curth
 Implements NN based on R-learner and U-learner (as discussed in Nie & Wager (2017))
 """
+# Author: Alicia Curth
 from typing import Any, Callable, Optional
 
 import jax.numpy as jnp

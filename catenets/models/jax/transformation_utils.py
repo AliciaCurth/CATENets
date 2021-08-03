@@ -1,7 +1,7 @@
 """
-Author: Alicia Curth
 Utils for transformations
 """
+# Author: Alicia Curth
 from typing import Any, Optional
 
 import numpy as np

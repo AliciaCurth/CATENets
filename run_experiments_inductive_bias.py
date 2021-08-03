@@ -1,7 +1,7 @@
 """
-Author: Alicia Curth
 File to run experiments from shell
 """
+# Author: Alicia Curth
 import argparse
 import sys
 from typing import Any

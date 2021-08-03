@@ -1,8 +1,7 @@
 """
-Author: Alicia Curth
 Module implements SNet class as discussed in Curth & van der Schaar (2021)
 """
-
+# Author: Alicia Curth
 from typing import Callable, List, Tuple
 
 import jax.numpy as jnp

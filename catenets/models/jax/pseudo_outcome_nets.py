@@ -1,8 +1,8 @@
 """
-Author: Alicia Curth
 Implements Pseudo-outcome based Two-step Nets, namely the DR-learner, the PW-learner and the
 RA-learner.
 """
+# Author: Alicia Curth
 from typing import Callable, Optional, Tuple
 
 import jax.numpy as jnp

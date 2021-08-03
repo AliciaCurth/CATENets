@@ -1,8 +1,8 @@
 """
-Author: Alicia Curth
 Class implements SNet-3, a variation on DR-CFR discussed in
 Hassanpour and Greiner (2020) and Wu et al (2020).
 """
+# Author: Alicia Curth
 from typing import Any, Callable, List, Tuple
 
 import jax.numpy as jnp

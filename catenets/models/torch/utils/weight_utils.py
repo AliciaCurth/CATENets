@@ -1,7 +1,7 @@
 """
-Author: Alicia Curth
 Implement different reweighting/balancing strategies as in Li et al (2018)
 """
+# Author: Alicia Curth
 from typing import Optional
 
 import torch

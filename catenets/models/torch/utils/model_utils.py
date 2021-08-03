@@ -1,7 +1,7 @@
 """
-Author: Alicia Curth
 Model utils shared across different nets
 """
+# Author: Alicia Curth, Bogdan Cebere
 from typing import Any, Optional
 
 import torch

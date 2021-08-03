@@ -1,7 +1,7 @@
 """
-Author: Alicia Curth
 Base modules shared across different nets
 """
+# Author: Alicia Curth
 import abc
 from typing import Any, Callable, List, Optional, Tuple
 
@@ -108,14 +108,14 @@ class BaseCATENet(BaseEstimator, RegressorMixin, abc.ABC):
         sample_weight: Optional[jnp.ndarray] = None,
     ) -> float:
         """
-        Return the sqrt PEHE error.
+        Return the sqrt PEHE error (Oracle metric).
 
         Parameters
         ----------
         X: pd.DataFrame or np.array
             Covariate matrix
         y: np.array
-            Expected outcome vector
+            Expected potential outcome vector
         """
         X = check_X_is_np(X)
         y = check_X_is_np(y)

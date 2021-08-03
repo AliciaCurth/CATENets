@@ -1,7 +1,7 @@
 """
-Author: Alicia Curth
 Utils to replicate setups A & B
 """
+# Author: Alicia Curth
 import csv
 import os
 from typing import Optional, Tuple, Union

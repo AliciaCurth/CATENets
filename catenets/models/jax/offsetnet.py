@@ -1,10 +1,10 @@
 """
-Author: Alicia Curth
 Module implements OffsetNet, also referred to as the 'reparametrization approach' and 'hard
 approach' in "On inductive biases for heterogeneous treatment effect estimation", Curth & vd
 Schaar (2021); modeling the POs using a shared prognostic function and
 an offset (treatment effect)
 """
+# Author: Alicia Curth
 from typing import Any, Callable, List, Tuple
 
 import jax.numpy as jnp

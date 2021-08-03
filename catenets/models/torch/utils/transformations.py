@@ -1,7 +1,7 @@
 """
-Author: Alicia Curth
 Unbiased Transformations for CATE
 """
+# Author: Alicia Curth
 from typing import Optional
 
 import torch

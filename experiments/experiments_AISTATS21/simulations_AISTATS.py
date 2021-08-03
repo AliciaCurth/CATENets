@@ -1,7 +1,7 @@
 """
-Author: Alicia Curth
 Script to generate synthetic simulations in AISTATS paper
 """
+# Author: Alicia Curth
 import csv
 import os
 from typing import Any, Optional, Union

@@ -1,8 +1,8 @@
 """
-Author: Alicia Curth
 Module implements SNet1 and SNet2, which are based on  CFRNet/TARNet from Shalit et al (2017) and
 DragonNet from Shi et al (2019), respectively.
 """
+# Author: Alicia Curth
 from typing import Any, Callable, List, Tuple
 
 import jax.numpy as jnp
