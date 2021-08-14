@@ -33,4 +33,4 @@ def load(dataset: str, *args: Any, **kwargs: Any) -> Tuple:
         raise Exception("Unsupported dataset")
 
 
-__all__ = ["dataset_ihdp", "dataset_twins", "load"]
+__all__ = ["dataset_ihdp", "dataset_twins", "dataset_acic2016", "load"]
