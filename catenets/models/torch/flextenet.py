@@ -35,7 +35,9 @@ class FlexTELinearLayer(nn.Module):
     def __init__(self, name: str, *args: Any, **kwargs: Any) -> None:
         super(FlexTELinearLayer, self).__init__()
         self.name = name
-        self.model = nn.Sequential(nn.Dropout(0.5), nn.Linear(*args, **kwargs))
+        self.model = nn.Sequential(nn.Dropout(0.5), nn.Linear(*args, **kwargs)).to(
+            DEVICE
+        )
 
     def forward(self, tensors: List[torch.Tensor]) -> List:
         if len(tensors) != 2:
@@ -73,9 +75,13 @@ class FlexTESplitLayer(nn.Module):
 
         self.net_shared = nn.Sequential(
             nn.Dropout(0.5), nn.Linear(n_units_in, n_units_s)
-        )
-        self.net_p0 = nn.Sequential(nn.Dropout(0.5), nn.Linear(n_units_in_p, n_units_p))
-        self.net_p1 = nn.Sequential(nn.Dropout(0.5), nn.Linear(n_units_in_p, n_units_p))
+        ).to(DEVICE)
+        self.net_p0 = nn.Sequential(
+            nn.Dropout(0.5), nn.Linear(n_units_in_p, n_units_p)
+        ).to(DEVICE)
+        self.net_p1 = nn.Sequential(
+            nn.Dropout(0.5), nn.Linear(n_units_in_p, n_units_p)
+        ).to(DEVICE)
 
     def forward(self, tensors: List[torch.Tensor]) -> List:
         if self.first_layer and len(tensors) != 2:
@@ -112,9 +118,15 @@ class FlexTEOutputLayer(nn.Module):
     def __init__(self, n_units_in: int, n_units_in_p: int, private: bool) -> None:
         super(FlexTEOutputLayer, self).__init__()
         self.private = private
-        self.net_shared = nn.Sequential(nn.Dropout(0.5), nn.Linear(n_units_in, 1))
-        self.net_p0 = nn.Sequential(nn.Dropout(0.5), nn.Linear(n_units_in_p, 1))
-        self.net_p1 = nn.Sequential(nn.Dropout(0.5), nn.Linear(n_units_in_p, 1))
+        self.net_shared = nn.Sequential(nn.Dropout(0.5), nn.Linear(n_units_in, 1)).to(
+            DEVICE
+        )
+        self.net_p0 = nn.Sequential(nn.Dropout(0.5), nn.Linear(n_units_in_p, 1)).to(
+            DEVICE
+        )
+        self.net_p1 = nn.Sequential(nn.Dropout(0.5), nn.Linear(n_units_in_p, 1)).to(
+            DEVICE
+        )
 
     def forward(self, tensors: List[torch.Tensor]) -> torch.Tensor:
         if len(tensors) != 4:
