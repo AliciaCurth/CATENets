@@ -373,7 +373,7 @@ class FlexTENet(BaseCATEEstimator):
                 FlexTESplitLayer(
                     "output_layer_0",
                     n_units_s_r,
-                    n_units_s_r + n_units_p_r,
+                    n_units_s_r if shared_repr else n_units_s_r + n_units_p_r,
                     n_units_s_out,
                     n_units_p_out,
                     first_layer=(shared_repr),
@@ -417,7 +417,17 @@ class FlexTENet(BaseCATEEstimator):
                 params_0 = params_0 / torch.linalg.norm(params_0, dim=0)
                 params_1 = params_1 / torch.linalg.norm(params_1, dim=0)
 
-            return torch.linalg.norm(torch.mm(params_0.T, params_1), "fro") ** 2
+            if params_0.shape == params_1.shape:
+                return torch.linalg.norm(params_0 * params_1, "fro") ** 2
+            elif params_0.shape[0] == params_1.shape[0]:
+                return torch.linalg.norm(torch.mm(params_0.T, params_1), "fro") ** 2
+            elif params_0.shape[1] == params_1.shape[1]:
+                return torch.linalg.norm(torch.mm(params_0, params_1.T), "fro") ** 2
+            else:
+                return (
+                    torch.linalg.norm(params_0, "fro") ** 2
+                    + torch.linalg.norm(params_1, "fro") ** 2
+                )
 
         def _apply_reg_split_layer(
             layer: FlexTESplitLayer, full: bool = True

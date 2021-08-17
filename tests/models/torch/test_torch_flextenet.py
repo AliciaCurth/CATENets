@@ -78,7 +78,9 @@ def test_flextenet_model_sanity(dataset: str, pehe_threshold: float) -> None:
     assert score["raw"]["pehe"][0] < pehe_threshold
 
 
-def test_flextenet_model_predict_api() -> None:
+@pytest.mark.parametrize("shared_repr", [False, True])
+@pytest.mark.parametrize("n_units_p_r", [50, 200])
+def test_flextenet_model_predict_api(shared_repr: bool, n_units_p_r: int) -> None:
     X_train, W_train, Y_train, Y_train_full, X_test, Y_test = load("ihdp")
     W_train = W_train.ravel()
 
@@ -88,6 +90,8 @@ def test_flextenet_model_predict_api() -> None:
         batch_size=1024,
         n_iter=100,
         lr=1e-3,
+        shared_repr=shared_repr,
+        n_units_p_r=n_units_p_r,
     )
     model.fit(X_train, Y_train, W_train)
 
