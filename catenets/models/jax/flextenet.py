@@ -14,6 +14,10 @@ from jax.experimental.stax import Dense, Sigmoid, elu, glorot_normal, normal, se
 import catenets.logger as log
 from catenets.models.constants import (
     DEFAULT_BATCH_SIZE,
+    DEFAULT_DIM_P_OUT,
+    DEFAULT_DIM_P_R,
+    DEFAULT_DIM_S_OUT,
+    DEFAULT_DIM_S_R,
     DEFAULT_LAYERS_OUT,
     DEFAULT_LAYERS_R,
     DEFAULT_N_ITER,
@@ -27,15 +31,10 @@ from catenets.models.constants import (
     DEFAULT_STEP_SIZE,
     DEFAULT_VAL_SPLIT,
     LARGE_VAL,
+    N_SUBSPACES,
 )
 from catenets.models.jax.base import BaseCATENet
 from catenets.models.jax.model_utils import check_shape_1d_data, make_val_split
-
-N_SUBSPACES = 3
-DEFAULT_DIM_S_OUT = 50
-DEFAULT_DIM_S_R = 100
-DEFAULT_DIM_P_OUT = 50
-DEFAULT_DIM_P_R = 100
 
 
 class FlexTENet(BaseCATENet):

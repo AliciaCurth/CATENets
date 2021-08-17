@@ -312,7 +312,8 @@ class SNet(BaseCATEEstimator):
         def _get_cos_reg(
             params_0: torch.Tensor, params_1: torch.Tensor
         ) -> torch.Tensor:
-            return torch.linalg.norm(torch.dot(params_0.T, params_1), "fro") ** 2
+            print(params_0.shape, params_1.shape)
+            return torch.linalg.norm(torch.mm(params_0.T, params_1), "fro") ** 2
 
         reps_c_params = self._reps_c.model[0].weight
         reps_o_params = self._reps_o.model[0].weight

@@ -1,6 +1,7 @@
 """
 PyTorch-based implementations for the CATE estimators.
 """
+from .flextenet import FlexTENet
 from .pseudo_outcome_nets import (
     DRLearner,
     PWLearner,
@@ -26,4 +27,5 @@ __all__ = [
     "PWLearner",
     "DRLearner",
     "SNet",
+    "FlexTENet",
 ]

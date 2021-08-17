@@ -1,3 +1,4 @@
+import numpy as np
 import pytest
 from torch import nn
 
@@ -72,7 +73,12 @@ def test_model_sanity(dataset: str, pehe_threshold: float) -> None:
     X_train, W_train, Y_train, Y_train_full, X_test, Y_test = load(dataset)
     W_train = W_train.ravel()
 
-    model = SNet(X_train.shape[1], batch_size=1024, n_iter=1500)
+    model = SNet(
+        X_train.shape[1],
+        binary_y=(len(np.unique(Y_train)) == 2),
+        batch_size=1024,
+        n_iter=1500,
+    )
 
     score = evaluate_treatments_model(
         model, X_train, Y_train, Y_train_full, W_train, n_folds=3
