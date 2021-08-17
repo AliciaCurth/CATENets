@@ -227,8 +227,6 @@ class FlexTENet(BaseCATEEstimator):
         Whether the final prediction layer should be fully private, or retain a shared component.
     weight_decay: float
         l2 (ridge) penalty
-    weight_decay_p: float
-        l2 (ridge) penalty for private layers
     penalty_orthogonal: float
         orthogonalisation penalty
     lr: float
@@ -272,7 +270,6 @@ class FlexTENet(BaseCATEEstimator):
         n_units_p_r: int = DEFAULT_DIM_P_R,
         private_out: bool = False,
         weight_decay: float = DEFAULT_PENALTY_L2,
-        weight_decay_p: float = DEFAULT_PENALTY_L2,
         penalty_orthogonal: float = DEFAULT_PENALTY_ORTHOGONAL,
         lr: float = DEFAULT_STEP_SIZE,
         n_iter: int = DEFAULT_N_ITER,
@@ -301,7 +298,6 @@ class FlexTENet(BaseCATEEstimator):
 
         self.penalty_orthogonal = penalty_orthogonal
         self.weight_decay = weight_decay
-        self.weight_decay_p = weight_decay_p
         self.lr = lr
         self.n_iter = n_iter
         self.batch_size = batch_size

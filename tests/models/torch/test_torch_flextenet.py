@@ -18,7 +18,6 @@ def test_flextenet_model_params() -> None:
         n_units_p_r=50,
         private_out=True,
         weight_decay=1e-5,
-        weight_decay_p=1e-6,
         penalty_orthogonal=1e-7,
         lr=1e-2,
         n_iter=123,
@@ -42,7 +41,6 @@ def test_flextenet_model_params() -> None:
     assert model.n_units_p_r == 50
     assert model.private_out is True
     assert model.weight_decay == 1e-5
-    assert model.weight_decay_p == 1e-6
     assert model.penalty_orthogonal == 1e-7
     assert model.lr == 1e-2
     assert model.n_iter == 123
@@ -79,8 +77,11 @@ def test_flextenet_model_sanity(dataset: str, pehe_threshold: float) -> None:
 
 
 @pytest.mark.parametrize("shared_repr", [False, True])
-@pytest.mark.parametrize("n_units_p_r", [50, 200])
-def test_flextenet_model_predict_api(shared_repr: bool, n_units_p_r: int) -> None:
+@pytest.mark.parametrize("private_out", [False, True])
+@pytest.mark.parametrize("n_units_p_r", [50, 150])
+def test_flextenet_model_predict_api(
+    shared_repr: bool, private_out: bool, n_units_p_r: int
+) -> None:
     X_train, W_train, Y_train, Y_train_full, X_test, Y_test = load("ihdp")
     W_train = W_train.ravel()
 
@@ -91,6 +92,7 @@ def test_flextenet_model_predict_api(shared_repr: bool, n_units_p_r: int) -> Non
         n_iter=100,
         lr=1e-3,
         shared_repr=shared_repr,
+        private_out=private_out,
         n_units_p_r=n_units_p_r,
     )
     model.fit(X_train, Y_train, W_train)
