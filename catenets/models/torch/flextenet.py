@@ -317,7 +317,7 @@ class FlexTENet(BaseCATEEstimator):
             layers.extend(
                 [
                     FlexTELinearLayer("shared_repr_layer_0", n_unit_in, n_units_s_r),
-                    ElementWiseSplitActivation(nn.ELU()),
+                    ElementWiseSplitActivation(nn.SELU(inplace=True)),
                 ]
             )
 
@@ -328,7 +328,7 @@ class FlexTENet(BaseCATEEstimator):
                         FlexTELinearLayer(
                             f"shared_repr_layer_{i + 1}", n_units_s_r, n_units_s_r
                         ),
-                        ElementWiseSplitActivation(nn.ELU()),
+                        ElementWiseSplitActivation(nn.SELU(inplace=True)),
                     ]
                 )
 
@@ -343,7 +343,7 @@ class FlexTENet(BaseCATEEstimator):
                         n_units_p_r,
                         first_layer=True,
                     ),
-                    ElementWiseParallelActivation(nn.ELU()),
+                    ElementWiseParallelActivation(nn.SELU(inplace=True)),
                 ]
             )
 
@@ -359,7 +359,7 @@ class FlexTENet(BaseCATEEstimator):
                             n_units_p_r,
                             first_layer=False,
                         ),
-                        ElementWiseParallelActivation(nn.ELU()),
+                        ElementWiseParallelActivation(nn.SELU(inplace=True)),
                     ]
                 )
 
@@ -374,7 +374,7 @@ class FlexTENet(BaseCATEEstimator):
                     n_units_p_out,
                     first_layer=(shared_repr),
                 ),
-                ElementWiseParallelActivation(nn.ELU()),
+                ElementWiseParallelActivation(nn.SELU(inplace=True)),
             ]
         )
 
@@ -390,7 +390,7 @@ class FlexTENet(BaseCATEEstimator):
                         n_units_p_out,
                         first_layer=False,
                     ),
-                    ElementWiseParallelActivation(nn.ELU()),
+                    ElementWiseParallelActivation(nn.SELU(inplace=True)),
                 ]
             )
 

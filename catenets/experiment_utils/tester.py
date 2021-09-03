@@ -25,7 +25,7 @@ def evaluate_treatments_model(
     Y: torch.Tensor,
     Y_full: torch.Tensor,
     W: torch.Tensor,
-    n_folds: int = 5,
+    n_folds: int = 3,
     seed: int = 0,
 ) -> dict:
     metric_pehe = np.zeros(n_folds)
