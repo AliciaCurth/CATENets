@@ -415,11 +415,10 @@ class FlexTENet(BaseCATEEstimator):
 
             x_min = min(params_0.shape[0], params_1.shape[0])
             y_min = min(params_0.shape[1], params_1.shape[1])
+
             return (
                 torch.linalg.norm(
-                    nn.CosineSimilarity()(
-                        params_0[:x_min, :y_min], params_1[:x_min, :y_min]
-                    )
+                    params_0[:x_min, :y_min] * params_1[:x_min, :y_min], "fro"
                 )
                 ** 2
             )
