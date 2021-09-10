@@ -47,7 +47,9 @@ NUMERIC_COLS = [
 N_NUM_COLS = len(NUMERIC_COLS)
 
 
-def get_acic_covariates(fn_csv: Path, keep_categorical: bool = False) -> np.ndarray:
+def get_acic_covariates(
+    fn_csv: Path, keep_categorical: bool = False, preprocessed: bool = True
+) -> np.ndarray:
     X = pd.read_csv(fn_csv)
     if not keep_categorical:
         X = X.drop(columns=["x_2", "x_21", "x_24"])
@@ -70,8 +72,11 @@ def get_acic_covariates(fn_csv: Path, keep_categorical: bool = False) -> np.ndar
 
         X.drop(feature_list, axis=1, inplace=True)
 
-    scaler = StandardScaler()
-    X_t = scaler.fit_transform(X)
+    if preprocessed:
+        X_t = X.values
+    else:
+        scaler = StandardScaler()
+        X_t = scaler.fit_transform(X)
     return X_t
 
 
@@ -89,8 +94,11 @@ def preprocess(
     inter: bool = True,
     i_exp: int = 0,
     keep_categorical: bool = False,
+    preprocessed: bool = True,
 ) -> Tuple:
-    X = get_acic_covariates(fn_csv)
+    X = get_acic_covariates(
+        fn_csv, keep_categorical=keep_categorical, preprocessed=preprocessed
+    )
     np.random.seed(i_exp)
 
     # shuffle indices
@@ -186,9 +194,7 @@ def preprocess(
 
 def load(
     data_path: Path,
-    train_ratio: float = 0.8,
     preprocessed: bool = True,
-    *args: Any,
     **kwargs: Any,
 ) -> Tuple:
     """
@@ -202,8 +208,6 @@ def load(
     ----------
     data_path: Path
         Path to the CSV. If it is missing, it will be downloaded.
-    train_ratio: float
-        Train/test ratio
     preprocessed: bool
         Switch between the raw and preprocessed versions of the dataset.
 
@@ -236,4 +240,4 @@ def load(
         csv = data_path / "data_cf_all/x.csv"
     log.debug(f"load dataset {csv}")
 
-    return preprocess(csv, *args, **kwargs)
+    return preprocess(csv, preprocessed=preprocessed, **kwargs)
