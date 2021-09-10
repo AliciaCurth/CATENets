@@ -204,6 +204,8 @@ def load(
         Path to the CSV. If it is missing, it will be downloaded.
     train_ratio: float
         Train/test ratio
+    preprocessed: bool
+        Switch between the raw and preprocessed versions of the dataset.
 
     Returns
     -------
