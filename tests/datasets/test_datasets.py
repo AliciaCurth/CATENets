@@ -37,8 +37,11 @@ def test_dataset_sanity_ihdp() -> None:
 
 
 @pytest.mark.slow
-def test_dataset_sanity_acic2016() -> None:
-    X_train, W_train, Y_train, Y_train_full, X_test, Y_test = load("acic2016")
+@pytest.mark.parametrize("preprocessed", [False, True])
+def test_dataset_sanity_acic2016(preprocessed: bool) -> None:
+    X_train, W_train, Y_train, Y_train_full, X_test, Y_test = load(
+        "acic2016", preprocessed=preprocessed
+    )
 
     assert X_train.shape[1] == X_test.shape[1]
     assert X_train.shape[0] == Y_train.shape[0]

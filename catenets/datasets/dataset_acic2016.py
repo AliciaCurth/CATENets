@@ -18,8 +18,8 @@ from .network import download_if_needed
 np.random.seed(0)
 random.seed(0)
 
-DATASET = "x_trans.csv"
 FILE_ID = "0B7pG5PPgj6A3N09ibmFwNWE1djA"
+PREPROCESSED_FILE_ID = "1iOfEAk402o3jYBs2Prfiz6oaailwWcR5"
 
 NUMERIC_COLS = [
     0,
@@ -187,6 +187,7 @@ def preprocess(
 def load(
     data_path: Path,
     train_ratio: float = 0.8,
+    preprocessed: bool = True,
     *args: Any,
     **kwargs: Any,
 ) -> Tuple:
@@ -219,13 +220,18 @@ def load(
     test_potential_y: array or pd.DataFrame
         Potential outcomes in testing data.
     """
-    arch = data_path / "data_cf_all.tar.gz"
+    if preprocessed:
+        csv = data_path / "x_trans.csv"
 
-    download_if_needed(
-        arch, file_id=FILE_ID, unarchive=True, unarchive_folder=data_path
-    )
+        download_if_needed(csv, file_id=PREPROCESSED_FILE_ID)
+    else:
+        arch = data_path / "data_cf_all.tar.gz"
 
-    csv = data_path / "data_cf_all/x.csv"
+        download_if_needed(
+            arch, file_id=FILE_ID, unarchive=True, unarchive_folder=data_path
+        )
+
+        csv = data_path / "data_cf_all/x.csv"
     log.debug(f"load dataset {csv}")
 
     return preprocess(csv, *args, **kwargs)
