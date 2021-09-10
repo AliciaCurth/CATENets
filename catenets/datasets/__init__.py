@@ -3,7 +3,7 @@ import os
 from pathlib import Path
 from typing import Any, Tuple
 
-from . import dataset_ihdp, dataset_twins
+from . import dataset_acic2016, dataset_ihdp, dataset_twins
 
 DATA_PATH = Path(os.path.dirname(__file__)) / Path("data")
 
@@ -27,8 +27,10 @@ def load(dataset: str, *args: Any, **kwargs: Any) -> Tuple:
         return dataset_twins.load(DATA_PATH, *args, **kwargs)
     if dataset == "ihdp":
         return dataset_ihdp.load(DATA_PATH, *args, **kwargs)
+    if dataset == "acic2016":
+        return dataset_acic2016.load(DATA_PATH, *args, **kwargs)
     else:
         raise Exception("Unsupported dataset")
 
 
-__all__ = ["dataset_ihdp", "dataset_twins", "load"]
+__all__ = ["dataset_ihdp", "dataset_twins", "dataset_acic2016", "load"]

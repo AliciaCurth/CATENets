@@ -7,9 +7,9 @@ import os
 from typing import Optional, Tuple, Union
 
 import numpy as onp
-import pandas as pd
 from sklearn import clone
 
+from catenets.datasets import load
 from catenets.experiment_utils.base import eval_root_mse
 from catenets.models.jax import (
     DRAGON_NAME,
@@ -34,36 +34,8 @@ from catenets.models.jax import (
     XNet,
 )
 
-DATA_DIR = "data/acic2016/"
-ACIC_COV = "x.csv"
-ACIC_COV_TRANS = "x_trans.csv"
 RESULT_DIR_SIMU = "results/experiments_inductive_bias/acic2016/simulations/"
 SEP = "_"
-
-NUMERIC_COLS = [
-    0,
-    3,
-    4,
-    16,
-    17,
-    18,
-    20,
-    21,
-    22,
-    24,
-    24,
-    25,
-    30,
-    31,
-    32,
-    33,
-    39,
-    40,
-    41,
-    53,
-    54,
-]
-N_NUM_COLS = len(NUMERIC_COLS)
 
 # Hyperparms for all models
 PARAMS_DEPTH: dict = {"n_layers_r": 1, "n_layers_out": 1}
@@ -338,9 +310,6 @@ def do_acic_simu(
     else:
         raise ValueError("n_exp should be either an integer or a list of integers.")
 
-    # get data
-    X_full = pd.read_csv(DATA_DIR + ACIC_COV_TRANS).iloc[:, 1:].values
-
     for i_exp in experiment_loop:
         rmse_cate = []
         rmse_mu0 = []
@@ -348,7 +317,6 @@ def do_acic_simu(
 
         # get data
         X, y, w, X_t, mu_0_t, mu_1_t, cate_t = acic_simu(
-            X_full,
             i_exp,
             n_0=n_0,
             n_1=n_1,
@@ -394,7 +362,6 @@ def do_acic_simu(
 
 
 def acic_simu(
-    X: onp.ndarray,
     i_exp: onp.ndarray,
     n_0: int = 2000,
     n_1: int = 200,
@@ -407,90 +374,22 @@ def acic_simu(
     ate_goal: float = 0,
     inter: bool = True,
 ) -> Tuple:
-    onp.random.seed(i_exp)
-
-    # shuffle indices
-    n_total, n_cov = X.shape
-    ind = onp.arange(n_total)
-    onp.random.shuffle(ind)
-    ind_test = ind[-n_test:]
-    ind_1 = ind[n_0 : (n_0 + n_1)]
-
-    # create treatment indicator (treatment assignment does not matter in test set)
-    w = onp.zeros(n_total).reshape((-1, 1))
-    w[ind_1] = 1
-
-    # create dgp
-    coeffs_ = [0, 1]
-    # sample baseline coefficients
-    beta_0 = onp.random.choice(
-        coeffs_, size=n_cov, replace=True, p=[1 - sp_lin, sp_lin]
+    X_train, w_train, y_train, _, X_test, Y_test = load(
+        "acic2016",
+        i_exp=i_exp,
+        n_0=n_0,
+        n_1=n_1,
+        n_test=n_test,
+        error_sd=error_sd,
+        sp_lin=sp_lin,
+        sp_nonlin=sp_nonlin,
+        prop_gamma=prop_gamma,
+        prop_omega=prop_omega,
+        ate_goal=ate_goal,
+        inter=inter,
     )
-    intercept = onp.random.choice([x for x in onp.arange(-1, 1.25, 0.25)])
-
-    # sample treatment effect coefficients
-    gamma = onp.random.choice(
-        coeffs_, size=n_cov, replace=True, p=[1 - prop_gamma, prop_gamma]
-    )
-    omega = onp.random.choice(
-        [0, 1], replace=True, size=n_cov, p=[prop_omega, 1 - prop_omega]
-    )
-
-    # simulate mu_0 and mu_1
-    mu_0 = (intercept + onp.dot(X, beta_0)).reshape((-1, 1))
-    mu_1 = (intercept + onp.dot(X, gamma + beta_0 * omega)).reshape((-1, 1))
-    if sp_nonlin > 0:
-        coefs_sq = [0, 0.1]
-        beta_sq = onp.random.choice(
-            coefs_sq, size=N_NUM_COLS, replace=True, p=[1 - sp_nonlin, sp_nonlin]
-        )
-        omega = onp.random.choice(
-            [0, 1], replace=True, size=N_NUM_COLS, p=[prop_omega, 1 - prop_omega]
-        )
-        X_sq = X[:, NUMERIC_COLS] ** 2
-        mu_0 = mu_0 + onp.dot(X_sq, beta_sq).reshape((-1, 1))
-        mu_1 = mu_1 + onp.dot(X_sq, beta_sq * omega).reshape((-1, 1))
-
-        if inter:
-            # randomly add some interactions
-            ind_c = onp.arange(n_cov)
-            onp.random.shuffle(ind_c)
-            inter_list = list()
-            for i in range(0, n_cov - 2, 2):
-                inter_list.append(X[:, ind_c[i]] * X[:, ind_c[i + 1]])
-
-            X_inter = onp.array(inter_list).T
-            n_inter = X_inter.shape[1]
-            beta_inter = onp.random.choice(
-                coefs_sq, size=n_inter, replace=True, p=[1 - sp_nonlin, sp_nonlin]
-            )
-            omega = onp.random.choice(
-                [0, 1], replace=True, size=n_inter, p=[prop_omega, 1 - prop_omega]
-            )
-            mu_0 = mu_0 + onp.dot(X_inter, beta_inter).reshape((-1, 1))
-            mu_1 = mu_1 + onp.dot(X_inter, beta_inter * omega).reshape((-1, 1))
-
-    ate = onp.mean(mu_1 - mu_0)
-    mu_1 = mu_1 - ate + ate_goal
-
-    y = (
-        w * mu_1
-        + (1 - w) * mu_0
-        + onp.random.normal(0, error_sd, n_total).reshape((-1, 1))
-    )
-
-    cate = mu_1 - mu_0
-
-    X_train, y_train, w_train = (
-        X[ind[: (n_0 + n_1)], :],
-        y[ind[: (n_0 + n_1)]],
-        w[ind[: (n_0 + n_1)]],
-    )
-    X_test, mu_0_t, mu_1_t, cate_t = (
-        X[ind_test, :],
-        mu_0[ind_test],
-        mu_1[ind_test],
-        cate[ind_test],
-    )
+    mu_0_t = Y_test[:, 0]
+    mu_1_t = Y_test[:, 1]
+    cate_t = mu_1_t - mu_0_t
 
     return X_train, y_train, w_train, X_test, mu_0_t, mu_1_t, cate_t
