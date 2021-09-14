@@ -339,7 +339,7 @@ class SNet(BaseCATEEstimator):
             col_mu0 = _get_absolute_rowsums(reps_mu0_params)
             col_mu1 = _get_absolute_rowsums(reps_mu1_params)
             col_w = _get_absolute_rowsums(reps_prop_params)
-            return torch.sum(
+            return self.penalty_orthogonal * torch.sum(
                 col_c * col_o
                 + col_c * col_w
                 + col_c * col_mu1
@@ -353,7 +353,7 @@ class SNet(BaseCATEEstimator):
             )
 
         elif self.ortho_reg_type == "fro":
-            return (
+            return self.penalty_orthogonal * (
                 _get_cos_reg(reps_c_params, reps_o_params)
                 + _get_cos_reg(reps_c_params, reps_mu0_params)
                 + _get_cos_reg(reps_c_params, reps_mu1_params)
