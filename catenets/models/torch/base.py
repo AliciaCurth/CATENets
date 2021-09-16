@@ -104,7 +104,7 @@ class BasicNet(nn.Module):
         layers = [nn.Linear(n_unit_in, n_units_out), NL()]
 
         # add required number of layers
-        for i in range(n_layers_out):
+        for i in range(n_layers_out - 1):
             layers.extend(
                 [
                     nn.Dropout(0.2),
@@ -328,7 +328,7 @@ class PropensityNet(nn.Module):
             NL(),
         ]
 
-        for i in range(n_layers_out_prop):
+        for i in range(n_layers_out_prop - 1):
             layers.extend(
                 [
                     nn.Linear(
