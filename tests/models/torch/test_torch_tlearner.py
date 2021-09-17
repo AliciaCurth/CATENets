@@ -35,7 +35,7 @@ def test_nn_model_params() -> None:
         assert mod.n_iter_print == 10
         assert mod.seed == 11
         assert mod.val_split_prop == 0.9
-        assert len(mod.model) == 7  # 2 in + NL + 2 * n_layers_hidden + 2 out
+        assert len(mod.model) == 4  # 2 in + NL + 2 * (n_layers_hidden - 1) + 2 out
 
 
 @pytest.mark.parametrize("nonlin", ["elu", "relu", "sigmoid"])

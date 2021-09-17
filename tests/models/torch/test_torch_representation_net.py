@@ -31,7 +31,7 @@ def test_model_params(snet: Type) -> None:
     assert len(model._po_estimators) == 2
 
     for mod in model._po_estimators:
-        assert len(mod.model) == 7  # 1 in + NL + 3 * n_layers_out + 1 out + NL
+        assert len(mod.model) == 4  # 1 in + NL + 3 * (n_layers_out - 1) + 1 out + NL
 
     assert len(model._repr_estimator.model) == 6
 
