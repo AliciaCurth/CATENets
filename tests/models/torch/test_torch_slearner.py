@@ -40,8 +40,8 @@ def test_nn_model_params() -> None:
     assert model._po_estimator.seed == 11
     assert model._po_estimator.val_split_prop == 0.9
     assert (
-        len(model._po_estimator.model) == 4
-    )  # 1 in + NL + 2 * (n_layers_hidden -1) + out + Sigmoid
+        len(model._po_estimator.model) == 5
+    )  # 1 in + NL + 3 * (n_layers_hidden -1) + out + Sigmoid
 
     assert model._propensity_estimator.n_iter == 700
     assert model._propensity_estimator.batch_size == 80
@@ -49,8 +49,8 @@ def test_nn_model_params() -> None:
     assert model._propensity_estimator.seed == 11
     assert model._propensity_estimator.val_split_prop == 0.9
     assert (
-        len(model._propensity_estimator.model) == 26
-    )  # 1 in + NL + 2 * (n_layers_hidden - 1) + out + Softmax
+        len(model._propensity_estimator.model) == 38
+    )  # 1 in + NL + 3 * (n_layers_hidden - 1) + out + Softmax
 
 
 @pytest.mark.parametrize("nonlin", ["elu", "relu", "sigmoid"])
@@ -64,7 +64,7 @@ def test_nn_model_params_nonlin(nonlin: str) -> None:
     }
 
     for mod in [model._propensity_estimator, model._po_estimator]:
-        assert isinstance(mod.model[1], nonlins[nonlin])
+        assert isinstance(mod.model[2], nonlins[nonlin])
 
 
 @pytest.mark.slow
