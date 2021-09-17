@@ -15,6 +15,7 @@ from catenets.models.constants import (
     DEFAULT_N_ITER_PRINT,
     DEFAULT_NONLIN,
     DEFAULT_PATIENCE,
+    DEFAULT_PENALTY_DISC,
     DEFAULT_PENALTY_L2,
     DEFAULT_SEED,
     DEFAULT_STEP_SIZE,
@@ -75,6 +76,8 @@ class BasicDragonNet(BaseCATEEstimator):
         Nonlinearity to use in the neural net. Can be 'elu', 'relu', 'selu', 'leaky_relu'.
     weighting_strategy: optional str, None
         Whether to include propensity head and which weightening strategy to use
+    penalty_disc: float, default zero
+         Discrepancy penalty.
     """
 
     def __init__(
@@ -96,6 +99,7 @@ class BasicDragonNet(BaseCATEEstimator):
         seed: int = DEFAULT_SEED,
         nonlin: str = DEFAULT_NONLIN,
         weighting_strategy: Optional[str] = None,
+        penalty_disc: float = 0,
     ) -> None:
         super(BasicDragonNet, self).__init__()
 
@@ -108,6 +112,7 @@ class BasicDragonNet(BaseCATEEstimator):
         self.lr = lr
         self.weight_decay = weight_decay
         self.binary_y = binary_y
+        self.penalty_disc = penalty_disc
 
         self._repr_estimator = RepresentationNet(
             n_unit_in, n_units=n_units_r, n_layers=n_layers_r, nonlin=nonlin
@@ -132,6 +137,7 @@ class BasicDragonNet(BaseCATEEstimator):
         t_pred: torch.Tensor,
         y_true: torch.Tensor,
         t_true: torch.Tensor,
+        discrepancy: torch.Tensor,
     ) -> torch.Tensor:
         def head_loss(y_pred: torch.Tensor, y_true: torch.Tensor) -> torch.Tensor:
             if self.binary_y:
@@ -154,7 +160,9 @@ class BasicDragonNet(BaseCATEEstimator):
             t_pred = t_pred + EPS
             return nn.CrossEntropyLoss()(t_pred, t_true)
 
-        return po_loss(po_pred, y_true, t_true) + prop_loss(t_pred, t_true)
+        return (
+            po_loss(po_pred, y_true, t_true) + prop_loss(t_pred, t_true) + discrepancy
+        )
 
     def train(
         self,
@@ -215,8 +223,8 @@ class BasicDragonNet(BaseCATEEstimator):
                 y_next = y[idx_next].squeeze()
                 w_next = w[idx_next].squeeze()
 
-                po_preds, prop_preds = self._step(X_next)
-                batch_loss = self.loss(po_preds, prop_preds, y_next, w_next)
+                po_preds, prop_preds, discr = self._step(X_next, w_next)
+                batch_loss = self.loss(po_preds, prop_preds, y_next, w_next, discr)
 
                 batch_loss.backward()
 
@@ -228,8 +236,8 @@ class BasicDragonNet(BaseCATEEstimator):
 
             if i % self.n_iter_print == 0:
                 with torch.no_grad():
-                    po_preds, prop_preds = self._step(X_val)
-                    val_loss = self.loss(po_preds, prop_preds, y_val, w_val)
+                    po_preds, prop_preds, discr = self._step(X_val, w_val)
+                    val_loss = self.loss(po_preds, prop_preds, y_val, w_val, discr)
                     if val_loss_best > val_loss:
                         val_loss_best = val_loss
                         patience = 0
@@ -245,7 +253,9 @@ class BasicDragonNet(BaseCATEEstimator):
         return self
 
     @abc.abstractmethod
-    def _step(self, X: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
+    def _step(
+        self, X: torch.Tensor, w: torch.Tensor
+    ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         ...
 
     def _forward(self, X: torch.Tensor) -> torch.Tensor:
@@ -280,6 +290,20 @@ class BasicDragonNet(BaseCATEEstimator):
 
         return outcome
 
+    def _maximum_mean_discrepancy(
+        self, X: torch.Tensor, w: torch.Tensor
+    ) -> torch.Tensor:
+        n = w.shape[0]
+        n_t = torch.sum(w)
+
+        X = X / torch.sqrt(torch.var(X, dim=0) + EPS)
+        w = w.unsqueeze(dim=0)
+
+        mean_control = (n / (n - n_t)) * torch.mean((1 - w).T * X, dim=0)
+        mean_treated = (n / n_t) * torch.mean(w.T * X, dim=0)
+
+        return self.penalty_disc * torch.sum((mean_treated - mean_control) ** 2)
+
 
 class TARNet(BasicDragonNet):
     """
@@ -293,6 +317,7 @@ class TARNet(BasicDragonNet):
         n_units_out_prop: int = DEFAULT_UNITS_OUT,
         n_layers_out_prop: int = 0,
         nonlin: str = DEFAULT_NONLIN,
+        penalty_disc: float = DEFAULT_PENALTY_DISC,
         **kwargs: Any,
     ) -> None:
         propensity_estimator = PropensityNet(
@@ -310,14 +335,23 @@ class TARNet(BasicDragonNet):
             propensity_estimator,
             binary_y=binary_y,
             nonlin=nonlin,
+            penalty_disc=penalty_disc,
             **kwargs,
         )
 
-    def _step(self, X: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
-        po_preds = self._forward(X)
+    def _step(
+        self, X: torch.Tensor, w: torch.Tensor
+    ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+        repr_preds = self._repr_estimator(X).squeeze()
+
+        y0_preds = self._po_estimators[0](repr_preds).squeeze()
+        y1_preds = self._po_estimators[1](repr_preds).squeeze()
+
+        po_preds = torch.vstack((y0_preds, y1_preds)).T
+
         prop_preds = self._propensity_estimator(X)
 
-        return po_preds, prop_preds
+        return po_preds, prop_preds, self._maximum_mean_discrepancy(repr_preds, w)
 
 
 class DragonNet(BasicDragonNet):
@@ -353,7 +387,9 @@ class DragonNet(BasicDragonNet):
             **kwargs,
         )
 
-    def _step(self, X: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
+    def _step(
+        self, X: torch.Tensor, w: torch.Tensor
+    ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         repr_preds = self._repr_estimator(X).squeeze()
 
         y0_preds = self._po_estimators[0](repr_preds).squeeze()
@@ -363,4 +399,4 @@ class DragonNet(BasicDragonNet):
 
         prop_preds = self._propensity_estimator(repr_preds)
 
-        return po_preds, prop_preds
+        return po_preds, prop_preds, self._maximum_mean_discrepancy(repr_preds, w)
