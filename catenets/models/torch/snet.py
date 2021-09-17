@@ -111,6 +111,7 @@ class SNet(BaseCATEEstimator):
         seed: int = DEFAULT_SEED,
         nonlin: str = DEFAULT_NONLIN,
         ortho_reg_type: str = "abs",
+        patience: int = DEFAULT_PATIENCE,
         clipping_value: int = 1,
     ) -> None:
         super(SNet, self).__init__()
@@ -126,6 +127,7 @@ class SNet(BaseCATEEstimator):
         self.seed = seed
         self.ortho_reg_type = ortho_reg_type
         self.clipping_value = clipping_value
+        self.patience = patience
 
         self._reps_c = RepresentationNet(
             n_unit_in, n_units=n_units_r, n_layers=n_layers_r, nonlin=nonlin
@@ -302,7 +304,7 @@ class SNet(BaseCATEEstimator):
                         patience = 0
                     else:
                         patience += 1
-                    if patience > DEFAULT_PATIENCE and i > DEFAULT_N_ITER_MIN:
+                    if patience > self.patience and i > DEFAULT_N_ITER_MIN:
                         break
 
                     log.info(
