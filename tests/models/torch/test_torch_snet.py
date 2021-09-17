@@ -33,13 +33,13 @@ def test_model_params() -> None:
     assert len(model._po_estimators) == 2
 
     for mod in model._po_estimators:
-        assert len(mod.model) == 7  # 1 in + NL + 3 * n_layers_out + 1 out + NL
+        assert len(mod.model) == 4  # 1 in + NL + 3 * (n_layers_out - 1) + 1 out + NL
 
     assert len(model._reps_c.model) == 6
     assert len(model._reps_o.model) == 6
     assert len(model._reps_mu0.model) == 6
     assert len(model._reps_mu1.model) == 6
-    assert len(model._propensity_estimator.model) == 8
+    assert len(model._propensity_estimator.model) == 6
 
 
 @pytest.mark.parametrize("nonlin", ["elu", "relu", "sigmoid", "selu", "leaky_relu"])
