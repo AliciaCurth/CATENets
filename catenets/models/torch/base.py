@@ -74,6 +74,8 @@ class BasicNet(nn.Module):
         Number of iterations to wait before early stopping after decrease in validation loss
     n_iter_min: int
         Minimum number of iterations to go through before starting early stopping
+    clipping_value: int, default 1
+        Gradients clipping value
     """
 
     def __init__(
@@ -93,6 +95,7 @@ class BasicNet(nn.Module):
         val_split_prop: float = DEFAULT_VAL_SPLIT,
         patience: int = DEFAULT_PATIENCE,
         n_iter_min: int = DEFAULT_N_ITER_MIN,
+        clipping_value: int = 1,
     ) -> None:
         super(BasicNet, self).__init__()
 
@@ -101,7 +104,7 @@ class BasicNet(nn.Module):
             raise ValueError("Unknown nonlinearity")
 
         NL = NONLIN[nonlin]
-        layers = [nn.Linear(n_unit_in, n_units_out), NL()]
+        layers = [nn.Linear(n_unit_in, n_units_out), nn.BatchNorm1d(n_units_out), NL()]
 
         # add required number of layers
         for i in range(n_layers_out - 1):
@@ -109,6 +112,7 @@ class BasicNet(nn.Module):
                 [
                     nn.Dropout(0.2),
                     nn.Linear(n_units_out, n_units_out),
+                    nn.BatchNorm1d(n_units_out),
                     NL(),
                 ]
             )
@@ -129,6 +133,7 @@ class BasicNet(nn.Module):
         self.val_split_prop = val_split_prop
         self.patience = patience
         self.n_iter_min = n_iter_min
+        self.clipping_value = clipping_value
 
         self.optimizer = torch.optim.Adam(
             self.parameters(), lr=lr, weight_decay=weight_decay
@@ -183,6 +188,8 @@ class BasicNet(nn.Module):
                 batch_loss = loss(preds, y_next)
 
                 batch_loss.backward()
+
+                torch.nn.utils.clip_grad_norm_(self.parameters(), self.clipping_value)
 
                 self.optimizer.step()
 
@@ -246,10 +253,10 @@ class RepresentationNet(nn.Module):
 
         layers = []
 
-        layers = [nn.Linear(n_unit_in, n_units), NL()]
+        layers = [nn.Linear(n_unit_in, n_units), nn.BatchNorm1d(n_units), NL()]
         # add required number of layers
         for i in range(n_layers - 1):
-            layers.extend([nn.Linear(n_units, n_units), NL()])
+            layers.extend([nn.Linear(n_units, n_units), nn.BatchNorm1d(n_units), NL()])
 
         self.model = nn.Sequential(*layers).to(DEVICE)
 
@@ -296,6 +303,8 @@ class PropensityNet(nn.Module):
         Number of iterations to wait before early stopping after decrease in validation loss
     n_iter_min: int
         Minimum number of iterations to go through before starting early stopping
+    clipping_value: int, default 1
+        Gradients clipping value
     """
 
     def __init__(
@@ -316,6 +325,7 @@ class PropensityNet(nn.Module):
         val_split_prop: float = DEFAULT_VAL_SPLIT,
         patience: int = DEFAULT_PATIENCE,
         n_iter_min: int = DEFAULT_N_ITER_MIN,
+        clipping_value: int = 1,
     ) -> None:
         super(PropensityNet, self).__init__()
         if nonlin not in list(NONLIN.keys()):
@@ -325,6 +335,7 @@ class PropensityNet(nn.Module):
 
         layers = [
             nn.Linear(in_features=n_unit_in, out_features=n_units_out_prop),
+            nn.BatchNorm1d(n_units_out_prop),
             NL(),
         ]
 
@@ -334,6 +345,7 @@ class PropensityNet(nn.Module):
                     nn.Linear(
                         in_features=n_units_out_prop, out_features=n_units_out_prop
                     ),
+                    nn.BatchNorm1d(n_units_out_prop),
                     NL(),
                 ]
             )
@@ -354,6 +366,7 @@ class PropensityNet(nn.Module):
         self.val_split_prop = val_split_prop
         self.patience = patience
         self.n_iter_min = n_iter_min
+        self.clipping_value = clipping_value
 
         self.optimizer = torch.optim.Adam(
             self.parameters(), lr=lr, weight_decay=weight_decay
@@ -409,6 +422,8 @@ class PropensityNet(nn.Module):
                 batch_loss = self.loss(preds, y_next)
 
                 batch_loss.backward()
+
+                torch.nn.utils.clip_grad_norm_(self.parameters(), self.clipping_value)
 
                 self.optimizer.step()
                 train_loss.append(batch_loss.detach())

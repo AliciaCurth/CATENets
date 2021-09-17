@@ -46,7 +46,7 @@ def test_nn_model_params_nonlin(nonlin: str, model_t: Any) -> None:
     }
 
     for mod in [model._te_estimator, model._po_estimator, model._propensity_estimator]:
-        assert isinstance(mod.model[1], nonlins[nonlin])
+        assert isinstance(mod.model[2], nonlins[nonlin])
 
 
 @pytest.mark.slow
