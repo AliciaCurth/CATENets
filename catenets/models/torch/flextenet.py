@@ -256,6 +256,8 @@ class FlexTENet(BaseCATEEstimator):
         network (only used if pretrain_shared=True)
     normalize_ortho: bool, False
         Whether to normalize the orthogonality penalty (by depth of network)
+    clipping_value: int, default 1
+        Gradients clipping value
     """
 
     def __init__(
@@ -283,6 +285,7 @@ class FlexTENet(BaseCATEEstimator):
         shared_repr: bool = False,
         normalize_ortho: bool = False,
         mode: int = 1,
+        clipping_value: int = 1,
     ) -> None:
         super(FlexTENet, self).__init__()
 
@@ -307,6 +310,7 @@ class FlexTENet(BaseCATEEstimator):
         self.n_iter_min = n_iter_min
         self.shared_repr = shared_repr
         self.normalize_ortho = normalize_ortho
+        self.clipping_value = clipping_value
 
         self.seed = seed
         self.n_iter_print = n_iter_print
@@ -542,6 +546,8 @@ class FlexTENet(BaseCATEEstimator):
                 batch_loss = self.loss(mu0, mu1, y_next, w_next)
 
                 batch_loss.backward()
+
+                torch.nn.utils.clip_grad_norm_(self.parameters(), self.clipping_value)
 
                 optimizer.step()
 
