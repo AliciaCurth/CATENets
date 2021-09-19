@@ -132,7 +132,7 @@ class PseudoOutcomeLearner(BaseCATEEstimator):
         weighting_strategy: Optional[str] = "prop",
         patience: int = DEFAULT_PATIENCE,
         n_iter_min: int = DEFAULT_N_ITER_MIN,
-        batch_norm: bool = False,
+        batch_norm: bool = True,
     ):
         super(PseudoOutcomeLearner, self).__init__()
         self.n_unit_in = n_unit_in
