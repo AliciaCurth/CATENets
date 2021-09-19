@@ -113,6 +113,7 @@ class SNet(BaseCATEEstimator):
         ortho_reg_type: str = "abs",
         patience: int = DEFAULT_PATIENCE,
         clipping_value: int = 1,
+        batch_norm: bool = True
     ) -> None:
         super(SNet, self).__init__()
 
@@ -130,19 +131,23 @@ class SNet(BaseCATEEstimator):
         self.patience = patience
 
         self._reps_c = RepresentationNet(
-            n_unit_in, n_units=n_units_r, n_layers=n_layers_r, nonlin=nonlin
+            n_unit_in, n_units=n_units_r, n_layers=n_layers_r, nonlin=nonlin, batch_norm=batch_norm
         )
         self._reps_o = RepresentationNet(
-            n_unit_in, n_units=n_units_r_small, n_layers=n_layers_r, nonlin=nonlin
+            n_unit_in, n_units=n_units_r_small, n_layers=n_layers_r, nonlin=nonlin,
+            batch_norm=batch_norm
         )
         self._reps_mu0 = RepresentationNet(
-            n_unit_in, n_units=n_units_r_small, n_layers=n_layers_r, nonlin=nonlin
+            n_unit_in, n_units=n_units_r_small, n_layers=n_layers_r, nonlin=nonlin,
+            batch_norm=batch_norm
         )
         self._reps_mu1 = RepresentationNet(
-            n_unit_in, n_units=n_units_r_small, n_layers=n_layers_r, nonlin=nonlin
+            n_unit_in, n_units=n_units_r_small, n_layers=n_layers_r, nonlin=nonlin,
+            batch_norm=batch_norm
         )
         self._reps_prop = RepresentationNet(
-            n_unit_in, n_units=n_units_r, n_layers=n_layers_r, nonlin=nonlin
+            n_unit_in, n_units=n_units_r, n_layers=n_layers_r, nonlin=nonlin,
+            batch_norm=batch_norm
         )
 
         self._po_estimators = []
@@ -157,6 +162,7 @@ class SNet(BaseCATEEstimator):
                     n_layers_out=n_layers_out,
                     n_units_out=n_units_out,
                     nonlin=nonlin,
+                    batch_norm=batch_norm
                 )
             )
         self._propensity_estimator = PropensityNet(
@@ -167,6 +173,7 @@ class SNet(BaseCATEEstimator):
             n_layers_out_prop=n_layers_out_prop,
             n_units_out_prop=n_units_out_prop,
             nonlin=nonlin,
+            batch_norm=batch_norm
         ).to(DEVICE)
 
         params = (

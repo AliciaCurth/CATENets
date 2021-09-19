@@ -100,6 +100,7 @@ class BasicDragonNet(BaseCATEEstimator):
         nonlin: str = DEFAULT_NONLIN,
         weighting_strategy: Optional[str] = None,
         penalty_disc: float = 0,
+        batch_norm: bool = True
     ) -> None:
         super(BasicDragonNet, self).__init__()
 
@@ -115,7 +116,7 @@ class BasicDragonNet(BaseCATEEstimator):
         self.penalty_disc = penalty_disc
 
         self._repr_estimator = RepresentationNet(
-            n_unit_in, n_units=n_units_r, n_layers=n_layers_r, nonlin=nonlin
+            n_unit_in, n_units=n_units_r, n_layers=n_layers_r, nonlin=nonlin, batch_norm=batch_norm
         )
         self._po_estimators = []
         for idx in range(2):
@@ -127,6 +128,7 @@ class BasicDragonNet(BaseCATEEstimator):
                     n_layers_out=n_layers_out,
                     n_units_out=n_units_out,
                     nonlin=nonlin,
+                    batch_norm=batch_norm
                 )
             )
         self._propensity_estimator = propensity_estimator
@@ -318,6 +320,7 @@ class TARNet(BasicDragonNet):
         n_layers_out_prop: int = 0,
         nonlin: str = DEFAULT_NONLIN,
         penalty_disc: float = DEFAULT_PENALTY_DISC,
+        batch_norm: bool = True,
         **kwargs: Any,
     ) -> None:
         propensity_estimator = PropensityNet(
@@ -328,6 +331,7 @@ class TARNet(BasicDragonNet):
             n_layers_out_prop=n_layers_out_prop,
             n_units_out_prop=n_units_out_prop,
             nonlin=nonlin,
+            batch_norm=batch_norm
         ).to(DEVICE)
         super(TARNet, self).__init__(
             "TARNet",
@@ -336,6 +340,7 @@ class TARNet(BasicDragonNet):
             binary_y=binary_y,
             nonlin=nonlin,
             penalty_disc=penalty_disc,
+            batch_norm=batch_norm,
             **kwargs,
         )
 
@@ -367,6 +372,7 @@ class DragonNet(BasicDragonNet):
         n_layers_out_prop: int = 0,
         nonlin: str = DEFAULT_NONLIN,
         n_units_r: int = DEFAULT_UNITS_R,
+        batch_norm: bool = True,
         **kwargs: Any,
     ) -> None:
         propensity_estimator = PropensityNet(
@@ -377,6 +383,7 @@ class DragonNet(BasicDragonNet):
             n_layers_out_prop=n_layers_out_prop,
             n_units_out_prop=n_units_out_prop,
             nonlin=nonlin,
+            batch_norm=batch_norm
         ).to(DEVICE)
         super(DragonNet, self).__init__(
             "DragonNet",
@@ -384,6 +391,7 @@ class DragonNet(BasicDragonNet):
             propensity_estimator,
             binary_y=binary_y,
             nonlin=nonlin,
+            batch_norm=batch_norm
             **kwargs,
         )
 

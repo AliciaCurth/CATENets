@@ -114,13 +114,9 @@ class PseudoOutcomeLearner(BaseCATEEstimator):
         te_estimator: Any = None,
         n_folds: int = DEFAULT_CF_FOLDS,
         n_layers_out: int = DEFAULT_LAYERS_OUT,
-        n_layers_r: int = DEFAULT_LAYERS_R,
         n_layers_out_t: int = DEFAULT_LAYERS_OUT_T,
-        n_layers_r_t: int = DEFAULT_LAYERS_R_T,
         n_units_out: int = DEFAULT_UNITS_OUT,
-        n_units_r: int = DEFAULT_UNITS_R,
         n_units_out_t: int = DEFAULT_UNITS_OUT_T,
-        n_units_r_t: int = DEFAULT_UNITS_R_T,
         n_units_out_prop: int = DEFAULT_UNITS_OUT,
         n_layers_out_prop: int = 0,
         weight_decay: float = DEFAULT_PENALTY_L2,
@@ -136,6 +132,7 @@ class PseudoOutcomeLearner(BaseCATEEstimator):
         weighting_strategy: Optional[str] = "prop",
         patience: int = DEFAULT_PATIENCE,
         n_iter_min: int = DEFAULT_N_ITER_MIN,
+        batch_norm: bool = False,
     ):
         super(PseudoOutcomeLearner, self).__init__()
         self.n_unit_in = n_unit_in
@@ -147,7 +144,7 @@ class PseudoOutcomeLearner(BaseCATEEstimator):
         self.weight_decay_t = weight_decay_t
         self.weight_decay = weight_decay
         self.weighting_strategy = weighting_strategy
-        self.lr = lr_t
+        self.lr = lr
         self.lr_t = lr_t
         self.n_iter = n_iter
         self.batch_size = batch_size
@@ -155,12 +152,14 @@ class PseudoOutcomeLearner(BaseCATEEstimator):
         self.n_iter_print = n_iter_print
         self.seed = seed
         self.nonlin = nonlin
-        self.lr = lr
         self.n_folds = n_folds
         self.patience = patience
         self.n_iter_min = n_iter_min
         self.n_layers_out_t = n_layers_out_t
         self.n_units_out_t = n_units_out_t
+        self.n_layers_out = n_layers_out
+        self.n_units_out = n_units_out
+        self.batch_norm = batch_norm
 
         # set estimators
         self._te_template = te_estimator
@@ -178,28 +177,6 @@ class PseudoOutcomeLearner(BaseCATEEstimator):
             name,
             self.n_unit_in,
             binary_y=False,
-            n_layers_out=self.n_layers_out,
-            n_units_out=self.n_units_out,
-            weight_decay=self.weight_decay,
-            lr=self.lr,
-            n_iter=self.n_iter,
-            batch_size=self.batch_size,
-            val_split_prop=self.val_split_prop,
-            n_iter_print=self.n_iter_print,
-            seed=self.seed,
-            nonlin=self.nonlin,
-            patience=self.patience,
-            n_iter_min=self.n_iter_min,
-        ).to(DEVICE)
-
-    def _generate_po_estimator(self, name: str = "po_estimator") -> nn.Module:
-        if self._po_template is not None:
-            return copy.deepcopy(self._po_template)
-
-        return BasicNet(
-            name,
-            self.n_unit_in,
-            binary_y=self.binary_y,
             n_layers_out=self.n_layers_out_t,
             n_units_out=self.n_units_out_t,
             weight_decay=self.weight_decay_t,
@@ -212,6 +189,30 @@ class PseudoOutcomeLearner(BaseCATEEstimator):
             nonlin=self.nonlin,
             patience=self.patience,
             n_iter_min=self.n_iter_min,
+            batch_norm=self.batch_norm
+        ).to(DEVICE)
+
+    def _generate_po_estimator(self, name: str = "po_estimator") -> nn.Module:
+        if self._po_template is not None:
+            return copy.deepcopy(self._po_template)
+
+        return BasicNet(
+            name,
+            self.n_unit_in,
+            binary_y=self.binary_y,
+            n_layers_out=self.n_layers_out,
+            n_units_out=self.n_units_out,
+            weight_decay=self.weight_decay,
+            lr=self.lr,
+            n_iter=self.n_iter,
+            batch_size=self.batch_size,
+            val_split_prop=self.val_split_prop,
+            n_iter_print=self.n_iter_print,
+            seed=self.seed,
+            nonlin=self.nonlin,
+            patience=self.patience,
+            n_iter_min=self.n_iter_min,
+            batch_norm=self.batch_norm
         ).to(DEVICE)
 
     def _generate_propensity_estimator(
@@ -234,6 +235,7 @@ class PseudoOutcomeLearner(BaseCATEEstimator):
             seed=self.seed,
             nonlin=self.nonlin,
             val_split_prop=self.val_split_prop,
+            batch_norm=self.batch_norm
         ).to(DEVICE)
 
     def train(
