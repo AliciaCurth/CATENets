@@ -391,8 +391,8 @@ class DragonNet(BasicDragonNet):
             propensity_estimator,
             binary_y=binary_y,
             nonlin=nonlin,
-            batch_norm=batch_norm
-            **kwargs,
+            batch_norm=batch_norm,
+            **kwargs
         )
 
     def _step(
