@@ -96,6 +96,7 @@ class BasicNet(nn.Module):
         patience: int = DEFAULT_PATIENCE,
         n_iter_min: int = DEFAULT_N_ITER_MIN,
         clipping_value: int = 1,
+        batch_norm: bool = True
     ) -> None:
         super(BasicNet, self).__init__()
 
@@ -104,21 +105,38 @@ class BasicNet(nn.Module):
             raise ValueError("Unknown nonlinearity")
 
         NL = NONLIN[nonlin]
-        layers = [nn.Linear(n_unit_in, n_units_out), nn.BatchNorm1d(n_units_out), NL()]
 
-        # add required number of layers
-        for i in range(n_layers_out - 1):
-            layers.extend(
-                [
-                    nn.Dropout(0.2),
-                    nn.Linear(n_units_out, n_units_out),
-                    nn.BatchNorm1d(n_units_out),
-                    NL(),
-                ]
-            )
+        if n_layers_out > 0:
+            if batch_norm:
+                layers = [nn.Linear(n_unit_in, n_units_out), nn.BatchNorm1d(n_units_out), NL()]
+            else:
+                layers = [nn.Linear(n_unit_in, n_units_out), NL()]
 
-        # add final layers
-        layers.append(nn.Linear(n_units_out, 1))
+            # add required number of layers
+            for i in range(n_layers_out - 1):
+                if batch_norm:
+                    layers.extend(
+                        [
+                            nn.Dropout(0.2),
+                            nn.Linear(n_units_out, n_units_out),
+                            nn.BatchNorm1d(n_units_out),
+                            NL(),
+                        ]
+                    )
+                else:
+                    layers.extend(
+                        [
+                            nn.Dropout(0.2),
+                            nn.Linear(n_units_out, n_units_out),
+                            NL(),
+                        ]
+                    )
+
+            # add final layers
+            layers.append(nn.Linear(n_units_out, 1))
+        else:
+            layers = [nn.Linear(n_unit_in, 1)]
+
         if binary_y:
             layers.append(nn.Sigmoid())
 
@@ -244,6 +262,7 @@ class RepresentationNet(nn.Module):
         n_layers: int = DEFAULT_LAYERS_R,
         n_units: int = DEFAULT_UNITS_R,
         nonlin: str = DEFAULT_NONLIN,
+        batch_norm: bool = True
     ) -> None:
         super(RepresentationNet, self).__init__()
         if nonlin not in list(NONLIN.keys()):
@@ -251,12 +270,16 @@ class RepresentationNet(nn.Module):
 
         NL = NONLIN[nonlin]
 
-        layers = []
-
-        layers = [nn.Linear(n_unit_in, n_units), nn.BatchNorm1d(n_units), NL()]
+        if batch_norm:
+            layers = [nn.Linear(n_unit_in, n_units), nn.BatchNorm1d(n_units), NL()]
+        else:
+            layers = [nn.Linear(n_unit_in, n_units), NL()]
         # add required number of layers
         for i in range(n_layers - 1):
-            layers.extend([nn.Linear(n_units, n_units), nn.BatchNorm1d(n_units), NL()])
+            if batch_norm:
+                layers.extend([nn.Linear(n_units, n_units), nn.BatchNorm1d(n_units), NL()])
+            else:
+                layers.extend([nn.Linear(n_units, n_units), NL()])
 
         self.model = nn.Sequential(*layers).to(DEVICE)
 
@@ -326,6 +349,7 @@ class PropensityNet(nn.Module):
         patience: int = DEFAULT_PATIENCE,
         n_iter_min: int = DEFAULT_N_ITER_MIN,
         clipping_value: int = 1,
+        batch_norm: bool = True
     ) -> None:
         super(PropensityNet, self).__init__()
         if nonlin not in list(NONLIN.keys()):
@@ -333,14 +357,21 @@ class PropensityNet(nn.Module):
 
         NL = NONLIN[nonlin]
 
-        layers = [
+        if batch_norm:
+            layers = [
             nn.Linear(in_features=n_unit_in, out_features=n_units_out_prop),
             nn.BatchNorm1d(n_units_out_prop),
             NL(),
-        ]
+            ]
+        else:
+            layers = [
+                nn.Linear(in_features=n_unit_in, out_features=n_units_out_prop),
+                NL(),
+            ]
 
         for i in range(n_layers_out_prop - 1):
-            layers.extend(
+            if batch_norm:
+                layers.extend(
                 [
                     nn.Linear(
                         in_features=n_units_out_prop, out_features=n_units_out_prop
@@ -349,6 +380,14 @@ class PropensityNet(nn.Module):
                     NL(),
                 ]
             )
+            else:
+                layers.extend(
+                    [
+                        nn.Linear(
+                            in_features=n_units_out_prop, out_features=n_units_out_prop
+                        ),NL(),
+                    ]
+                )
         layers.extend(
             [
                 nn.Linear(in_features=n_units_out_prop, out_features=n_unit_out),
