@@ -199,9 +199,6 @@ class SNet(BaseCATEEstimator):
                 n_unit_in, n_units=n_units_r, n_layers=n_layers_r, nonlin=nonlin,
                 batch_norm=batch_norm
             )
-            self._propensity_estimator = None
-            self._reps_c = None
-            self._reps_prop = None
 
             for idx in range(2):
                 self._po_estimators.append(

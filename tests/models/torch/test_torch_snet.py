@@ -60,12 +60,15 @@ def test_model_params() -> None:
         with_prop=False
     )
 
-    assert model._reps_c is None
+    with np.testing.assert_raises(AttributeError):
+        model._reps_c
+    with np.testing.assert_raises(AttributeError):
+        model._reps_prop
+    with np.testing.assert_raises(AttributeError):
+        model._propensity_estimator
     assert model._reps_o is not None
     assert model._reps_mu0 is not None
     assert model._reps_mu1 is not None
-    assert model._reps_prop is None
-    assert model._propensity_estimator is None
     assert len(model._po_estimators) == 2
 
     for mod in model._po_estimators:
