@@ -18,8 +18,6 @@ import catenets.logger as log
 
 from .network import download_if_needed
 
-np.random.seed(0)
-random.seed(0)
 
 DATASET = "Twin_Data.csv.gz"
 URL = "https://bitbucket.org/mvdschaar/mlforhealthlabpub/raw/0b0190bcd38a76c405c805f1ca774971fcd85233/data/twins/Twin_Data.csv.gz"  # noqa: E501
@@ -60,7 +58,9 @@ def preprocess(
     test_potential_y: array or pd.DataFrame
         Potential outcomes in testing data.
     """
-
+    np.random.seed(seed)
+    random.seed(seed)
+    
     # Load original data (11400 patients, 30 features, 2 dimensional potential outcomes)
     df = pd.read_csv(fn_csv)
 
@@ -185,17 +185,25 @@ def preprocess(
     potential_y = np.vstack((y0, y1)).T
 
     # Train/test division
-    idx = np.random.permutation(no)
-    train_idx = idx[: int(train_ratio * no)]
-    test_idx = idx[int(train_ratio * no) :]
+    if train_ratio < 1:
+        idx = np.random.permutation(no)
+        train_idx = idx[: int(train_ratio * no)]
+        test_idx = idx[int(train_ratio * no) :]
 
-    train_x = x[train_idx, :]
-    train_w = w[train_idx]
-    train_y = y[train_idx]
-    train_potential_y = potential_y[train_idx, :]
+        train_x = x[train_idx, :]
+        train_w = w[train_idx]
+        train_y = y[train_idx]
+        train_potential_y = potential_y[train_idx, :]
 
-    test_x = x[test_idx, :]
-    test_potential_y = potential_y[test_idx, :]
+        test_x = x[test_idx, :]
+        test_potential_y = potential_y[test_idx, :]
+    else:
+        train_x = x
+        train_w = w
+        train_y = y
+        train_potential_y = potential_y
+        test_x = None
+        test_potential_y = None
 
     return train_x, train_w, train_y, train_potential_y, test_x, test_potential_y
 
