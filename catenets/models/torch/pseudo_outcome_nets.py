@@ -299,7 +299,7 @@ class PseudoOutcomeLearner(BaseCATEEstimator):
 
         return self
 
-    def predict(self, X: torch.Tensor) -> torch.Tensor:
+    def predict(self, X: torch.Tensor, return_po: bool = False) -> torch.Tensor:
         """
         Predict treatment effects
 
@@ -312,6 +312,10 @@ class PseudoOutcomeLearner(BaseCATEEstimator):
         te_est: array-like of shape (n_samples,)
             Predicted treatment effects
         """
+        if return_po:
+            raise NotImplementedError(
+                "PseudoOutcomeLearners have no Potential outcome predictors."
+            )
         X = self._check_tensor(X).float()
         return predict_wrapper(self._te_estimator, X)
 
