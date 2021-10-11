@@ -612,7 +612,7 @@ class XLearner(PseudoOutcomeLearner):
 
         train_wrapper(self._propensity_estimator, X, w)
 
-    def predict(self, X: torch.Tensor, predict_po: bool = False) -> torch.Tensor:
+    def predict(self, X: torch.Tensor, return_po: bool = False) -> torch.Tensor:
         """
         Predict treatment effects
 
@@ -627,6 +627,10 @@ class XLearner(PseudoOutcomeLearner):
         te_est: array-like of shape (n_samples,)
             Predicted treatment effects
         """
+        if return_po:
+            raise NotImplementedError(
+                "PseudoOutcomeLearners have no Potential outcome predictors."
+            )
         X = self._check_tensor(X).float().to(DEVICE)
         tau0_pred = predict_wrapper(self._te_estimator_0, X)
         tau1_pred = predict_wrapper(self._te_estimator_1, X)
