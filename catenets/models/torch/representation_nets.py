@@ -100,7 +100,8 @@ class BasicDragonNet(BaseCATEEstimator):
         nonlin: str = DEFAULT_NONLIN,
         weighting_strategy: Optional[str] = None,
         penalty_disc: float = 0,
-        batch_norm: bool = True
+        batch_norm: bool = True,
+        early_stopping: bool = True
     ) -> None:
         super(BasicDragonNet, self).__init__()
 
@@ -114,6 +115,7 @@ class BasicDragonNet(BaseCATEEstimator):
         self.weight_decay = weight_decay
         self.binary_y = binary_y
         self.penalty_disc = penalty_disc
+        self.early_stopping = early_stopping
 
         self._repr_estimator = RepresentationNet(
             n_unit_in, n_units=n_units_r, n_layers=n_layers_r, nonlin=nonlin, batch_norm=batch_norm
@@ -236,19 +238,20 @@ class BasicDragonNet(BaseCATEEstimator):
 
             train_loss = torch.Tensor(train_loss).to(DEVICE)
 
-            if i % self.n_iter_print == 0:
+            if self.early_stopping or i % self.n_iter_print == 0:
                 with torch.no_grad():
                     po_preds, prop_preds, discr = self._step(X_val, w_val)
                     val_loss = self.loss(po_preds, prop_preds, y_val, w_val, discr)
-                    if val_loss_best > val_loss:
-                        val_loss_best = val_loss
-                        patience = 0
-                    else:
-                        patience += 1
-                    if patience > DEFAULT_PATIENCE and i > DEFAULT_N_ITER_MIN:
-                        break
-
-                    log.info(
+                    if self.early_stopping:
+                        if val_loss_best > val_loss:
+                            val_loss_best = val_loss
+                            patience = 0
+                        else:
+                            patience += 1
+                        if patience > DEFAULT_PATIENCE and i > DEFAULT_N_ITER_MIN:
+                            break
+                    if i % self.n_iter_print == 0:
+                        log.info(
                         f"[{self.name}] Epoch: {i}, current {val_string} loss: {val_loss} train_loss: {torch.mean(train_loss)}"
                     )
 

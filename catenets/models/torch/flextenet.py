@@ -311,6 +311,7 @@ class FlexTENet(BaseCATEEstimator):
         self.shared_repr = shared_repr
         self.normalize_ortho = normalize_ortho
         self.clipping_value = clipping_value
+        self.early_stopping = early_stopping
 
         self.seed = seed
         self.n_iter_print = n_iter_print
@@ -555,21 +556,22 @@ class FlexTENet(BaseCATEEstimator):
 
             train_loss = torch.Tensor(train_loss).to(DEVICE)
 
-            if i % self.n_iter_print == 0:
+            if self.early_stopping or i % self.n_iter_print == 0:
                 with torch.no_grad():
                     _, mu0, mu1 = self.predict(X_val, return_po=True)
                     val_loss = self.loss(mu0, mu1, y_val, w_val).detach().cpu()
-                    if val_loss_best > val_loss:
-                        val_loss_best = val_loss
-                        patience = 0
-                    else:
-                        patience += 1
-                    if patience > DEFAULT_PATIENCE and i > DEFAULT_N_ITER_MIN:
-                        break
-
-                    log.info(
-                        f"[FlexTENet] Epoch: {i}, current {val_string} loss: {val_loss} train_loss: {torch.mean(train_loss)}"
-                    )
+                    if self.early_stopping:
+                        if val_loss_best > val_loss:
+                            val_loss_best = val_loss
+                            patience = 0
+                        else:
+                            patience += 1
+                        if patience > DEFAULT_PATIENCE and i > DEFAULT_N_ITER_MIN:
+                            break
+                    if i % self.n_iter_print == 0:
+                        log.info(
+                            f"[FlexTENet] Epoch: {i}, current {val_string} loss: {val_loss} train_loss: {torch.mean(train_loss)}"
+                        )
 
         return self
 

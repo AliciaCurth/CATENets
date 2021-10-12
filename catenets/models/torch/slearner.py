@@ -83,7 +83,8 @@ class SLearner(BaseCATEEstimator):
         seed: int = DEFAULT_SEED,
         nonlin: str = DEFAULT_NONLIN,
         weighting_strategy: Optional[str] = None,
-        batch_norm: bool = True
+        batch_norm: bool = True,
+        early_stopping: bool = True
     ) -> None:
         super(SLearner, self).__init__()
 
@@ -105,7 +106,8 @@ class SLearner(BaseCATEEstimator):
                 n_iter_print=n_iter_print,
                 seed=seed,
                 nonlin=nonlin,
-                batch_norm=batch_norm
+                batch_norm=batch_norm,
+                early_stopping=early_stopping
             ).to(DEVICE)
         if weighting_strategy is not None:
             self._propensity_estimator = PropensityNet(
@@ -123,7 +125,8 @@ class SLearner(BaseCATEEstimator):
                 seed=seed,
                 nonlin=nonlin,
                 val_split_prop=val_split_prop,
-                batch_norm=batch_norm
+                batch_norm=batch_norm,
+                early_stopping=early_stopping
             ).to(DEVICE)
 
     def train(
