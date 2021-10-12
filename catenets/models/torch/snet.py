@@ -116,7 +116,8 @@ class SNet(BaseCATEEstimator):
             clipping_value: int = 1,
             batch_norm: bool = True,
             with_prop: bool = True,
-            early_stopping: bool = True
+            early_stopping: bool = True,
+            prop_loss_multiplier: float = 1
     ) -> None:
         super(SNet, self).__init__()
 
@@ -135,6 +136,7 @@ class SNet(BaseCATEEstimator):
         self.with_prop = with_prop
         self.early_stopping = early_stopping
         self.n_iter_min = n_iter_min
+        self.prop_loss_multiplier = prop_loss_multiplier
 
         self._reps_mu0 = RepresentationNet(
             n_unit_in, n_units=n_units_r_small, n_layers=n_layers_r, nonlin=nonlin,
@@ -265,7 +267,7 @@ class SNet(BaseCATEEstimator):
 
         return (
                 po_loss(y0_pred, y1_pred, y_true, t_true)
-                + prop_loss(t_pred, t_true)
+                + self.prop_loss_multiplier*prop_loss(t_pred, t_true)
                 + discrepancy
                 + self._ortho_reg()
         )
