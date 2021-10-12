@@ -101,7 +101,10 @@ class BasicDragonNet(BaseCATEEstimator):
         weighting_strategy: Optional[str] = None,
         penalty_disc: float = 0,
         batch_norm: bool = True,
-        early_stopping: bool = True
+        early_stopping: bool = True,
+        prop_loss_multiplier: float = 1,
+        n_iter_min: int = DEFAULT_N_ITER_MIN,
+        patience: int = DEFAULT_PATIENCE
     ) -> None:
         super(BasicDragonNet, self).__init__()
 
@@ -116,6 +119,9 @@ class BasicDragonNet(BaseCATEEstimator):
         self.binary_y = binary_y
         self.penalty_disc = penalty_disc
         self.early_stopping = early_stopping
+        self.prop_loss_multiplier = prop_loss_multiplier
+        self.n_iter_min = n_iter_min
+        self.patience = patience
 
         self._repr_estimator = RepresentationNet(
             n_unit_in, n_units=n_units_r, n_layers=n_layers_r, nonlin=nonlin, batch_norm=batch_norm
@@ -165,7 +171,8 @@ class BasicDragonNet(BaseCATEEstimator):
             return nn.CrossEntropyLoss()(t_pred, t_true)
 
         return (
-            po_loss(po_pred, y_true, t_true) + prop_loss(t_pred, t_true) + discrepancy
+            po_loss(po_pred, y_true, t_true) +
+            self.prop_loss_multiplier*prop_loss(t_pred, t_true) + discrepancy
         )
 
     def train(
@@ -248,7 +255,7 @@ class BasicDragonNet(BaseCATEEstimator):
                             patience = 0
                         else:
                             patience += 1
-                        if patience > DEFAULT_PATIENCE and i > DEFAULT_N_ITER_MIN:
+                        if patience > self.patience and ((i + 1) * n_batches > self.n_iter_min):
                             break
                     if i % self.n_iter_print == 0:
                         log.info(
@@ -346,6 +353,7 @@ class TARNet(BasicDragonNet):
             batch_norm=batch_norm,
             **kwargs,
         )
+        self.prop_loss_multiplier = 0
 
     def _step(
         self, X: torch.Tensor, w: torch.Tensor

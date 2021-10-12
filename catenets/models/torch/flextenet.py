@@ -566,7 +566,7 @@ class FlexTENet(BaseCATEEstimator):
                             patience = 0
                         else:
                             patience += 1
-                        if patience > DEFAULT_PATIENCE and i > DEFAULT_N_ITER_MIN:
+                        if patience > self.patience and ((i + 1) * n_batches > self.n_iter_min):
                             break
                     if i % self.n_iter_print == 0:
                         log.info(

@@ -105,6 +105,7 @@ class SNet(BaseCATEEstimator):
             penalty_disc: float = DEFAULT_PENALTY_DISC,
             lr: float = DEFAULT_STEP_SIZE,
             n_iter: int = DEFAULT_N_ITER,
+            n_iter_min: int = DEFAULT_N_ITER_MIN,
             batch_size: int = DEFAULT_BATCH_SIZE,
             val_split_prop: float = DEFAULT_VAL_SPLIT,
             n_iter_print: int = DEFAULT_N_ITER_PRINT,
@@ -115,7 +116,8 @@ class SNet(BaseCATEEstimator):
             clipping_value: int = 1,
             batch_norm: bool = True,
             with_prop: bool = True,
-            early_stopping: bool = True
+            early_stopping: bool = True,
+            prop_loss_multiplier: float = 1
     ) -> None:
         super(SNet, self).__init__()
 
@@ -133,6 +135,8 @@ class SNet(BaseCATEEstimator):
         self.patience = patience
         self.with_prop = with_prop
         self.early_stopping = early_stopping
+        self.n_iter_min = n_iter_min
+        self.prop_loss_multiplier = prop_loss_multiplier
 
         self._reps_mu0 = RepresentationNet(
             n_unit_in, n_units=n_units_r_small, n_layers=n_layers_r, nonlin=nonlin,
@@ -263,7 +267,7 @@ class SNet(BaseCATEEstimator):
 
         return (
                 po_loss(y0_pred, y1_pred, y_true, t_true)
-                + prop_loss(t_pred, t_true)
+                + self.prop_loss_multiplier*prop_loss(t_pred, t_true)
                 + discrepancy
                 + self._ortho_reg()
         )
@@ -352,7 +356,7 @@ class SNet(BaseCATEEstimator):
                             patience = 0
                         else:
                             patience += 1
-                        if patience > self.patience and i > DEFAULT_N_ITER_MIN:
+                        if patience > self.patience and ((i + 1) * n_batches > self.n_iter_min):
                             break
 
                     if i % self.n_iter_print == 0:
