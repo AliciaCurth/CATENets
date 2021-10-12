@@ -68,7 +68,8 @@ class TLearner(BaseCATEEstimator):
         n_iter_print: int = DEFAULT_N_ITER_PRINT,
         seed: int = DEFAULT_SEED,
         nonlin: str = DEFAULT_NONLIN,
-        batch_norm: bool = True
+        batch_norm: bool = True,
+        early_stopping: bool = True
     ) -> None:
         super(TLearner, self).__init__()
 
@@ -94,7 +95,8 @@ class TLearner(BaseCATEEstimator):
                         n_iter_print=n_iter_print,
                         seed=seed,
                         nonlin=nonlin,
-                        batch_norm=batch_norm
+                        batch_norm=batch_norm,
+                        early_stopping=early_stopping
                     ).to(DEVICE),
                 )
 

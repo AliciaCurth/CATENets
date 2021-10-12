@@ -114,7 +114,8 @@ class SNet(BaseCATEEstimator):
             patience: int = DEFAULT_PATIENCE,
             clipping_value: int = 1,
             batch_norm: bool = True,
-            with_prop: bool = True
+            with_prop: bool = True,
+            early_stopping: bool = True
     ) -> None:
         super(SNet, self).__init__()
 
@@ -131,6 +132,7 @@ class SNet(BaseCATEEstimator):
         self.clipping_value = clipping_value
         self.patience = patience
         self.with_prop = with_prop
+        self.early_stopping = early_stopping
 
         self._reps_mu0 = RepresentationNet(
             n_unit_in, n_units=n_units_r_small, n_layers=n_layers_r, nonlin=nonlin,
@@ -332,7 +334,7 @@ class SNet(BaseCATEEstimator):
 
             train_loss = torch.Tensor(train_loss).to(DEVICE)
 
-            if i % self.n_iter_print == 0:
+            if self.early_stopping or i % self.n_iter_print == 0:
                 with torch.no_grad():
                     y0_preds, y1_preds, prop_preds, discrepancy = self._step(
                         X_val, w_val
@@ -344,15 +346,17 @@ class SNet(BaseCATEEstimator):
                             .detach()
                             .cpu()
                     )
-                    if val_loss_best > val_loss:
-                        val_loss_best = val_loss
-                        patience = 0
-                    else:
-                        patience += 1
-                    if patience > self.patience and i > DEFAULT_N_ITER_MIN:
-                        break
+                    if self.early_stopping:
+                        if val_loss_best > val_loss:
+                            val_loss_best = val_loss
+                            patience = 0
+                        else:
+                            patience += 1
+                        if patience > self.patience and i > DEFAULT_N_ITER_MIN:
+                            break
 
-                    log.info(
+                    if i % self.n_iter_print == 0:
+                        log.info(
                         f"[SNet] Epoch: {i}, current {val_string} loss: {val_loss} train_loss: {torch.mean(train_loss)}"
                     )
 
