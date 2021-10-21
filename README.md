@@ -9,10 +9,10 @@ Code Author: Alicia Curth (amc253@cam.ac.uk)
 
 This repo contains Jax-based, sklearn-style implementations of Neural Network-based Conditional
 Average Treatment Effect (CATE) Estimators, which were used in the AISTATS21 paper
-'Nonparametric Estimation of Heterogeneous Treatment Effects: From Theory to Learning
-Algorithms' (Curth & vd Schaar, 2021a; https://arxiv.org/abs/2101.10943) as well as the follow up
-NeurIPS21 paper "On Inductive Biases for Heterogeneous Treatment Effect Estimation" (Curth & vd
-Schaar, 2021b; https://arxiv.org/abs/2106.03765) and the paper "Really Doing Great at Estimating CATE? A Critical Look at ML Benchmarking Practices in Treatment Effect Estimation" (Curth et al, 2021; NeurIPS21 Datasets & Benchmarks track https://openreview.net/forum?id=FQLzQqGEAH). 
+['Nonparametric Estimation of Heterogeneous Treatment Effects: From Theory to Learning
+Algorithms']( https://arxiv.org/abs/2101.10943) (Curth & vd Schaar, 2021a) as well as the follow up
+NeurIPS21 paper ["On Inductive Biases for Heterogeneous Treatment Effect Estimation"](https://arxiv.org/abs/2106.03765) (Curth & vd
+Schaar, 2021b) and the NeurIPS21 Datasets & Benchmarks track paper ["Really Doing Great at Estimating CATE? A Critical Look at ML Benchmarking Practices in Treatment Effect Estimation"](https://openreview.net/forum?id=FQLzQqGEAH) (Curth et al, 2021). 
 
 We implement the SNet-class we introduce in Curth & vd Schaar (2021a), as well as FlexTENet and
 OffsetNet as discussed in Curth & vd Schaar (2021b), and re-implement a number of
@@ -99,7 +99,7 @@ If you use this software please cite the corresponding paper(s):
 
 
 @article{curth2021really,
-  title={On Inductive Biases for Heterogeneous Treatment Effect Estimation},
+  title={Really Doing Great at Estimating CATE? A Critical Look at ML Benchmarking Practices in Treatment Effect Estimation},
   author={Curth, Alicia and Svensson, David and Weatherall, James and van der Schaar, Mihaela},
   booktitle={Proceedings of the Neural Information Processing Systems Track on Datasets and Benchmarks},
   year={2021}
