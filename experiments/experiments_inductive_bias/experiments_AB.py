@@ -87,6 +87,35 @@ ABLATIONS = {
     FLEXTE_NAME + "_noortho_reg_same": FlexTENet(penalty_orthogonal=0, **PARAMS_DEPTH),
 }
 
+# For results in Appendix B.3
+FLEX_LAMBDA = {'FlexTENet_001': FlexTENet(penalty_orthogonal=PENALTY_ORTHOGONAL,
+                                          penalty_l2_p=1 / 100,
+                                          **PARAMS_DEPTH),
+               'FlexTENet_01': FlexTENet(penalty_orthogonal=PENALTY_ORTHOGONAL,
+                                         penalty_l2_p=1 / 10,
+                                         **PARAMS_DEPTH),
+               'FlexTENet_0001': FlexTENet(penalty_orthogonal=PENALTY_ORTHOGONAL,
+                                           penalty_l2_p=1 / 1000,
+                                           **PARAMS_DEPTH),
+               'FlexTENet_00001': FlexTENet(penalty_orthogonal=PENALTY_ORTHOGONAL,
+                                            penalty_l2_p=1 / 10000,
+                                            **PARAMS_DEPTH)
+               }
+
+T_LAMBDA = {T_NAME: TNet(**PARAMS_DEPTH),
+            T_NAME + '_reg_01': TNet(train_separate=False, penalty_diff=1 / 10, **PARAMS_DEPTH),
+            T_NAME + '_reg_001': TNet(train_separate=False, penalty_diff=1 / 100, **PARAMS_DEPTH),
+            T_NAME + '_reg_0001': TNet(train_separate=False, penalty_diff=1 / 1000,
+                                       **PARAMS_DEPTH),
+            T_NAME + '_reg_00001': TNet(train_separate=False, penalty_diff=1 / 10000,
+                                        **PARAMS_DEPTH)}
+
+OFFSET_LAMBDA = {OFFSET_NAME + '_reg_01': OffsetNet(penalty_l2_p=1 / 10, **PARAMS_DEPTH),
+                 OFFSET_NAME + '_reg_001': OffsetNet(penalty_l2_p=1 / 100, **PARAMS_DEPTH),
+                 OFFSET_NAME + '_reg_0001': OffsetNet(penalty_l2_p=1 / 1000, **PARAMS_DEPTH),
+                 OFFSET_NAME + '_reg_00001': OffsetNet(penalty_l2_p=1 / 10000, **PARAMS_DEPTH),
+                 }
+
 # For results in appendix D.1
 TWOSTEP_LEARNERS = {
     XNET_NAME: XNet(**PARAMS_DEPTH_2),
@@ -170,14 +199,15 @@ X_VARIANTS = {
 
 
 def do_acic_simu_loops(
-    rho_loop: list = [0, 0.05, 0.1, 0.2, 0.5, 0.8],
-    n1_loop: list = [200, 2000, 500],
-    n_exp: int = 10,
-    file_name: str = "acic_simu",
-    models: Optional[dict] = None,
-    n_0: int = 2000,
-    n_test: int = 500,
-    setting: str = "A",
+        rho_loop: list = [0, 0.05, 0.1, 0.2, 0.5, 0.8],
+        n1_loop: list = [200, 2000, 500],
+        n_exp: int = 10,
+        file_name: str = "acic_simu",
+        models: Optional[dict] = None,
+        n_0: int = 2000,
+        n_test: int = 500,
+        setting: str = "A",
+        factual_eval: bool = False
 ) -> None:
     if models is None:
         models = ALL_MODELS
@@ -194,6 +224,7 @@ def do_acic_simu_loops(
                     n_test=n_test,
                     prop_omega=0,
                     prop_gamma=rho,
+                    factual_eval=factual_eval,
                 )
         else:
             for rho in rho_loop:
@@ -206,46 +237,25 @@ def do_acic_simu_loops(
                     n_test=n_test,
                     prop_gamma=0,
                     prop_omega=rho,
+                    factual_eval=factual_eval
                 )
 
 
-def do_acic_simu_loop_n1(
-    n1_loop: list,
-    n_exp: int = 10,
-    file_name: str = "acic_simu",
-    models: Optional[dict] = None,
-    n_0: int = 2000,
-    n_test: int = 500,
-    prop_gamma: float = 0,
-    prop_omega: float = 0,
-) -> None:
-    for n in n1_loop:
-        do_acic_simu(
-            n_exp=n_exp,
-            file_name=file_name,
-            models=models,
-            n_0=n_0,
-            n_1=n,
-            n_test=n_test,
-            prop_gamma=prop_gamma,
-            prop_omega=prop_omega,
-        )
-
-
 def do_acic_simu(
-    n_exp: Union[int, list] = 10,
-    file_name: str = "acic_simu",
-    models: Union[dict, str, None] = None,
-    n_0: int = 2000,
-    n_1: int = 200,
-    n_test: int = 500,
-    error_sd: float = 1,
-    sp_lin: float = 0.6,
-    sp_nonlin: float = 0.3,
-    prop_gamma: float = 0,
-    ate_goal: float = 0,
-    inter: bool = True,
-    prop_omega: float = 0,
+        n_exp: Union[int, list] = 10,
+        file_name: str = "acic_simu",
+        models: Union[dict, str, None] = None,
+        n_0: int = 2000,
+        n_1: int = 200,
+        n_test: int = 500,
+        error_sd: float = 1,
+        sp_lin: float = 0.6,
+        sp_nonlin: float = 0.3,
+        prop_gamma: float = 0,
+        ate_goal: float = 0,
+        inter: bool = True,
+        prop_omega: float = 0,
+        factual_eval: bool = False,
 ) -> None:
     if models is None:
         models = ALL_MODELS
@@ -254,6 +264,12 @@ def do_acic_simu(
             models = ALL_MODELS
         elif models == "ablations":
             models = ABLATIONS
+        elif models == 'flex_lambda':
+            models = FLEX_LAMBDA
+        elif models == 't_lambda':
+            models = T_LAMBDA
+        elif models == 'offset_lambda':
+            models = OFFSET_LAMBDA
         elif models == "snet":
             models = SNET_VARIANTS
         elif models == "dragon":
@@ -288,19 +304,26 @@ def do_acic_simu(
     )
     writer = csv.writer(out_file)
     header = (
-        ["y_var", "cate_var"]
-        + [name + "_cate" for name in models.keys()]
-        + [
-            name + "_mu0"
-            for name in models.keys()
-            if "DR" not in name and "X" not in name
-        ]
-        + [
-            name + "_mu1"
-            for name in models.keys()
-            if "DR" not in name and "X" not in name
-        ]
+            ["y_var", "cate_var"]
+            + [name + "_cate" for name in models.keys()]
+            + [
+                name + "_mu0"
+                for name in models.keys()
+                if "R" not in name and "X" not in name
+            ]
+            + [
+                name + "_mu1"
+                for name in models.keys()
+                if "R" not in name and "X" not in name
+            ]
     )
+
+    if factual_eval:
+        header = header + [
+            name + '_factual' for name in models.keys()
+            if 'R' not in name and 'X' not in name
+        ]
+
     writer.writerow(header)
 
     if isinstance(n_exp, int):
@@ -316,19 +339,36 @@ def do_acic_simu(
         rmse_mu1 = []
 
         # get data
-        X, y, w, X_t, mu_0_t, mu_1_t, cate_t = acic_simu(
-            i_exp,
-            n_0=n_0,
-            n_1=n_1,
-            n_test=n_test,
-            error_sd=error_sd,
-            sp_lin=sp_lin,
-            sp_nonlin=sp_nonlin,
-            prop_gamma=prop_gamma,
-            ate_goal=ate_goal,
-            inter=inter,
-            prop_omega=prop_omega,
-        )
+        if not factual_eval:
+            X, y, w, X_t, mu_0_t, mu_1_t, cate_t = acic_simu(
+                i_exp,
+                n_0=n_0,
+                n_1=n_1,
+                n_test=n_test,
+                error_sd=error_sd,
+                sp_lin=sp_lin,
+                sp_nonlin=sp_nonlin,
+                prop_gamma=prop_gamma,
+                ate_goal=ate_goal,
+                inter=inter,
+                prop_omega=prop_omega,
+            )
+        else:
+            rmse_factual = []
+            X, y, w, X_t, y_t, w_t, mu_0_t, mu_1_t, cate_t = acic_simu(
+                i_exp,
+                n_0=n_0,
+                n_1=n_1,
+                n_test=n_test,
+                error_sd=error_sd,
+                sp_lin=sp_lin,
+                sp_nonlin=sp_nonlin,
+                prop_gamma=prop_gamma,
+                ate_goal=ate_goal,
+                inter=inter,
+                prop_omega=prop_omega,
+                return_ytest=True,
+            )
 
         y_var = onp.var(y)
         cate_var = onp.var(cate_t)
@@ -342,39 +382,45 @@ def do_acic_simu(
             estimator_temp.fit(X=X, y=y, w=w)
 
             if (
-                "DR" not in model_name
-                and "R" not in model_name
-                and "X" not in model_name
+                    "R" not in model_name
+                    and "X" not in model_name
             ):
                 cate_pred_out, mu0_pred, mu1_pred = estimator_temp.predict(
                     X_t, return_po=True
                 )
                 rmse_mu0.append(eval_root_mse(mu0_pred, mu_0_t))
                 rmse_mu1.append(eval_root_mse(mu1_pred, mu_1_t))
+                if factual_eval:
+                    pred_factual = w_t * mu1_pred + (1 - w_t) * mu0_pred
+                    rmse_factual.append(eval_root_mse(pred_factual, y_t))
             else:
                 cate_pred_out = estimator_temp.predict(X_t)
 
             rmse_cate.append(eval_root_mse(cate_pred_out, cate_t))
 
-        writer.writerow([y_var, cate_var] + rmse_cate + rmse_mu0 + rmse_mu1)
+        if not factual_eval:
+            writer.writerow([y_var, cate_var] + rmse_cate + rmse_mu0 + rmse_mu1)
+        else:
+            writer.writerow([y_var, cate_var] + rmse_cate + rmse_mu0 + rmse_mu1 + rmse_factual)
 
     out_file.close()
 
 
 def acic_simu(
-    i_exp: onp.ndarray,
-    n_0: int = 2000,
-    n_1: int = 200,
-    n_test: int = 500,
-    error_sd: float = 1,
-    sp_lin: float = 0.6,
-    sp_nonlin: float = 0.3,
-    prop_gamma: float = 0,
-    prop_omega: float = 0,
-    ate_goal: float = 0,
-    inter: bool = True,
+        i_exp: onp.ndarray,
+        n_0: int = 2000,
+        n_1: int = 200,
+        n_test: int = 500,
+        error_sd: float = 1,
+        sp_lin: float = 0.6,
+        sp_nonlin: float = 0.3,
+        prop_gamma: float = 0,
+        prop_omega: float = 0,
+        ate_goal: float = 0,
+        inter: bool = True,
+        return_ytest: bool = False,
 ) -> Tuple:
-    X_train, w_train, y_train, _, X_test, Y_test = load(
+    X_train, w_train, y_train, _, X_test, w_test, y_test, po_test = load(
         "acic2016",
         i_exp=i_exp,
         n_0=n_0,
@@ -388,8 +434,11 @@ def acic_simu(
         ate_goal=ate_goal,
         inter=inter,
     )
-    mu_0_t = Y_test[:, 0]
-    mu_1_t = Y_test[:, 1]
+    mu_0_t = po_test[:, 0]
+    mu_1_t = po_test[:, 1]
     cate_t = mu_1_t - mu_0_t
+
+    if return_ytest:
+        return X_train, y_train, w_train, X_test, y_test, w_test, mu_0_t, mu_1_t, cate_t
 
     return X_train, y_train, w_train, X_test, mu_0_t, mu_1_t, cate_t
