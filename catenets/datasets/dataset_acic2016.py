@@ -176,8 +176,10 @@ def preprocess(
         mu_0[ind[: (n_0 + n_1)]],
         mu_1[ind[: (n_0 + n_1)]],
     )
-    X_test, mu_0_t, mu_1_t = (
+    X_test, y_test, w_test, mu_0_t, mu_1_t = (
         X[ind_test, :],
+        y[ind_test],
+        w[ind_test],
         mu_0[ind_test],
         mu_1[ind_test],
     )
@@ -188,6 +190,8 @@ def preprocess(
         y_train,
         np.asarray([mu_0_train, mu_1_train]).squeeze().T,
         X_test,
+        w_test,
+        y_test,
         np.asarray([mu_0_t, mu_1_t]).squeeze().T,
     )
 
