@@ -1,5 +1,7 @@
 """
-File to run experiments from shell
+File to run experiments for
+"On Inductive Biases for Heterogeneous Treatment Effect Estimation" (Curth & vdS, NeurIPS21)
+from shell
 """
 # Author: Alicia Curth
 import argparse
@@ -21,6 +23,9 @@ def init_arg() -> Any:
     parser.add_argument("--n_exp", default=10, type=int)
     parser.add_argument("--n_0", default=2000, type=int)
     parser.add_argument("--models", default=None, type=str)
+    parser.add_argument("--n1_loop", nargs='+', default=[200, 2000, 500], type=int)
+    parser.add_argument("--rho_loop", nargs='+', default=[0, 0.05, 0.1, 0.2, 0.5, 0.8], type=float)
+    parser.add_argument("--factual_eval", default=False, type=bool)
     return parser.parse_args()
 
 
@@ -33,6 +38,9 @@ if __name__ == "__main__":
             setting=args.setup,
             n_0=args.n_0,
             models=args.models,
+            n1_loop=args.n1_loop,
+            rho_loop=args.rho_loop,
+            factual_eval=args.factual_eval,
         )
     elif (args.setup == "C") or (args.setup == "D"):
         do_ihdp_experiments(
