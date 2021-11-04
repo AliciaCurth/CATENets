@@ -188,7 +188,7 @@ def preprocess(
     if train_ratio < 1:
         idx = np.random.permutation(no)
         train_idx = idx[: int(train_ratio * no)]
-        test_idx = idx[int(train_ratio * no) :]
+        test_idx = idx[int(train_ratio * no):]
 
         train_x = x[train_idx, :]
         train_w = w[train_idx]

@@ -192,7 +192,7 @@ class XNet(BaseCATENet):
 
         Parameters
         ----------
-        X: pd.DataFrame or onp.array
+        X: pd.DataFrame or np.array
             Covariate matrix
         return_po: bool, default False
             Whether to return potential outcome estimate
