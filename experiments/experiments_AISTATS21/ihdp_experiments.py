@@ -16,7 +16,7 @@ from catenets.models.jax import PSEUDOOUT_NAME, PseudoOutcomeNet
 from catenets.models.jax.transformation_utils import RA_TRANSFORMATION
 
 # Some constants
-DATA_DIR = Path("data/")
+DATA_DIR = Path("catenets/datasets/data/")
 RESULT_DIR = Path("results/experiments_AISTATS21/ihdp/")
 SEP = "_"
 

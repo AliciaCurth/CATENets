@@ -24,7 +24,7 @@ from catenets.models.jax import (
     TNet,
 )
 
-DATA_DIR = Path("data/ihdp/")
+DATA_DIR = Path("catenets/datasets/data/")
 RESULT_DIR = Path("results/experiments_inductive_bias/ihdp/")
 SEP = "_"
 
