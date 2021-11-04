@@ -65,11 +65,10 @@ Options:
 --file_name # base file name to write to, defaults to 'results'
 --n_repeats # number of experiments to run for each configuration, defaults to 10 (should be set to 100 for IHDP)
 ```
-To run the ihdp experiments, first download the IHDP-100 data files from https://www.fredjo.com/ and place them in a folder called 'data/'.
 
 Similarly, the experiments in Curth & vd Schaar (2021b) can be replicated using the code in
-``experiments.experiments_inductive_bias`` or from shell using ```python
-run_experiments_inductive_bias.py```.
+``experiments.experiments_inductivebias_NeurIPS21`` (or from shell using ```python
+run_experiments_inductive_bias_NeurIPS.py```) and the experiments in Curth et al (2021) can be replicated using the code in ``experiments.experiments_benchmarks_NeurIPS21`` (the catenets experiments can also be run from shell using ``python run_experiments_benchmarks_NeurIPS``).
 
 The code can also be installed as a python package (``catenets``). From a local copy of the repo, run ``python setup.py install``.
 
