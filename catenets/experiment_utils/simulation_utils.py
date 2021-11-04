@@ -132,12 +132,12 @@ def get_multivariate_normal_params(
 ) -> Tuple[np.ndarray, np.ndarray]:
     # Adapted from Hassanpour & Greiner (2020)
     if correlated:
-        mu = np.zeros(m)  # onp.random.normal(size=m)/10
+        mu = np.zeros(m)  # np.random.normal(size=m)/10
         temp = np.random.uniform(size=(m, m))
         temp = 0.5 * (np.transpose(temp) + temp)
         sig = (np.ones((m, m)) - np.eye(m)) * temp / 10 + 0.5 * np.eye(
             m
-        )  # (temp + m * onp.eye(m)) / 10
+        )  # (temp + m * np.eye(m)) / 10
 
     else:
         mu = np.zeros(m)

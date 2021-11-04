@@ -256,7 +256,7 @@ def load_raw(data_path: Path) -> Tuple:
     train_csv = data_path / TRAIN_DATASET
     test_csv = data_path / TEST_DATASET
 
-    log.debug(f"load raw dataset f{train_csv}")
+    log.debug(f"load raw dataset {train_csv}")
 
     download_if_needed(train_csv, http_url=TRAIN_URL)
     download_if_needed(test_csv, http_url=TEST_URL)
