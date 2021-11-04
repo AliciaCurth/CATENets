@@ -198,14 +198,14 @@ def preprocess_simu(
     )
 
 
-def get_acic_orig_filenames(data_path: Path, simu_num: int):
+def get_acic_orig_filenames(data_path: Path, simu_num: int) -> list:
     return sorted(glob.glob((data_path / ("data_cf_all/" + str(simu_num) +
                                           '/zymu_*.csv')).__str__()))
 
 
 def get_acic_orig_outcomes(data_path: Path,
                            simu_num: int,
-                           i_exp: int):
+                           i_exp: int) -> Tuple:
     file_list = get_acic_orig_filenames(data_path=data_path,
                                         simu_num=simu_num)
 
@@ -224,7 +224,7 @@ def preprocess_acic_orig(fn_csv: Path,
                          i_exp: int = 0,
                          train_size: int = 4000,
                          random_split: bool = False
-                         ):
+                         )-> Tuple:
     X = get_acic_covariates(
         fn_csv, keep_categorical=keep_categorical, preprocessed=preprocessed
     )
