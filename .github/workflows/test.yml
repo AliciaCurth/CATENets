@@ -5,6 +5,9 @@ on:
     branches: [main, release]
   pull_request:
     types: [opened, synchronize, reopened]
+  schedule:
+    - cron:  '0 0 * * 0'
+
 
 jobs:
   Linter:
@@ -34,8 +37,8 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        python-version: [3.6, 3.7, 3.8, 3.9]
-        os: [macos-latest, ubuntu-latest]
+        python-version: ['3.7', '3.8', '3.9']
+        os: [macos-latest, ubuntu-latest, windows-latest]
     steps:
       - uses: actions/checkout@v2
         with:
@@ -52,5 +55,15 @@ jobs:
         run: |
             pip install -r requirements_dev.txt
             pip install .
-      - name: Test with pytest
+      - name: Test with pytest Unix
         run: pytest -vvvsx -m "not slow"
+        if: ${{ matrix.os != 'windows-latest' }}
+      - name: Test with pytest Windows
+        run: |
+            cd tests\datasets
+            pytest -vvvsx -m "not slow"
+            cd ..\..
+
+            cd tests\models\torch
+            pytest -vvvsx -m "not slow"
+        if: ${{ matrix.os == 'windows-latest' }}
