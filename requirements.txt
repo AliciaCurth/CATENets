@@ -1,6 +1,6 @@
 googledrivedownloader
 jax>=0.1
-jaxlib>=0.1
+jaxlib>=0.1; sys_platform != 'win32'
 loguru>=0.5.3
 numpy>=1.19.2
 pandas>=1.1.2
@@ -8,4 +8,4 @@ pytest>=6.2.4
 requests
 scikit_learn>=0.24.2
 scipy>=1.2
-torch
+torch>=1.9
