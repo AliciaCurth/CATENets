@@ -297,9 +297,9 @@ class BasicDragonNet(BaseCATEEstimator):
         y: array-like of shape (n_samples,)
         """
         if not training:
-            self._repr_estimator.eval()
-            self._po_estimators[0].eval()
-            self._po_estimators[1].eval()
+            self._repr_estimator.model.eval()
+            self._po_estimators[0].model.eval()
+            self._po_estimators[1].model.eval()
 
         X = self._check_tensor(X).float()
         preds = self._forward(X)

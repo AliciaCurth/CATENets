@@ -332,7 +332,7 @@ class PseudoOutcomeLearner(BaseCATEEstimator):
                 "PseudoOutcomeLearners have no Potential outcome predictors."
             )
         if not training:
-            self._te_estimator.eval()
+            self._te_estimator.model.eval()
         X = self._check_tensor(X).float()
         return predict_wrapper(self._te_estimator, X)
 
@@ -651,8 +651,8 @@ class XLearner(PseudoOutcomeLearner):
             )
 
         if not training:
-            self._te_estimator_1.eval()
-            self._te_estimator_0.eval()
+            self._te_estimator_1.model.eval()
+            self._te_estimator_0.model.eval()
 
         X = self._check_tensor(X).float().to(DEVICE)
         tau0_pred = predict_wrapper(self._te_estimator_0, X)
