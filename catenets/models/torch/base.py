@@ -97,7 +97,9 @@ class BasicNet(nn.Module):
         n_iter_min: int = DEFAULT_N_ITER_MIN,
         clipping_value: int = 1,
         batch_norm: bool = True,
-        early_stopping: bool = True
+        early_stopping: bool = True,
+        dropout: bool = False,
+        dropout_prob: float = 0.2,
     ) -> None:
         super(BasicNet, self).__init__()
 
@@ -115,10 +117,11 @@ class BasicNet(nn.Module):
 
             # add required number of layers
             for i in range(n_layers_out - 1):
+                if dropout:
+                    layers.extend([nn.Dropout(dropout_prob)])
                 if batch_norm:
-                    layers.extend(
-                        [
-                            nn.Dropout(0.2),
+                        layers.extend(
+                           [
                             nn.Linear(n_units_out, n_units_out),
                             nn.BatchNorm1d(n_units_out),
                             NL(),
@@ -127,7 +130,6 @@ class BasicNet(nn.Module):
                 else:
                     layers.extend(
                         [
-                            nn.Dropout(0.2),
                             nn.Linear(n_units_out, n_units_out),
                             NL(),
                         ]
@@ -357,7 +359,9 @@ class PropensityNet(nn.Module):
         n_iter_min: int = DEFAULT_N_ITER_MIN,
         clipping_value: int = 1,
         batch_norm: bool = True,
-        early_stopping: bool = True
+        early_stopping: bool = True,
+        dropout: bool = False,
+        dropout_prob: float = 0.2,
     ) -> None:
         super(PropensityNet, self).__init__()
         if nonlin not in list(NONLIN.keys()):
@@ -378,6 +382,8 @@ class PropensityNet(nn.Module):
             ]
 
         for i in range(n_layers_out_prop - 1):
+            if dropout:
+                layers.extend([nn.Dropout(dropout_prob)])
             if batch_norm:
                 layers.extend(
                 [
@@ -588,7 +594,7 @@ class BaseCATEEstimator(nn.Module):
         -------
         potential outcomes probabilities
         """
-        return self.predict(X, return_po=False)
+        return self.predict(X, return_po=False, training=True)
 
     @abc.abstractmethod
     @benchmark
@@ -596,6 +602,7 @@ class BaseCATEEstimator(nn.Module):
         self,
         X: torch.Tensor,
         return_po: bool = False,
+        training: bool = False
     ) -> torch.Tensor:
         """
         Predict treatment effect estimates using a CATE estimator.
