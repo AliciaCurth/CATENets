@@ -284,7 +284,7 @@ class BasicDragonNet(BaseCATEEstimator):
 
         return torch.vstack((y0_preds, y1_preds)).T
 
-    def predict(self, X: torch.Tensor, return_po: bool = False) -> torch.Tensor:
+    def predict(self, X: torch.Tensor, return_po: bool = False, training: bool = False) -> torch.Tensor:
         """
         Predict the treatment effects
 
@@ -296,6 +296,11 @@ class BasicDragonNet(BaseCATEEstimator):
         -------
         y: array-like of shape (n_samples,)
         """
+        if not training:
+            self._repr_estimator.eval()
+            self._po_estimators[0].eval()
+            self._po_estimators[1].eval()
+
         X = self._check_tensor(X).float()
         preds = self._forward(X)
         y0_preds = preds[:, 0]

@@ -587,7 +587,7 @@ class FlexTENet(BaseCATEEstimator):
                 y_next = y[idx_next].squeeze()
                 w_next = w[idx_next].squeeze()
 
-                _, mu0, mu1 = self.predict(X_next, return_po=True)
+                _, mu0, mu1 = self.predict(X_next, return_po=True, training=True)
                 batch_loss = self.loss(mu0, mu1, y_next, w_next)
 
                 batch_loss.backward()
@@ -602,7 +602,7 @@ class FlexTENet(BaseCATEEstimator):
 
             if self.early_stopping or i % self.n_iter_print == 0:
                 with torch.no_grad():
-                    _, mu0, mu1 = self.predict(X_val, return_po=True)
+                    _, mu0, mu1 = self.predict(X_val, return_po=True, training=True)
                     val_loss = self.loss(mu0, mu1, y_val, w_val).detach().cpu()
                     if self.early_stopping:
                         if val_loss_best > val_loss:
@@ -619,7 +619,7 @@ class FlexTENet(BaseCATEEstimator):
 
         return self
 
-    def predict(self, X: torch.Tensor, return_po: bool = False) -> torch.Tensor:
+    def predict(self, X: torch.Tensor, return_po: bool = False, training: bool = False) -> torch.Tensor:
         """
         Predict treatment effects and potential outcomes
 
@@ -631,6 +631,8 @@ class FlexTENet(BaseCATEEstimator):
         -------
         y: array-like of shape (n_samples,)
         """
+        if not training:
+            self.model.eval()
 
         X = self._check_tensor(X).float()
         W0 = torch.zeros(X.shape[0]).to(DEVICE)

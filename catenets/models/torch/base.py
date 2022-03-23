@@ -594,7 +594,7 @@ class BaseCATEEstimator(nn.Module):
         -------
         potential outcomes probabilities
         """
-        return self.predict(X, return_po=False)
+        return self.predict(X, return_po=False, training=True)
 
     @abc.abstractmethod
     @benchmark
@@ -602,6 +602,7 @@ class BaseCATEEstimator(nn.Module):
         self,
         X: torch.Tensor,
         return_po: bool = False,
+        training: bool = False
     ) -> torch.Tensor:
         """
         Predict treatment effect estimates using a CATE estimator.

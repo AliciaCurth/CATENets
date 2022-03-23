@@ -314,7 +314,7 @@ class PseudoOutcomeLearner(BaseCATEEstimator):
 
         return self
 
-    def predict(self, X: torch.Tensor, return_po: bool = False) -> torch.Tensor:
+    def predict(self, X: torch.Tensor, return_po: bool = False, training: bool = False) -> torch.Tensor:
         """
         Predict treatment effects
 
@@ -331,6 +331,8 @@ class PseudoOutcomeLearner(BaseCATEEstimator):
             raise NotImplementedError(
                 "PseudoOutcomeLearners have no Potential outcome predictors."
             )
+        if not training:
+            self._te_estimator.eval()
         X = self._check_tensor(X).float()
         return predict_wrapper(self._te_estimator, X)
 

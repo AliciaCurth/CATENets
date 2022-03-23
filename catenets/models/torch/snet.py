@@ -503,7 +503,7 @@ class SNet(BaseCATEEstimator):
 
         return y0_preds, y1_preds, prop_preds, reps_o
 
-    def predict(self, X: torch.Tensor, return_po: bool = False) -> torch.Tensor:
+    def predict(self, X: torch.Tensor, return_po: bool = False, training: bool = False) -> torch.Tensor:
         """
         Predict treatment effects and potential outcomes
 
@@ -515,6 +515,16 @@ class SNet(BaseCATEEstimator):
         -------
         y: array-like of shape (n_samples,)
         """
+        if not training:
+            self._po_estimators[0].eval()
+            self._po_estimators[1].eval()
+            self._reps_o.eval()
+            self._reps_mu1.eval()
+            self._reps_mu0.eval()
+            if self.with_prop:
+                self._reps_c.eval()
+                self._reps_prop.eval()
+
         X = self._check_tensor(X).float()
         y0_preds, y1_preds, _, _ = self._forward(X)
 

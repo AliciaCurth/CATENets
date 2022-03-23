@@ -197,7 +197,7 @@ class SLearner(BaseCATEEstimator):
 
         return [X_ext_0, X_ext_1]
 
-    def predict(self, X: torch.Tensor, return_po: bool = False) -> torch.Tensor:
+    def predict(self, X: torch.Tensor, return_po: bool = False, training: bool = False) -> torch.Tensor:
         """
         Predict treatment effects and potential outcomes
 
@@ -209,6 +209,9 @@ class SLearner(BaseCATEEstimator):
         -------
         y: array-like of shape (n_samples,)
         """
+        if not training:
+            self._po_estimator.eval()
+
         X = self._check_tensor(X).float()
         X_ext = self._create_extended_matrices(X)
 
