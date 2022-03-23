@@ -98,7 +98,6 @@ class FlexTESplitLayer(nn.Module):
             self.net_p1 = nn.Sequential(nn.Linear(n_units_in_p, n_units_p)
             ).to(DEVICE)
 
-
     def forward(self, tensors: List[torch.Tensor]) -> List:
         if self.first_layer and len(tensors) != 2:
             raise ValueError(
@@ -354,8 +353,8 @@ class FlexTENet(BaseCATEEstimator):
         if shared_repr:  # fully shared representation as in TARNet
             layers.extend(
                 [
-                    FlexTELinearLayer("shared_repr_layer_0", n_unit_in, n_units_s_r,
-                                      dropout=dropout, dropout_prob=dropout_prob),
+                    FlexTELinearLayer("shared_repr_layer_0", dropout, dropout_prob,
+                                      n_unit_in, n_units_s_r),
                     ElementWiseSplitActivation(nn.SELU(inplace=True)),
                 ]
             )
@@ -365,8 +364,8 @@ class FlexTENet(BaseCATEEstimator):
                 layers.extend(
                     [
                         FlexTELinearLayer(
-                            f"shared_repr_layer_{i + 1}", n_units_s_r, n_units_s_r,
-                            dropout=dropout, dropout_prob=dropout_prob
+                            f"shared_repr_layer_{i + 1}", dropout, dropout_prob, n_units_s_r,
+                            n_units_s_r
                         ),
                         ElementWiseSplitActivation(nn.SELU(inplace=True)),
                     ]
