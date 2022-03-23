@@ -104,7 +104,9 @@ class BasicDragonNet(BaseCATEEstimator):
         early_stopping: bool = True,
         prop_loss_multiplier: float = 1,
         n_iter_min: int = DEFAULT_N_ITER_MIN,
-        patience: int = DEFAULT_PATIENCE
+        patience: int = DEFAULT_PATIENCE,
+        dropout: bool = False,
+        dropout_prob: float = 0.2
     ) -> None:
         super(BasicDragonNet, self).__init__()
 
@@ -122,6 +124,8 @@ class BasicDragonNet(BaseCATEEstimator):
         self.prop_loss_multiplier = prop_loss_multiplier
         self.n_iter_min = n_iter_min
         self.patience = patience
+        self.dropout = dropout
+        self.dropout_prob = dropout_prob
 
         self._repr_estimator = RepresentationNet(
             n_unit_in, n_units=n_units_r, n_layers=n_layers_r, nonlin=nonlin, batch_norm=batch_norm
@@ -136,7 +140,9 @@ class BasicDragonNet(BaseCATEEstimator):
                     n_layers_out=n_layers_out,
                     n_units_out=n_units_out,
                     nonlin=nonlin,
-                    batch_norm=batch_norm
+                    batch_norm=batch_norm,
+                    dropout=dropout,
+                    dropout_prob=dropout_prob
                 )
             )
         self._propensity_estimator = propensity_estimator
@@ -331,6 +337,8 @@ class TARNet(BasicDragonNet):
         nonlin: str = DEFAULT_NONLIN,
         penalty_disc: float = DEFAULT_PENALTY_DISC,
         batch_norm: bool = True,
+        dropout: bool = False,
+        dropout_prob: float = 0.2,
         **kwargs: Any,
     ) -> None:
         propensity_estimator = PropensityNet(
@@ -341,7 +349,9 @@ class TARNet(BasicDragonNet):
             n_layers_out_prop=n_layers_out_prop,
             n_units_out_prop=n_units_out_prop,
             nonlin=nonlin,
-            batch_norm=batch_norm
+            batch_norm=batch_norm,
+            dropout_prob=dropout_prob,
+            dropout=dropout
         ).to(DEVICE)
         super(TARNet, self).__init__(
             "TARNet",
@@ -351,6 +361,8 @@ class TARNet(BasicDragonNet):
             nonlin=nonlin,
             penalty_disc=penalty_disc,
             batch_norm=batch_norm,
+            dropout=dropout,
+            dropout_prob=dropout_prob,
             **kwargs,
         )
         self.prop_loss_multiplier = 0
@@ -384,6 +396,8 @@ class DragonNet(BasicDragonNet):
         nonlin: str = DEFAULT_NONLIN,
         n_units_r: int = DEFAULT_UNITS_R,
         batch_norm: bool = True,
+        dropout: bool = False,
+        dropout_prob: float = 0.2,
         **kwargs: Any,
     ) -> None:
         propensity_estimator = PropensityNet(
@@ -394,7 +408,9 @@ class DragonNet(BasicDragonNet):
             n_layers_out_prop=n_layers_out_prop,
             n_units_out_prop=n_units_out_prop,
             nonlin=nonlin,
-            batch_norm=batch_norm
+            batch_norm=batch_norm,
+            dropout=dropout,
+            dropout_prob=dropout_prob
         ).to(DEVICE)
         super(DragonNet, self).__init__(
             "DragonNet",
@@ -403,6 +419,8 @@ class DragonNet(BasicDragonNet):
             binary_y=binary_y,
             nonlin=nonlin,
             batch_norm=batch_norm,
+            dropout=dropout,
+            dropout_prob=dropout_prob,
             **kwargs
         )
 

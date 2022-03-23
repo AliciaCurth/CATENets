@@ -133,7 +133,9 @@ class PseudoOutcomeLearner(BaseCATEEstimator):
         patience: int = DEFAULT_PATIENCE,
         n_iter_min: int = DEFAULT_N_ITER_MIN,
         batch_norm: bool = True,
-        early_stopping: bool = True
+        early_stopping: bool = True,
+        dropout: bool = False,
+        dropout_prob: float = 0.2
     ):
         super(PseudoOutcomeLearner, self).__init__()
         self.n_unit_in = n_unit_in
@@ -162,6 +164,8 @@ class PseudoOutcomeLearner(BaseCATEEstimator):
         self.n_units_out = n_units_out
         self.batch_norm = batch_norm
         self.early_stopping = early_stopping
+        self.dropout = dropout
+        self.dropout_prob = dropout_prob
 
         # set estimators
         self._te_template = te_estimator
@@ -192,7 +196,9 @@ class PseudoOutcomeLearner(BaseCATEEstimator):
             patience=self.patience,
             n_iter_min=self.n_iter_min,
             batch_norm=self.batch_norm,
-            early_stopping=self.early_stopping
+            early_stopping=self.early_stopping,
+            dropout=self.dropout,
+            dropout_prob=self.dropout_prob
         ).to(DEVICE)
 
     def _generate_po_estimator(self, name: str = "po_estimator") -> nn.Module:
@@ -216,7 +222,9 @@ class PseudoOutcomeLearner(BaseCATEEstimator):
             patience=self.patience,
             n_iter_min=self.n_iter_min,
             batch_norm=self.batch_norm,
-            early_stopping=self.early_stopping
+            early_stopping=self.early_stopping,
+            dropout=self.dropout,
+            dropout_prob=self.dropout_prob
         ).to(DEVICE)
 
     def _generate_propensity_estimator(
@@ -240,7 +248,9 @@ class PseudoOutcomeLearner(BaseCATEEstimator):
             nonlin=self.nonlin,
             val_split_prop=self.val_split_prop,
             batch_norm=self.batch_norm,
-            early_stopping=self.early_stopping
+            early_stopping=self.early_stopping,
+            dropout_prob=self.dropout_prob,
+            dropout=self.dropout
         ).to(DEVICE)
 
     def train(

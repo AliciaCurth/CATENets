@@ -69,7 +69,9 @@ class TLearner(BaseCATEEstimator):
         seed: int = DEFAULT_SEED,
         nonlin: str = DEFAULT_NONLIN,
         batch_norm: bool = True,
-        early_stopping: bool = True
+        early_stopping: bool = True,
+        dropout: bool = False,
+        dropout_prob: float = 0.2
     ) -> None:
         super(TLearner, self).__init__()
 
@@ -96,7 +98,9 @@ class TLearner(BaseCATEEstimator):
                         seed=seed,
                         nonlin=nonlin,
                         batch_norm=batch_norm,
-                        early_stopping=early_stopping
+                        early_stopping=early_stopping,
+                        dropout_prob=dropout_prob,
+                        dropout=dropout
                     ).to(DEVICE),
                 )
 
