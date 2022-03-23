@@ -118,7 +118,7 @@ class BasicNet(nn.Module):
             # add required number of layers
             for i in range(n_layers_out - 1):
                 if dropout:
-                    layers.extent([nn.Dropout(dropout_prob)])
+                    layers.extend([nn.Dropout(dropout_prob)])
                 if batch_norm:
                         layers.extend(
                            [
