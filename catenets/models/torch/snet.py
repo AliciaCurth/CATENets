@@ -117,7 +117,9 @@ class SNet(BaseCATEEstimator):
             batch_norm: bool = True,
             with_prop: bool = True,
             early_stopping: bool = True,
-            prop_loss_multiplier: float = 1
+            prop_loss_multiplier: float = 1,
+            dropout: bool = False,
+            dropout_prob: float = 0.2
     ) -> None:
         super(SNet, self).__init__()
 
@@ -137,6 +139,8 @@ class SNet(BaseCATEEstimator):
         self.early_stopping = early_stopping
         self.n_iter_min = n_iter_min
         self.prop_loss_multiplier = prop_loss_multiplier
+        self.dropout=dropout
+        self.dropout_prob = dropout_prob
 
         self._reps_mu0 = RepresentationNet(
             n_unit_in, n_units=n_units_r_small, n_layers=n_layers_r, nonlin=nonlin,
@@ -176,7 +180,9 @@ class SNet(BaseCATEEstimator):
                         n_layers_out=n_layers_out,
                         n_units_out=n_units_out,
                         nonlin=nonlin,
-                        batch_norm=batch_norm
+                        batch_norm=batch_norm,
+                        dropout_prob=dropout_prob,
+                        dropout=dropout
                     )
                 )
             self._propensity_estimator = PropensityNet(
@@ -187,7 +193,9 @@ class SNet(BaseCATEEstimator):
                 n_layers_out_prop=n_layers_out_prop,
                 n_units_out_prop=n_units_out_prop,
                 nonlin=nonlin,
-                batch_norm=batch_norm
+                batch_norm=batch_norm,
+                dropout=dropout,
+                dropout_prob=dropout_prob
             ).to(DEVICE)
 
             params = (
@@ -495,7 +503,7 @@ class SNet(BaseCATEEstimator):
 
         return y0_preds, y1_preds, prop_preds, reps_o
 
-    def predict(self, X: torch.Tensor, return_po: bool = False) -> torch.Tensor:
+    def predict(self, X: torch.Tensor, return_po: bool = False, training: bool = False) -> torch.Tensor:
         """
         Predict treatment effects and potential outcomes
 
@@ -507,6 +515,16 @@ class SNet(BaseCATEEstimator):
         -------
         y: array-like of shape (n_samples,)
         """
+        if not training:
+            self._po_estimators[0].model.eval()
+            self._po_estimators[1].model.eval()
+            self._reps_o.model.eval()
+            self._reps_mu1.model.eval()
+            self._reps_mu0.model.eval()
+            if self.with_prop:
+                self._reps_c.model.eval()
+                self._reps_prop.model.eval()
+
         X = self._check_tensor(X).float()
         y0_preds, y1_preds, _, _ = self._forward(X)
 
