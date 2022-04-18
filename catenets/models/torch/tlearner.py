@@ -124,8 +124,8 @@ class TLearner(BaseCATEEstimator):
 
         y_hat = []
         for widx, plugin in enumerate(self._plug_in):
-            if not training:
-                plugin.model.eval()
+            if not training and hasattr(plugin, "eval"):
+                plugin.eval()
             y_hat.append(predict_wrapper(plugin, X))
 
         outcome = y_hat[1] - y_hat[0]
