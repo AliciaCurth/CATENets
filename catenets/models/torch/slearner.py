@@ -168,7 +168,9 @@ class SLearner(BaseCATEEstimator):
 
         if hasattr(self._po_estimator, "fit"):
             log.info("Fit the sklearn po_estimator")
-            self._po_estimator.fit(X_ext.detach().numpy(), y.detach().numpy())
+            self._po_estimator.fit(
+                X_ext.detach().cpu().numpy(), y.detach().cpu().numpy()
+            )
             return self
 
         if self._weighting_strategy is None:
@@ -211,8 +213,8 @@ class SLearner(BaseCATEEstimator):
         -------
         y: array-like of shape (n_samples,)
         """
-        if not training:
-            self._po_estimator.model.eval()
+        if not training and hasattr(self._po_estimator, "eval"):
+            self._po_estimator.eval()
 
         X = self._check_tensor(X).float()
         X_ext = self._create_extended_matrices(X)

@@ -329,8 +329,8 @@ class PseudoOutcomeLearner(BaseCATEEstimator):
             raise NotImplementedError(
                 "PseudoOutcomeLearners have no Potential outcome predictors."
             )
-        if not training:
-            self._te_estimator.model.eval()
+        if not training and hasattr(self._te_estimator, "eval"):
+            self._te_estimator.eval()
         X = self._check_tensor(X).float()
         return predict_wrapper(self._te_estimator, X)
 
@@ -435,7 +435,11 @@ class DRLearner(PseudoOutcomeLearner):
     ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         mu0_pred, mu1_pred = self._impute_pos(X, y, w, fit_mask, pred_mask)
         p_pred = self._impute_propensity(X, w, fit_mask, pred_mask).squeeze()
-        return mu0_pred.squeeze(), mu1_pred.squeeze(), p_pred
+        return (
+            mu0_pred.squeeze().to(DEVICE),
+            mu1_pred.squeeze().to(DEVICE),
+            p_pred.to(DEVICE),
+        )
 
     def _second_step(
         self,
@@ -466,7 +470,7 @@ class PWLearner(PseudoOutcomeLearner):
 
         mu0_pred, mu1_pred = np.nan, np.nan  # not needed
         p_pred = self._impute_propensity(X, w, fit_mask, pred_mask).squeeze()
-        return mu0_pred, mu1_pred, p_pred
+        return mu0_pred.to(DEVICE), mu1_pred.to(DEVICE), p_pred.to(DEVICE)
 
     def _second_step(
         self,
@@ -496,7 +500,7 @@ class RALearner(PseudoOutcomeLearner):
     ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         mu0_pred, mu1_pred = self._impute_pos(X, y, w, fit_mask, pred_mask)
         p_pred = np.nan  # not needed
-        return mu0_pred.squeeze(), mu1_pred.squeeze(), p_pred
+        return mu0_pred.squeeze().to(DEVICE), mu1_pred.squeeze().to(DEVICE), p_pred
 
     def _second_step(
         self,
@@ -528,7 +532,7 @@ class ULearner(PseudoOutcomeLearner):
         mu_pred = self._impute_unconditional_mean(X, y, fit_mask, pred_mask).squeeze()
         mu1_pred = np.nan  # only have one thing to impute here
         p_pred = self._impute_propensity(X, w, fit_mask, pred_mask).squeeze()
-        return mu_pred, mu1_pred, p_pred
+        return mu_pred.to(DEVICE), mu1_pred, p_pred.to(DEVICE)
 
     def _second_step(
         self,
@@ -560,7 +564,7 @@ class RLearner(PseudoOutcomeLearner):
         mu_pred = self._impute_unconditional_mean(X, y, fit_mask, pred_mask).squeeze()
         mu1_pred = np.nan  # only have one thing to impute here
         p_pred = self._impute_propensity(X, w, fit_mask, pred_mask).squeeze()
-        return mu_pred, mu1_pred, p_pred
+        return mu_pred.to(DEVICE), mu1_pred, p_pred.to(DEVICE)
 
     def _second_step(
         self,
@@ -605,7 +609,7 @@ class XLearner(PseudoOutcomeLearner):
     ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         mu0_pred, mu1_pred = self._impute_pos(X, y, w, fit_mask, pred_mask)
         p_pred = np.nan
-        return mu0_pred.squeeze(), mu1_pred.squeeze(), p_pred
+        return mu0_pred.squeeze().to(DEVICE), mu1_pred.squeeze().to(DEVICE), p_pred
 
     def _second_step(
         self,

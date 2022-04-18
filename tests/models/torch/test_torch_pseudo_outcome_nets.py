@@ -49,14 +49,15 @@ def test_nn_model_params_nonlin(nonlin: str, model_t: Any) -> None:
         assert isinstance(mod.model[2], nonlins[nonlin])
 
 
-@pytest.mark.slow
 @pytest.mark.parametrize("dataset, pehe_threshold", [("twins", 0.4), ("ihdp", 4)])
 @pytest.mark.parametrize("model_t", [DRLearner, RALearner, XLearner])
 def test_nn_model_sanity(dataset: str, pehe_threshold: float, model_t: Any) -> None:
     X_train, W_train, Y_train, Y_train_full, X_test, Y_test = load(dataset)
     W_train = W_train.ravel()
 
-    model = model_t(X_train.shape[1], binary_y=(len(np.unique(Y_train)) == 2))
+    model = model_t(
+        X_train.shape[1], binary_y=(len(np.unique(Y_train)) == 2), n_iter=10
+    )
 
     score = evaluate_treatments_model(model, X_train, Y_train, Y_train_full, W_train)
 
@@ -65,7 +66,6 @@ def test_nn_model_sanity(dataset: str, pehe_threshold: float, model_t: Any) -> N
     )
 
 
-@pytest.mark.slow
 @pytest.mark.parametrize("dataset, pehe_threshold", [("twins", 0.4)])
 @pytest.mark.parametrize(
     "po_estimator",
@@ -114,6 +114,7 @@ def test_sklearn_model_pseudo_outcome_binary(
         po_estimator=po_estimator,
         te_estimator=te_estimator,
         batch_size=1024,
+        n_iter=10,
     )
 
     score = evaluate_treatments_model(
@@ -130,7 +131,7 @@ def test_model_predict_api() -> None:
     X_train, W_train, Y_train, Y_train_full, X_test, Y_test = load("ihdp")
     W_train = W_train.ravel()
 
-    model = XLearner(X_train.shape[1], binary_y=False, batch_size=1024, n_iter=100)
+    model = XLearner(X_train.shape[1], binary_y=False, batch_size=1024, n_iter=10)
     model.fit(X_train, Y_train, W_train)
 
     out = model.predict(X_test)
