@@ -71,7 +71,7 @@ class TLearner(BaseCATEEstimator):
         batch_norm: bool = True,
         early_stopping: bool = True,
         dropout: bool = False,
-        dropout_prob: float = 0.2
+        dropout_prob: float = 0.2,
     ) -> None:
         super(TLearner, self).__init__()
 
@@ -100,11 +100,13 @@ class TLearner(BaseCATEEstimator):
                         batch_norm=batch_norm,
                         early_stopping=early_stopping,
                         dropout_prob=dropout_prob,
-                        dropout=dropout
+                        dropout=dropout,
                     ).to(DEVICE),
                 )
 
-    def predict(self, X: torch.Tensor, return_po: bool = False, training: bool = False) -> torch.Tensor:
+    def predict(
+        self, X: torch.Tensor, return_po: bool = False, training: bool = False
+    ) -> torch.Tensor:
         """
         Predict treatment effects and potential outcomes
         Parameters
@@ -133,7 +135,7 @@ class TLearner(BaseCATEEstimator):
 
         return outcome
 
-    def train(
+    def fit(
         self,
         X: torch.Tensor,
         y: torch.Tensor,

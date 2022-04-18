@@ -82,7 +82,7 @@ def train_wrapper(
 ) -> None:
     if hasattr(estimator, "train"):
         log.debug(f"Train PyTorch network {estimator}")
-        estimator.train(X, y, **kwargs)
+        estimator.fit(X, y, **kwargs)
     elif hasattr(estimator, "fit"):
         log.debug(f"Train sklearn estimator {estimator}")
         estimator.fit(X.detach().numpy(), y.detach().numpy())

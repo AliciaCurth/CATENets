@@ -12,8 +12,6 @@ from catenets.models.constants import (
     DEFAULT_CF_FOLDS,
     DEFAULT_LAYERS_OUT,
     DEFAULT_LAYERS_OUT_T,
-    DEFAULT_LAYERS_R,
-    DEFAULT_LAYERS_R_T,
     DEFAULT_N_ITER,
     DEFAULT_N_ITER_MIN,
     DEFAULT_N_ITER_PRINT,
@@ -25,8 +23,6 @@ from catenets.models.constants import (
     DEFAULT_STEP_SIZE_T,
     DEFAULT_UNITS_OUT,
     DEFAULT_UNITS_OUT_T,
-    DEFAULT_UNITS_R,
-    DEFAULT_UNITS_R_T,
     DEFAULT_VAL_SPLIT,
 )
 from catenets.models.torch.base import (
@@ -135,7 +131,7 @@ class PseudoOutcomeLearner(BaseCATEEstimator):
         batch_norm: bool = True,
         early_stopping: bool = True,
         dropout: bool = False,
-        dropout_prob: float = 0.2
+        dropout_prob: float = 0.2,
     ):
         super(PseudoOutcomeLearner, self).__init__()
         self.n_unit_in = n_unit_in
@@ -198,7 +194,7 @@ class PseudoOutcomeLearner(BaseCATEEstimator):
             batch_norm=self.batch_norm,
             early_stopping=self.early_stopping,
             dropout=self.dropout,
-            dropout_prob=self.dropout_prob
+            dropout_prob=self.dropout_prob,
         ).to(DEVICE)
 
     def _generate_po_estimator(self, name: str = "po_estimator") -> nn.Module:
@@ -224,7 +220,7 @@ class PseudoOutcomeLearner(BaseCATEEstimator):
             batch_norm=self.batch_norm,
             early_stopping=self.early_stopping,
             dropout=self.dropout,
-            dropout_prob=self.dropout_prob
+            dropout_prob=self.dropout_prob,
         ).to(DEVICE)
 
     def _generate_propensity_estimator(
@@ -250,10 +246,10 @@ class PseudoOutcomeLearner(BaseCATEEstimator):
             batch_norm=self.batch_norm,
             early_stopping=self.early_stopping,
             dropout_prob=self.dropout_prob,
-            dropout=self.dropout
+            dropout=self.dropout,
         ).to(DEVICE)
 
-    def train(
+    def fit(
         self, X: torch.Tensor, y: torch.Tensor, w: torch.Tensor
     ) -> "PseudoOutcomeLearner":
         """
@@ -314,7 +310,9 @@ class PseudoOutcomeLearner(BaseCATEEstimator):
 
         return self
 
-    def predict(self, X: torch.Tensor, return_po: bool = False, training: bool = False) -> torch.Tensor:
+    def predict(
+        self, X: torch.Tensor, return_po: bool = False, training: bool = False
+    ) -> torch.Tensor:
         """
         Predict treatment effects
 
@@ -629,8 +627,9 @@ class XLearner(PseudoOutcomeLearner):
 
         train_wrapper(self._propensity_estimator, X, w)
 
-    def predict(self, X: torch.Tensor, return_po: bool = False, training: bool = False) -> \
-            torch.Tensor:
+    def predict(
+        self, X: torch.Tensor, return_po: bool = False, training: bool = False
+    ) -> torch.Tensor:
         """
         Predict treatment effects
 

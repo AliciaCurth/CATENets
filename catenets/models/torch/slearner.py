@@ -86,7 +86,7 @@ class SLearner(BaseCATEEstimator):
         batch_norm: bool = True,
         early_stopping: bool = True,
         dropout: bool = False,
-        dropout_prob: float = 0.2
+        dropout_prob: float = 0.2,
     ) -> None:
         super(SLearner, self).__init__()
 
@@ -111,7 +111,7 @@ class SLearner(BaseCATEEstimator):
                 batch_norm=batch_norm,
                 early_stopping=early_stopping,
                 dropout_prob=dropout_prob,
-                dropout=dropout
+                dropout=dropout,
             ).to(DEVICE)
         if weighting_strategy is not None:
             self._propensity_estimator = PropensityNet(
@@ -132,10 +132,10 @@ class SLearner(BaseCATEEstimator):
                 batch_norm=batch_norm,
                 early_stopping=early_stopping,
                 dropout=dropout,
-                dropout_prob=dropout_prob
+                dropout_prob=dropout_prob,
             ).to(DEVICE)
 
-    def train(
+    def fit(
         self,
         X: torch.Tensor,
         y: torch.Tensor,
@@ -174,14 +174,14 @@ class SLearner(BaseCATEEstimator):
         if self._weighting_strategy is None:
             # fit standard S-learner
             log.info("Fit the PyTorch po_estimator")
-            self._po_estimator.train(X_ext, y)
+            self._po_estimator.fit(X_ext, y)
             return self
 
         # use reweighting within the outcome model
         log.info("Fit the PyTorch po_estimator with the propensity estimator")
-        self._propensity_estimator.train(X, w)
+        self._propensity_estimator.fit(X, w)
         weights = self._propensity_estimator.get_importance_weights(X, w)
-        self._po_estimator.train(X_ext, y, weight=weights)
+        self._po_estimator.fit(X_ext, y, weight=weights)
 
         return self
 
@@ -197,7 +197,9 @@ class SLearner(BaseCATEEstimator):
 
         return [X_ext_0, X_ext_1]
 
-    def predict(self, X: torch.Tensor, return_po: bool = False, training: bool = False) -> torch.Tensor:
+    def predict(
+        self, X: torch.Tensor, return_po: bool = False, training: bool = False
+    ) -> torch.Tensor:
         """
         Predict treatment effects and potential outcomes
 

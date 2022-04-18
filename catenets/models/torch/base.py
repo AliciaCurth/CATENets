@@ -111,7 +111,11 @@ class BasicNet(nn.Module):
 
         if n_layers_out > 0:
             if batch_norm:
-                layers = [nn.Linear(n_unit_in, n_units_out), nn.BatchNorm1d(n_units_out), NL()]
+                layers = [
+                    nn.Linear(n_unit_in, n_units_out),
+                    nn.BatchNorm1d(n_units_out),
+                    NL(),
+                ]
             else:
                 layers = [nn.Linear(n_unit_in, n_units_out), NL()]
 
@@ -120,8 +124,8 @@ class BasicNet(nn.Module):
                 if dropout:
                     layers.extend([nn.Dropout(dropout_prob)])
                 if batch_norm:
-                        layers.extend(
-                           [
+                    layers.extend(
+                        [
                             nn.Linear(n_units_out, n_units_out),
                             nn.BatchNorm1d(n_units_out),
                             NL(),
@@ -164,7 +168,7 @@ class BasicNet(nn.Module):
     def forward(self, X: torch.Tensor) -> torch.Tensor:
         return self.model(X)
 
-    def train(
+    def fit(
         self, X: torch.Tensor, y: torch.Tensor, weight: Optional[torch.Tensor] = None
     ) -> "BasicNet":
         X = self._check_tensor(X)
@@ -271,7 +275,7 @@ class RepresentationNet(nn.Module):
         n_layers: int = DEFAULT_LAYERS_R,
         n_units: int = DEFAULT_UNITS_R,
         nonlin: str = DEFAULT_NONLIN,
-        batch_norm: bool = True
+        batch_norm: bool = True,
     ) -> None:
         super(RepresentationNet, self).__init__()
         if nonlin not in list(NONLIN.keys()):
@@ -286,7 +290,9 @@ class RepresentationNet(nn.Module):
         # add required number of layers
         for i in range(n_layers - 1):
             if batch_norm:
-                layers.extend([nn.Linear(n_units, n_units), nn.BatchNorm1d(n_units), NL()])
+                layers.extend(
+                    [nn.Linear(n_units, n_units), nn.BatchNorm1d(n_units), NL()]
+                )
             else:
                 layers.extend([nn.Linear(n_units, n_units), NL()])
 
@@ -371,9 +377,9 @@ class PropensityNet(nn.Module):
 
         if batch_norm:
             layers = [
-            nn.Linear(in_features=n_unit_in, out_features=n_units_out_prop),
-            nn.BatchNorm1d(n_units_out_prop),
-            NL(),
+                nn.Linear(in_features=n_unit_in, out_features=n_units_out_prop),
+                nn.BatchNorm1d(n_units_out_prop),
+                NL(),
             ]
         else:
             layers = [
@@ -386,20 +392,21 @@ class PropensityNet(nn.Module):
                 layers.extend([nn.Dropout(dropout_prob)])
             if batch_norm:
                 layers.extend(
-                [
-                    nn.Linear(
-                        in_features=n_units_out_prop, out_features=n_units_out_prop
-                    ),
-                    nn.BatchNorm1d(n_units_out_prop),
-                    NL(),
-                ]
-            )
+                    [
+                        nn.Linear(
+                            in_features=n_units_out_prop, out_features=n_units_out_prop
+                        ),
+                        nn.BatchNorm1d(n_units_out_prop),
+                        NL(),
+                    ]
+                )
             else:
                 layers.extend(
                     [
                         nn.Linear(
                             in_features=n_units_out_prop, out_features=n_units_out_prop
-                        ),NL(),
+                        ),
+                        NL(),
                     ]
                 )
         layers.extend(
@@ -438,7 +445,7 @@ class PropensityNet(nn.Module):
     def loss(self, y_pred: torch.Tensor, y_target: torch.Tensor) -> torch.Tensor:
         return nn.NLLLoss()(torch.log(y_pred + EPS), y_target)
 
-    def train(self, X: torch.Tensor, y: torch.Tensor) -> "PropensityNet":
+    def fit(self, X: torch.Tensor, y: torch.Tensor) -> "PropensityNet":
         X = self._check_tensor(X)
         y = self._check_tensor(y).long()
 
@@ -495,7 +502,9 @@ class PropensityNet(nn.Module):
                             patience = 0
                         else:
                             patience += 1
-                        if patience > self.patience and ((i + 1) * n_batches > self.n_iter_min):
+                        if patience > self.patience and (
+                            (i + 1) * n_batches > self.n_iter_min
+                        ):
                             break
                     if i % self.n_iter_print == 0:
                         log.info(
@@ -552,7 +561,7 @@ class BaseCATEEstimator(nn.Module):
     @abc.abstractmethod
     @check_input_train
     @benchmark
-    def train(
+    def fit(
         self,
         X: torch.Tensor,
         y: torch.Tensor,
@@ -573,15 +582,6 @@ class BaseCATEEstimator(nn.Module):
         ...
 
     @benchmark
-    def fit(
-        self,
-        X: torch.Tensor,
-        y: torch.Tensor,
-        w: torch.Tensor,
-    ) -> "BaseCATEEstimator":
-        return self.train(X, y, w)
-
-    @benchmark
     def forward(self, X: torch.Tensor) -> torch.Tensor:
         """
         Predict treatment effect estimates using a CATE estimator.
@@ -599,10 +599,7 @@ class BaseCATEEstimator(nn.Module):
     @abc.abstractmethod
     @benchmark
     def predict(
-        self,
-        X: torch.Tensor,
-        return_po: bool = False,
-        training: bool = False
+        self, X: torch.Tensor, return_po: bool = False, training: bool = False
     ) -> torch.Tensor:
         """
         Predict treatment effect estimates using a CATE estimator.
