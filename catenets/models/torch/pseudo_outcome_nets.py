@@ -172,7 +172,7 @@ class PseudoOutcomeLearner(BaseCATEEstimator):
         self._po_template = po_estimator
 
         self._te_estimator = self._generate_te_estimator()
-        self._po_estimator = self._generate_te_estimator()
+        self._po_estimator = self._generate_po_estimator()
         if weighting_strategy is not None:
             self._propensity_estimator = self._generate_propensity_estimator()
 
