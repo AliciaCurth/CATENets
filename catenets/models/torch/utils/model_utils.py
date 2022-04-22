@@ -7,8 +7,7 @@ from typing import Any, Optional
 import torch
 from sklearn.model_selection import train_test_split
 
-import catenets.logger as log
-from catenets.models.constants import DEFAULT_SEED, DEFAULT_VAL_SPLIT
+from constants import DEFAULT_SEED, DEFAULT_VAL_SPLIT
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -81,10 +80,10 @@ def train_wrapper(
     **kwargs: Any,
 ) -> None:
     if hasattr(estimator, "train"):
-        log.debug(f"Train PyTorch network {estimator}")
+        print(f"Train PyTorch network {estimator}")
         estimator.train(X, y, **kwargs)
     elif hasattr(estimator, "fit"):
-        log.debug(f"Train sklearn estimator {estimator}")
+        print(f"Train sklearn estimator {estimator}")
         estimator.fit(X.detach().numpy(), y.detach().numpy())
     else:
         raise NotImplementedError(f"Invalid estimator for the {estimator}")
