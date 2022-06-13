@@ -316,6 +316,8 @@ class SNet(BaseCATEEstimator):
         w: torch.Tensor of shape (n_samples,)
             The treatment indicator
         """
+        self.train()
+
         X = torch.Tensor(X).to(DEVICE)
         y = torch.Tensor(y).squeeze().to(DEVICE)
         w = torch.Tensor(w).squeeze().long().to(DEVICE)
@@ -536,14 +538,7 @@ class SNet(BaseCATEEstimator):
         y: array-like of shape (n_samples,)
         """
         if not training:
-            self._po_estimators[0].model.eval()
-            self._po_estimators[1].model.eval()
-            self._reps_o.model.eval()
-            self._reps_mu1.model.eval()
-            self._reps_mu0.model.eval()
-            if self.with_prop:
-                self._reps_c.model.eval()
-                self._reps_prop.model.eval()
+            self.eval()
 
         X = self._check_tensor(X).float()
         y0_preds, y1_preds, _, _ = self._forward(X)

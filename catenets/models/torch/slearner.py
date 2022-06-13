@@ -153,6 +153,7 @@ class SLearner(BaseCATEEstimator):
         w: torch.Tensor of shape (n_samples,)
             The treatment indicator
         """
+        self.train()
 
         X = torch.Tensor(X).to(DEVICE)
         y = torch.Tensor(y).to(DEVICE)
@@ -213,8 +214,8 @@ class SLearner(BaseCATEEstimator):
         -------
         y: array-like of shape (n_samples,)
         """
-        if not training and hasattr(self._po_estimator, "eval"):
-            self._po_estimator.eval()
+        if not training:
+            self.eval()
 
         X = self._check_tensor(X).float()
         X_ext = self._create_extended_matrices(X)

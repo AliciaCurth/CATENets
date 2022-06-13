@@ -204,6 +204,8 @@ class BasicDragonNet(BaseCATEEstimator):
         w: torch.Tensor of shape (n_samples,)
             The treatment indicator
         """
+        self.train()
+
         X = torch.Tensor(X).to(DEVICE)
         y = torch.Tensor(y).squeeze().to(DEVICE)
         w = torch.Tensor(w).squeeze().long().to(DEVICE)
@@ -306,9 +308,7 @@ class BasicDragonNet(BaseCATEEstimator):
         y: array-like of shape (n_samples,)
         """
         if not training:
-            self._repr_estimator.model.eval()
-            self._po_estimators[0].model.eval()
-            self._po_estimators[1].model.eval()
+            self.eval()
 
         X = self._check_tensor(X).float()
         preds = self._forward(X)

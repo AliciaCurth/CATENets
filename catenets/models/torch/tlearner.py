@@ -120,12 +120,13 @@ class TLearner(BaseCATEEstimator):
         -------
         y: torch.Tensor of shape (n_samples,)
         """
+        if not training:
+            self.eval()
+
         X = self._check_tensor(X).float()
 
         y_hat = []
         for widx, plugin in enumerate(self._plug_in):
-            if not training and hasattr(plugin, "eval"):
-                plugin.eval()
             y_hat.append(predict_wrapper(plugin, X))
 
         outcome = y_hat[1] - y_hat[0]
@@ -153,6 +154,8 @@ class TLearner(BaseCATEEstimator):
         w: torch.Tensor (n_samples,)
             The treatment indicator
         """
+        self.train()
+
         X = torch.Tensor(X).to(DEVICE)
         y = torch.Tensor(y).to(DEVICE)
         w = torch.Tensor(w).to(DEVICE)

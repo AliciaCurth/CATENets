@@ -561,6 +561,8 @@ class FlexTENet(BaseCATEEstimator):
         w: torch.Tensor of shape (n_samples,)
             The treatment indicator
         """
+        self.model.train()
+
         X = torch.Tensor(X).to(DEVICE)
         y = torch.Tensor(y).squeeze().to(DEVICE)
         w = torch.Tensor(w).squeeze().long().to(DEVICE)

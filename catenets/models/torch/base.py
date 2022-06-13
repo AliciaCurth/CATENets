@@ -171,6 +171,8 @@ class BasicNet(nn.Module):
     def fit(
         self, X: torch.Tensor, y: torch.Tensor, weight: Optional[torch.Tensor] = None
     ) -> "BasicNet":
+        self.train()
+
         X = self._check_tensor(X)
         y = self._check_tensor(y).squeeze()
 
@@ -446,6 +448,8 @@ class PropensityNet(nn.Module):
         return nn.NLLLoss()(torch.log(y_pred + EPS), y_target)
 
     def fit(self, X: torch.Tensor, y: torch.Tensor) -> "PropensityNet":
+        self.train()
+
         X = self._check_tensor(X)
         y = self._check_tensor(y).long()
 

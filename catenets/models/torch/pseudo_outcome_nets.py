@@ -168,7 +168,7 @@ class PseudoOutcomeLearner(BaseCATEEstimator):
         self._po_template = po_estimator
 
         self._te_estimator = self._generate_te_estimator()
-        self._po_estimator = self._generate_te_estimator()
+        self._po_estimator = self._generate_po_estimator()
         if weighting_strategy is not None:
             self._propensity_estimator = self._generate_propensity_estimator()
 
@@ -264,6 +264,8 @@ class PseudoOutcomeLearner(BaseCATEEstimator):
         w: array-like of shape (n_samples,)
             Train-sample treatments
         """
+        self.train()
+
         X = self._check_tensor(X).float()
         y = self._check_tensor(y).squeeze().float()
         w = self._check_tensor(w).squeeze().float()
@@ -329,8 +331,9 @@ class PseudoOutcomeLearner(BaseCATEEstimator):
             raise NotImplementedError(
                 "PseudoOutcomeLearners have no Potential outcome predictors."
             )
-        if not training and hasattr(self._te_estimator, "eval"):
-            self._te_estimator.eval()
+        if not training:
+            self.eval()
+
         X = self._check_tensor(X).float()
         return predict_wrapper(self._te_estimator, X)
 
@@ -654,8 +657,7 @@ class XLearner(PseudoOutcomeLearner):
             )
 
         if not training:
-            self._te_estimator_1.model.eval()
-            self._te_estimator_0.model.eval()
+            self.eval()
 
         X = self._check_tensor(X).float().to(DEVICE)
         tau0_pred = predict_wrapper(self._te_estimator_0, X)
