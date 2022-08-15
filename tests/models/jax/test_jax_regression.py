@@ -48,17 +48,24 @@ def test_model_fit_issue_twins_version(model_name: str) -> None:
     if not os.path.isfile(csv_path):
         download(csv_path)
 
-    X, W, Y = load(csv_path)
+    X, W, Y, Yfull = load(csv_path)
 
     model = deepcopy(ALL_MODELS[model_name])
 
-    X_train, X_test, W_train, W_test, Y_train, Y_test = train_test_split(X, W, Y)
+    (
+        X_train,
+        X_test,
+        W_train,
+        W_test,
+        Y_train,
+        Y_test,
+        Yfull_train,
+        Yfull_test,
+    ) = train_test_split(X, W, Y, Yfull)
 
-    model.fit(
-        X=X_train.to_numpy(), y=Y_train["outcome"].to_numpy(), w=W_train.to_numpy()
-    )
+    model.fit(X=X_train, y=Y_train, w=W_train)
 
     cate_pred = model.predict(X_test, return_po=False)
 
-    pehe = sqrt_PEHE(Y_test.to_numpy(), cate_pred)
+    pehe = sqrt_PEHE(Yfull_test, cate_pred)
     print(f"PEHE score for model {model_name} on Twins dataset = {pehe}")

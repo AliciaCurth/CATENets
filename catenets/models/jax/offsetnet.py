@@ -10,8 +10,8 @@ from typing import Any, Callable, List, Tuple
 import jax.numpy as jnp
 import numpy as onp
 from jax import grad, jit, random
-from jax.experimental import optimizers
-from jax.experimental.stax import sigmoid
+from jax.example_libraries import optimizers
+from jax.example_libraries.stax import sigmoid
 
 import catenets.logger as log
 from catenets.models.constants import (
