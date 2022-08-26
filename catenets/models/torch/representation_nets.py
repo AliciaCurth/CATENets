@@ -106,7 +106,7 @@ class BasicDragonNet(BaseCATEEstimator):
         n_iter_min: int = DEFAULT_N_ITER_MIN,
         patience: int = DEFAULT_PATIENCE,
         dropout: bool = False,
-        dropout_prob: float = 0.2
+        dropout_prob: float = 0.2,
     ) -> None:
         super(BasicDragonNet, self).__init__()
 
@@ -128,7 +128,11 @@ class BasicDragonNet(BaseCATEEstimator):
         self.dropout_prob = dropout_prob
 
         self._repr_estimator = RepresentationNet(
-            n_unit_in, n_units=n_units_r, n_layers=n_layers_r, nonlin=nonlin, batch_norm=batch_norm
+            n_unit_in,
+            n_units=n_units_r,
+            n_layers=n_layers_r,
+            nonlin=nonlin,
+            batch_norm=batch_norm,
         )
         self._po_estimators = []
         for idx in range(2):
@@ -142,7 +146,7 @@ class BasicDragonNet(BaseCATEEstimator):
                     nonlin=nonlin,
                     batch_norm=batch_norm,
                     dropout=dropout,
-                    dropout_prob=dropout_prob
+                    dropout_prob=dropout_prob,
                 )
             )
         self._propensity_estimator = propensity_estimator
@@ -177,11 +181,12 @@ class BasicDragonNet(BaseCATEEstimator):
             return nn.CrossEntropyLoss()(t_pred, t_true)
 
         return (
-            po_loss(po_pred, y_true, t_true) +
-            self.prop_loss_multiplier*prop_loss(t_pred, t_true) + discrepancy
+            po_loss(po_pred, y_true, t_true)
+            + self.prop_loss_multiplier * prop_loss(t_pred, t_true)
+            + discrepancy
         )
 
-    def train(
+    def fit(
         self,
         X: torch.Tensor,
         y: torch.Tensor,
@@ -199,6 +204,8 @@ class BasicDragonNet(BaseCATEEstimator):
         w: torch.Tensor of shape (n_samples,)
             The treatment indicator
         """
+        self.train()
+
         X = torch.Tensor(X).to(DEVICE)
         y = torch.Tensor(y).squeeze().to(DEVICE)
         w = torch.Tensor(w).squeeze().long().to(DEVICE)
@@ -261,12 +268,14 @@ class BasicDragonNet(BaseCATEEstimator):
                             patience = 0
                         else:
                             patience += 1
-                        if patience > self.patience and ((i + 1) * n_batches > self.n_iter_min):
+                        if patience > self.patience and (
+                            (i + 1) * n_batches > self.n_iter_min
+                        ):
                             break
                     if i % self.n_iter_print == 0:
                         log.info(
-                        f"[{self.name}] Epoch: {i}, current {val_string} loss: {val_loss} train_loss: {torch.mean(train_loss)}"
-                    )
+                            f"[{self.name}] Epoch: {i}, current {val_string} loss: {val_loss} train_loss: {torch.mean(train_loss)}"
+                        )
 
         return self
 
@@ -284,7 +293,9 @@ class BasicDragonNet(BaseCATEEstimator):
 
         return torch.vstack((y0_preds, y1_preds)).T
 
-    def predict(self, X: torch.Tensor, return_po: bool = False, training: bool = False) -> torch.Tensor:
+    def predict(
+        self, X: torch.Tensor, return_po: bool = False, training: bool = False
+    ) -> torch.Tensor:
         """
         Predict the treatment effects
 
@@ -297,9 +308,7 @@ class BasicDragonNet(BaseCATEEstimator):
         y: array-like of shape (n_samples,)
         """
         if not training:
-            self._repr_estimator.model.eval()
-            self._po_estimators[0].model.eval()
-            self._po_estimators[1].model.eval()
+            self.eval()
 
         X = self._check_tensor(X).float()
         preds = self._forward(X)
@@ -356,7 +365,7 @@ class TARNet(BasicDragonNet):
             nonlin=nonlin,
             batch_norm=batch_norm,
             dropout_prob=dropout_prob,
-            dropout=dropout
+            dropout=dropout,
         ).to(DEVICE)
         super(TARNet, self).__init__(
             "TARNet",
@@ -415,7 +424,7 @@ class DragonNet(BasicDragonNet):
             nonlin=nonlin,
             batch_norm=batch_norm,
             dropout=dropout,
-            dropout_prob=dropout_prob
+            dropout_prob=dropout_prob,
         ).to(DEVICE)
         super(DragonNet, self).__init__(
             "DragonNet",
@@ -426,7 +435,7 @@ class DragonNet(BasicDragonNet):
             batch_norm=batch_norm,
             dropout=dropout,
             dropout_prob=dropout_prob,
-            **kwargs
+            **kwargs,
         )
 
     def _step(

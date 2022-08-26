@@ -82,10 +82,10 @@ def train_wrapper(
 ) -> None:
     if hasattr(estimator, "train"):
         log.debug(f"Train PyTorch network {estimator}")
-        estimator.train(X, y, **kwargs)
+        estimator.fit(X, y, **kwargs)
     elif hasattr(estimator, "fit"):
         log.debug(f"Train sklearn estimator {estimator}")
-        estimator.fit(X.detach().numpy(), y.detach().numpy())
+        estimator.fit(X.detach().cpu().numpy(), y.detach().cpu().numpy())
     else:
         raise NotImplementedError(f"Invalid estimator for the {estimator}")
 
@@ -94,12 +94,12 @@ def predict_wrapper(estimator: Any, X: torch.Tensor) -> torch.Tensor:
     if hasattr(estimator, "forward"):
         return estimator(X)
     elif hasattr(estimator, "predict_proba"):
-        X_np = X.detach().numpy()
+        X_np = X.detach().cpu().numpy()
         no_event_proba = estimator.predict_proba(X_np)[:, 0]  # no event probability
 
         return torch.Tensor(no_event_proba)
     elif hasattr(estimator, "predict"):
-        X_np = X.detach().numpy()
+        X_np = X.detach().cpu().numpy()
         no_event_proba = estimator.predict(X_np)
 
         return torch.Tensor(no_event_proba)

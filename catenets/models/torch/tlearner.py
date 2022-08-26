@@ -71,7 +71,7 @@ class TLearner(BaseCATEEstimator):
         batch_norm: bool = True,
         early_stopping: bool = True,
         dropout: bool = False,
-        dropout_prob: float = 0.2
+        dropout_prob: float = 0.2,
     ) -> None:
         super(TLearner, self).__init__()
 
@@ -100,11 +100,13 @@ class TLearner(BaseCATEEstimator):
                         batch_norm=batch_norm,
                         early_stopping=early_stopping,
                         dropout_prob=dropout_prob,
-                        dropout=dropout
+                        dropout=dropout,
                     ).to(DEVICE),
                 )
 
-    def predict(self, X: torch.Tensor, return_po: bool = False, training: bool = False) -> torch.Tensor:
+    def predict(
+        self, X: torch.Tensor, return_po: bool = False, training: bool = False
+    ) -> torch.Tensor:
         """
         Predict treatment effects and potential outcomes
         Parameters
@@ -118,12 +120,13 @@ class TLearner(BaseCATEEstimator):
         -------
         y: torch.Tensor of shape (n_samples,)
         """
+        if not training:
+            self.eval()
+
         X = self._check_tensor(X).float()
 
         y_hat = []
         for widx, plugin in enumerate(self._plug_in):
-            if not training:
-                plugin.model.eval()
             y_hat.append(predict_wrapper(plugin, X))
 
         outcome = y_hat[1] - y_hat[0]
@@ -133,7 +136,7 @@ class TLearner(BaseCATEEstimator):
 
         return outcome
 
-    def train(
+    def fit(
         self,
         X: torch.Tensor,
         y: torch.Tensor,
@@ -151,6 +154,8 @@ class TLearner(BaseCATEEstimator):
         w: torch.Tensor (n_samples,)
             The treatment indicator
         """
+        self.train()
+
         X = torch.Tensor(X).to(DEVICE)
         y = torch.Tensor(y).to(DEVICE)
         w = torch.Tensor(w).to(DEVICE)
