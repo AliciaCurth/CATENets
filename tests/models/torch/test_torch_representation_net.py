@@ -56,14 +56,17 @@ def test_model_params_nonlin(nonlin: str, snet: Type) -> None:
         assert isinstance(mod.model[2], nonlins[nonlin])
 
 
-@pytest.mark.slow
-@pytest.mark.parametrize("dataset, pehe_threshold", [("twins", 0.4), ("ihdp", 1.5)])
+@pytest.mark.parametrize("dataset, pehe_threshold", [("twins", 0.4)])
 @pytest.mark.parametrize("snet", [TARNet, DragonNet])
 def test_model_sanity(dataset: str, pehe_threshold: float, snet: Type) -> None:
     X_train, W_train, Y_train, Y_train_full, X_test, Y_test = load(dataset)
     W_train = W_train.ravel()
 
-    model = snet(X_train.shape[1], batch_size=1024)
+    model = snet(
+        X_train.shape[1],
+        batch_size=256,
+        n_iter=10,
+    )
 
     score = evaluate_treatments_model(
         model, X_train, Y_train, Y_train_full, W_train, n_folds=3
@@ -77,7 +80,7 @@ def test_model_predict_api() -> None:
     X_train, W_train, Y_train, Y_train_full, X_test, Y_test = load("ihdp")
     W_train = W_train.ravel()
 
-    model = TARNet(X_train.shape[1], batch_size=1024, n_iter=100)
+    model = TARNet(X_train.shape[1], batch_size=1024, n_iter=10)
     model.fit(X_train, Y_train, W_train)
 
     out = model.predict(X_test)
