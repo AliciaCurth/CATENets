@@ -7,7 +7,7 @@ from typing import Callable, List, Tuple
 import jax.numpy as jnp
 import numpy as onp
 from jax import grad, jit, random
-from jax.experimental import optimizers
+from jax.example_libraries import optimizers
 
 import catenets.logger as log
 from catenets.models.constants import (

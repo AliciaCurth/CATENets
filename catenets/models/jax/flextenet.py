@@ -8,8 +8,15 @@ from typing import Any, Callable, Optional, Tuple
 import jax.numpy as jnp
 import numpy as onp
 from jax import grad, jit, random
-from jax.experimental import optimizers
-from jax.experimental.stax import Dense, Sigmoid, elu, glorot_normal, normal, serial
+from jax.example_libraries import optimizers
+from jax.example_libraries.stax import (
+    Dense,
+    Sigmoid,
+    elu,
+    glorot_normal,
+    normal,
+    serial,
+)
 
 import catenets.logger as log
 from catenets.models.constants import (
