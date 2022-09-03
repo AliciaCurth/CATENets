@@ -12,8 +12,6 @@ from catenets.models.constants import (
     DEFAULT_CF_FOLDS,
     DEFAULT_LAYERS_OUT,
     DEFAULT_LAYERS_OUT_T,
-    DEFAULT_LAYERS_R,
-    DEFAULT_LAYERS_R_T,
     DEFAULT_N_ITER,
     DEFAULT_N_ITER_MIN,
     DEFAULT_N_ITER_PRINT,
@@ -25,8 +23,6 @@ from catenets.models.constants import (
     DEFAULT_STEP_SIZE_T,
     DEFAULT_UNITS_OUT,
     DEFAULT_UNITS_OUT_T,
-    DEFAULT_UNITS_R,
-    DEFAULT_UNITS_R_T,
     DEFAULT_VAL_SPLIT,
 )
 from catenets.models.torch.base import (
@@ -135,7 +131,7 @@ class PseudoOutcomeLearner(BaseCATEEstimator):
         batch_norm: bool = True,
         early_stopping: bool = True,
         dropout: bool = False,
-        dropout_prob: float = 0.2
+        dropout_prob: float = 0.2,
     ):
         super(PseudoOutcomeLearner, self).__init__()
         self.n_unit_in = n_unit_in
@@ -172,7 +168,7 @@ class PseudoOutcomeLearner(BaseCATEEstimator):
         self._po_template = po_estimator
 
         self._te_estimator = self._generate_te_estimator()
-        self._po_estimator = self._generate_te_estimator()
+        self._po_estimator = self._generate_po_estimator()
         if weighting_strategy is not None:
             self._propensity_estimator = self._generate_propensity_estimator()
 
@@ -198,7 +194,7 @@ class PseudoOutcomeLearner(BaseCATEEstimator):
             batch_norm=self.batch_norm,
             early_stopping=self.early_stopping,
             dropout=self.dropout,
-            dropout_prob=self.dropout_prob
+            dropout_prob=self.dropout_prob,
         ).to(DEVICE)
 
     def _generate_po_estimator(self, name: str = "po_estimator") -> nn.Module:
@@ -224,7 +220,7 @@ class PseudoOutcomeLearner(BaseCATEEstimator):
             batch_norm=self.batch_norm,
             early_stopping=self.early_stopping,
             dropout=self.dropout,
-            dropout_prob=self.dropout_prob
+            dropout_prob=self.dropout_prob,
         ).to(DEVICE)
 
     def _generate_propensity_estimator(
@@ -250,10 +246,10 @@ class PseudoOutcomeLearner(BaseCATEEstimator):
             batch_norm=self.batch_norm,
             early_stopping=self.early_stopping,
             dropout_prob=self.dropout_prob,
-            dropout=self.dropout
+            dropout=self.dropout,
         ).to(DEVICE)
 
-    def train(
+    def fit(
         self, X: torch.Tensor, y: torch.Tensor, w: torch.Tensor
     ) -> "PseudoOutcomeLearner":
         """
@@ -268,6 +264,8 @@ class PseudoOutcomeLearner(BaseCATEEstimator):
         w: array-like of shape (n_samples,)
             Train-sample treatments
         """
+        self.train()
+
         X = self._check_tensor(X).float()
         y = self._check_tensor(y).squeeze().float()
         w = self._check_tensor(w).squeeze().float()
@@ -314,7 +312,9 @@ class PseudoOutcomeLearner(BaseCATEEstimator):
 
         return self
 
-    def predict(self, X: torch.Tensor, return_po: bool = False, training: bool = False) -> torch.Tensor:
+    def predict(
+        self, X: torch.Tensor, return_po: bool = False, training: bool = False
+    ) -> torch.Tensor:
         """
         Predict treatment effects
 
@@ -332,7 +332,8 @@ class PseudoOutcomeLearner(BaseCATEEstimator):
                 "PseudoOutcomeLearners have no Potential outcome predictors."
             )
         if not training:
-            self._te_estimator.model.eval()
+            self.eval()
+
         X = self._check_tensor(X).float()
         return predict_wrapper(self._te_estimator, X)
 
@@ -437,7 +438,11 @@ class DRLearner(PseudoOutcomeLearner):
     ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         mu0_pred, mu1_pred = self._impute_pos(X, y, w, fit_mask, pred_mask)
         p_pred = self._impute_propensity(X, w, fit_mask, pred_mask).squeeze()
-        return mu0_pred.squeeze(), mu1_pred.squeeze(), p_pred
+        return (
+            mu0_pred.squeeze().to(DEVICE),
+            mu1_pred.squeeze().to(DEVICE),
+            p_pred.to(DEVICE),
+        )
 
     def _second_step(
         self,
@@ -468,7 +473,7 @@ class PWLearner(PseudoOutcomeLearner):
 
         mu0_pred, mu1_pred = np.nan, np.nan  # not needed
         p_pred = self._impute_propensity(X, w, fit_mask, pred_mask).squeeze()
-        return mu0_pred, mu1_pred, p_pred
+        return mu0_pred.to(DEVICE), mu1_pred.to(DEVICE), p_pred.to(DEVICE)
 
     def _second_step(
         self,
@@ -498,7 +503,7 @@ class RALearner(PseudoOutcomeLearner):
     ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         mu0_pred, mu1_pred = self._impute_pos(X, y, w, fit_mask, pred_mask)
         p_pred = np.nan  # not needed
-        return mu0_pred.squeeze(), mu1_pred.squeeze(), p_pred
+        return mu0_pred.squeeze().to(DEVICE), mu1_pred.squeeze().to(DEVICE), p_pred
 
     def _second_step(
         self,
@@ -530,7 +535,7 @@ class ULearner(PseudoOutcomeLearner):
         mu_pred = self._impute_unconditional_mean(X, y, fit_mask, pred_mask).squeeze()
         mu1_pred = np.nan  # only have one thing to impute here
         p_pred = self._impute_propensity(X, w, fit_mask, pred_mask).squeeze()
-        return mu_pred, mu1_pred, p_pred
+        return mu_pred.to(DEVICE), mu1_pred, p_pred.to(DEVICE)
 
     def _second_step(
         self,
@@ -562,7 +567,7 @@ class RLearner(PseudoOutcomeLearner):
         mu_pred = self._impute_unconditional_mean(X, y, fit_mask, pred_mask).squeeze()
         mu1_pred = np.nan  # only have one thing to impute here
         p_pred = self._impute_propensity(X, w, fit_mask, pred_mask).squeeze()
-        return mu_pred, mu1_pred, p_pred
+        return mu_pred.to(DEVICE), mu1_pred, p_pred.to(DEVICE)
 
     def _second_step(
         self,
@@ -607,7 +612,7 @@ class XLearner(PseudoOutcomeLearner):
     ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         mu0_pred, mu1_pred = self._impute_pos(X, y, w, fit_mask, pred_mask)
         p_pred = np.nan
-        return mu0_pred.squeeze(), mu1_pred.squeeze(), p_pred
+        return mu0_pred.squeeze().to(DEVICE), mu1_pred.squeeze().to(DEVICE), p_pred
 
     def _second_step(
         self,
@@ -629,8 +634,9 @@ class XLearner(PseudoOutcomeLearner):
 
         train_wrapper(self._propensity_estimator, X, w)
 
-    def predict(self, X: torch.Tensor, return_po: bool = False, training: bool = False) -> \
-            torch.Tensor:
+    def predict(
+        self, X: torch.Tensor, return_po: bool = False, training: bool = False
+    ) -> torch.Tensor:
         """
         Predict treatment effects
 
@@ -651,8 +657,7 @@ class XLearner(PseudoOutcomeLearner):
             )
 
         if not training:
-            self._te_estimator_1.model.eval()
-            self._te_estimator_0.model.eval()
+            self.eval()
 
         X = self._check_tensor(X).float().to(DEVICE)
         tau0_pred = predict_wrapper(self._te_estimator_0, X)

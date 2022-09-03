@@ -8,8 +8,8 @@ from typing import Any, Callable, List, Optional, Tuple
 import jax.numpy as jnp
 import numpy as onp
 from jax import grad, jit, random
-from jax.experimental import optimizers, stax
-from jax.experimental.stax import Dense, Elu, Relu, Sigmoid
+from jax.example_libraries import optimizers, stax
+from jax.example_libraries.stax import Dense, Elu, Relu, Sigmoid
 from sklearn.base import BaseEstimator, RegressorMixin
 from sklearn.model_selection import ParameterGrid
 

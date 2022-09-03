@@ -32,15 +32,20 @@ class FlexTELinearLayer(nn.Module):
     """Layer constructor function for a fully-connected layer. Adapted to allow passing
     treatment indicator through layer without using it"""
 
-    def __init__(self, name: str, dropout: bool = False,
-                 dropout_prob: float = 0.5, *args: Any,
-                 **kwargs: Any) -> None:
+    def __init__(
+        self,
+        name: str,
+        dropout: bool = False,
+        dropout_prob: float = 0.5,
+        *args: Any,
+        **kwargs: Any,
+    ) -> None:
         super(FlexTELinearLayer, self).__init__()
         self.name = name
         if dropout:
-            self.model = nn.Sequential(nn.Dropout(dropout_prob), nn.Linear(*args, **kwargs)).to(
-            DEVICE
-        )
+            self.model = nn.Sequential(
+                nn.Dropout(dropout_prob), nn.Linear(*args, **kwargs)
+            ).to(DEVICE)
         else:
             self.model = nn.Sequential(nn.Linear(*args, **kwargs)).to(DEVICE)
 
@@ -91,12 +96,9 @@ class FlexTESplitLayer(nn.Module):
                 nn.Dropout(dropout_prob), nn.Linear(n_units_in_p, n_units_p)
             ).to(DEVICE)
         else:
-            self.net_shared = nn.Sequential(nn.Linear(n_units_in, n_units_s)
-            ).to(DEVICE)
-            self.net_p0 = nn.Sequential(nn.Linear(n_units_in_p, n_units_p)
-            ).to(DEVICE)
-            self.net_p1 = nn.Sequential(nn.Linear(n_units_in_p, n_units_p)
-            ).to(DEVICE)
+            self.net_shared = nn.Sequential(nn.Linear(n_units_in, n_units_s)).to(DEVICE)
+            self.net_p0 = nn.Sequential(nn.Linear(n_units_in_p, n_units_p)).to(DEVICE)
+            self.net_p1 = nn.Sequential(nn.Linear(n_units_in_p, n_units_p)).to(DEVICE)
 
     def forward(self, tensors: List[torch.Tensor]) -> List:
         if self.first_layer and len(tensors) != 2:
@@ -130,31 +132,30 @@ class FlexTESplitLayer(nn.Module):
 
 
 class FlexTEOutputLayer(nn.Module):
-    def __init__(self, n_units_in: int, n_units_in_p: int, private: bool,
-                 dropout: bool = False, dropout_prob: float = 0.5,) -> None:
+    def __init__(
+        self,
+        n_units_in: int,
+        n_units_in_p: int,
+        private: bool,
+        dropout: bool = False,
+        dropout_prob: float = 0.5,
+    ) -> None:
         super(FlexTEOutputLayer, self).__init__()
         self.private = private
         if dropout:
-            self.net_shared = nn.Sequential(nn.Dropout(dropout_prob), nn.Linear(n_units_in, 1)).to(
-                DEVICE
-            )
-            self.net_p0 = nn.Sequential(nn.Dropout(dropout_prob), nn.Linear(n_units_in_p, 1)).to(
-                DEVICE
-            )
-            self.net_p1 = nn.Sequential(nn.Dropout(dropout_prob), nn.Linear(n_units_in_p, 1)).to(
-                DEVICE
-            )
+            self.net_shared = nn.Sequential(
+                nn.Dropout(dropout_prob), nn.Linear(n_units_in, 1)
+            ).to(DEVICE)
+            self.net_p0 = nn.Sequential(
+                nn.Dropout(dropout_prob), nn.Linear(n_units_in_p, 1)
+            ).to(DEVICE)
+            self.net_p1 = nn.Sequential(
+                nn.Dropout(dropout_prob), nn.Linear(n_units_in_p, 1)
+            ).to(DEVICE)
         else:
-            self.net_shared = nn.Sequential(nn.Linear(n_units_in, 1)).to(
-                DEVICE
-            )
-            self.net_p0 = nn.Sequential(nn.Linear(n_units_in_p, 1)).to(
-                DEVICE
-            )
-            self.net_p1 = nn.Sequential(nn.Linear(n_units_in_p, 1)).to(
-                DEVICE
-            )
-
+            self.net_shared = nn.Sequential(nn.Linear(n_units_in, 1)).to(DEVICE)
+            self.net_p0 = nn.Sequential(nn.Linear(n_units_in_p, 1)).to(DEVICE)
+            self.net_p1 = nn.Sequential(nn.Linear(n_units_in_p, 1)).to(DEVICE)
 
     def forward(self, tensors: List[torch.Tensor]) -> torch.Tensor:
         if len(tensors) != 4:
@@ -315,7 +316,7 @@ class FlexTENet(BaseCATEEstimator):
         mode: int = 1,
         clipping_value: int = 1,
         dropout: bool = False,
-        dropout_prob: float = 0.5
+        dropout_prob: float = 0.5,
     ) -> None:
         super(FlexTENet, self).__init__()
 
@@ -353,8 +354,13 @@ class FlexTENet(BaseCATEEstimator):
         if shared_repr:  # fully shared representation as in TARNet
             layers.extend(
                 [
-                    FlexTELinearLayer("shared_repr_layer_0", dropout, dropout_prob,
-                                      n_unit_in, n_units_s_r),
+                    FlexTELinearLayer(
+                        "shared_repr_layer_0",
+                        dropout,
+                        dropout_prob,
+                        n_unit_in,
+                        n_units_s_r,
+                    ),
                     ElementWiseSplitActivation(nn.SELU(inplace=True)),
                 ]
             )
@@ -364,8 +370,11 @@ class FlexTENet(BaseCATEEstimator):
                 layers.extend(
                     [
                         FlexTELinearLayer(
-                            f"shared_repr_layer_{i + 1}", dropout, dropout_prob, n_units_s_r,
-                            n_units_s_r
+                            f"shared_repr_layer_{i + 1}",
+                            dropout,
+                            dropout_prob,
+                            n_units_s_r,
+                            n_units_s_r,
                         ),
                         ElementWiseSplitActivation(nn.SELU(inplace=True)),
                     ]
@@ -382,7 +391,7 @@ class FlexTENet(BaseCATEEstimator):
                         n_units_p_r,
                         first_layer=True,
                         dropout=dropout,
-                        dropout_prob=dropout_prob
+                        dropout_prob=dropout_prob,
                     ),
                     ElementWiseParallelActivation(nn.SELU(inplace=True)),
                 ]
@@ -400,7 +409,7 @@ class FlexTENet(BaseCATEEstimator):
                             n_units_p_r,
                             first_layer=False,
                             dropout=dropout,
-                            dropout_prob=dropout_prob
+                            dropout_prob=dropout_prob,
                         ),
                         ElementWiseParallelActivation(nn.SELU(inplace=True)),
                     ]
@@ -417,7 +426,7 @@ class FlexTENet(BaseCATEEstimator):
                     n_units_p_out,
                     first_layer=(shared_repr),
                     dropout=dropout,
-                    dropout_prob=dropout_prob
+                    dropout_prob=dropout_prob,
                 ),
                 ElementWiseParallelActivation(nn.SELU(inplace=True)),
             ]
@@ -435,7 +444,7 @@ class FlexTENet(BaseCATEEstimator):
                         n_units_p_out,
                         first_layer=False,
                         dropout=dropout,
-                        dropout_prob=dropout_prob
+                        dropout_prob=dropout_prob,
                     ),
                     ElementWiseParallelActivation(nn.SELU(inplace=True)),
                 ]
@@ -444,8 +453,11 @@ class FlexTENet(BaseCATEEstimator):
         # append final layer
         layers.append(
             FlexTEOutputLayer(
-                n_units_s_out, n_units_s_out + n_units_p_out, private=self.private_out,
-                dropout=dropout, dropout_prob=dropout_prob
+                n_units_s_out,
+                n_units_s_out + n_units_p_out,
+                private=self.private_out,
+                dropout=dropout,
+                dropout_prob=dropout_prob,
             )
         )
         if binary_y:
@@ -531,7 +543,7 @@ class FlexTENet(BaseCATEEstimator):
 
         return po_loss() + self._ortho_penalty_asymmetric()
 
-    def train(
+    def fit(
         self,
         X: torch.Tensor,
         y: torch.Tensor,
@@ -549,6 +561,8 @@ class FlexTENet(BaseCATEEstimator):
         w: torch.Tensor of shape (n_samples,)
             The treatment indicator
         """
+        self.model.train()
+
         X = torch.Tensor(X).to(DEVICE)
         y = torch.Tensor(y).squeeze().to(DEVICE)
         w = torch.Tensor(w).squeeze().long().to(DEVICE)
@@ -609,7 +623,9 @@ class FlexTENet(BaseCATEEstimator):
                             patience = 0
                         else:
                             patience += 1
-                        if patience > self.patience and ((i + 1) * n_batches > self.n_iter_min):
+                        if patience > self.patience and (
+                            (i + 1) * n_batches > self.n_iter_min
+                        ):
                             break
                     if i % self.n_iter_print == 0:
                         log.info(
@@ -618,7 +634,9 @@ class FlexTENet(BaseCATEEstimator):
 
         return self
 
-    def predict(self, X: torch.Tensor, return_po: bool = False, training: bool = False) -> torch.Tensor:
+    def predict(
+        self, X: torch.Tensor, return_po: bool = False, training: bool = False
+    ) -> torch.Tensor:
         """
         Predict treatment effects and potential outcomes
 
