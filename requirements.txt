@@ -1,4 +1,4 @@
-googledrivedownloader
+gdown
 jax>=0.3.16
 jaxlib>=0.3.14; sys_platform != 'win32'
 loguru>=0.5.3
