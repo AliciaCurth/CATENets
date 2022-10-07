@@ -8,7 +8,7 @@ import jax.numpy as jnp
 import numpy as onp
 import pandas as pd
 from jax import grad, jit, random
-from jax.experimental import optimizers
+from jax.example_libraries import optimizers
 from sklearn.model_selection import StratifiedKFold
 
 import catenets.logger as log
@@ -135,7 +135,7 @@ class RNet(BaseCATENet):
         n_iter_print: int = DEFAULT_N_ITER_PRINT,
         seed: int = DEFAULT_SEED,
         nonlin: str = DEFAULT_NONLIN,
-        binary_y: bool = False
+        binary_y: bool = False,
     ) -> None:
         # settings
         self.binary_y = binary_y
@@ -243,7 +243,7 @@ def train_r_net(
     seed: int = DEFAULT_SEED,
     return_val_loss: bool = False,
     nonlin: str = DEFAULT_NONLIN,
-    binary_y: bool = False
+    binary_y: bool = False,
 ) -> Any:
     # get shape of data
     n, d = X.shape
@@ -288,7 +288,7 @@ def train_r_net(
             n_iter_print=n_iter_print,
             seed=seed,
             nonlin=nonlin,
-            binary_y=binary_y
+            binary_y=binary_y,
         )
         if data_split:
             # keep only prediction data
@@ -333,7 +333,7 @@ def train_r_net(
                 n_iter_print=n_iter_print,
                 seed=seed,
                 nonlin=nonlin,
-                binary_y=binary_y
+                binary_y=binary_y,
             )
 
     log.debug("Training second stage.")
@@ -415,7 +415,7 @@ def _train_and_predict_r_stage1(
     n_iter_print: int = DEFAULT_N_ITER_PRINT,
     seed: int = DEFAULT_SEED,
     nonlin: str = DEFAULT_NONLIN,
-    binary_y: bool = False
+    binary_y: bool = False,
 ) -> Any:
     if len(w.shape) > 1:
         w = w.reshape((len(w),))
@@ -443,7 +443,7 @@ def _train_and_predict_r_stage1(
         n_iter_print=n_iter_print,
         seed=seed,
         nonlin=nonlin,
-        binary_y=binary_y
+        binary_y=binary_y,
     )
     mu_hat = predict_fun_out(params_out, X_pred)
 
