@@ -7,7 +7,7 @@ import urllib.request
 from pathlib import Path
 from typing import Optional
 
-from google_drive_downloader import GoogleDriveDownloader as gdd
+import gdown
 
 
 def download_gdrive_if_needed(path: Path, file_id: str) -> None:
@@ -26,7 +26,7 @@ def download_gdrive_if_needed(path: Path, file_id: str) -> None:
     if path.exists():
         return
 
-    gdd.download_file_from_google_drive(file_id=file_id, dest_path=path)
+    gdown.download(id=file_id, output=str(path), quiet=False)
 
 
 def download_http_if_needed(path: Path, url: str) -> None:
@@ -98,6 +98,7 @@ def download_if_needed(
     unarchive_folder: str
         Mandatory if you set unarchive to True.
     """
+    download_path = Path(download_path)
     if file_id is not None:
         download_gdrive_if_needed(download_path, file_id)
     elif http_url is not None:
@@ -108,4 +109,8 @@ def download_if_needed(
     if unarchive and unarchive_folder is None:
         raise ValueError("Please provide a folder for the archive")
     if unarchive and unarchive_folder is not None:
-        unarchive_if_needed(download_path, unarchive_folder)
+        try:
+            unarchive_if_needed(download_path, unarchive_folder)
+        except BaseException as e:
+            print(f"Failed to unpack {download_path}. Error {e}")
+            download_path.unlink()
