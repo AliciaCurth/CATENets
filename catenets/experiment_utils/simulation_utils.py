@@ -247,9 +247,9 @@ def mu1_AISTATS(
             coefs = np.ones(n_t)
         X_sel = X[:, (n_w + n_c + n_o) : (n_w + n_c + n_o + n_t)]
     if withbase:
-        return mu_0 + np.dot(X_sel ** nonlinear, coefs)
+        return mu_0 + np.dot(X_sel**nonlinear, coefs)
     else:
-        return np.dot(X_sel ** nonlinear, coefs)
+        return np.dot(X_sel**nonlinear, coefs)
 
 
 # Other simulation settings not used in AISTATS paper

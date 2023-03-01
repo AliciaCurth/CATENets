@@ -3,7 +3,7 @@ JAX models
 
 JAX-based CATE estimators
 
-.. toctree:: 
+.. toctree::
     :glob:
     :maxdepth: 2
 

@@ -12,20 +12,25 @@ from sklearn import clone
 
 from catenets.datasets.dataset_ihdp import get_one_data_set, load_raw, prepare_ihdp_data
 from catenets.experiment_utils.base import eval_root_mse
-from catenets.models.jax import RNet, TARNet, TNet
-from catenets.models.jax import RNET_NAME, TARNET_NAME, T_NAME
+from catenets.models.jax import RNET_NAME, T_NAME, TARNET_NAME, RNet, TARNet, TNet
 
 DATA_DIR = Path("catenets/datasets/data/")
 RESULT_DIR = Path("results/experiments_benchmarking/ihdp/")
 SEP = "_"
 
-PARAMS_DEPTH = {'n_layers_r': 3, 'n_layers_out': 2}
-PARAMS_DEPTH_2 = {'n_layers_r': 3, 'n_layers_out': 2, 'n_layers_r_t': 3, 'n_layers_out_t': 2}
+PARAMS_DEPTH = {"n_layers_r": 3, "n_layers_out": 2}
+PARAMS_DEPTH_2 = {
+    "n_layers_r": 3,
+    "n_layers_out": 2,
+    "n_layers_r_t": 3,
+    "n_layers_out_t": 2,
+}
 
-ALL_MODELS = {T_NAME: TNet(**PARAMS_DEPTH),
-              TARNET_NAME: TARNet(**PARAMS_DEPTH),
-              RNET_NAME: RNet(**PARAMS_DEPTH_2)
-              }
+ALL_MODELS = {
+    T_NAME: TNet(**PARAMS_DEPTH),
+    TARNET_NAME: TARNet(**PARAMS_DEPTH),
+    RNET_NAME: RNet(**PARAMS_DEPTH_2),
+}
 
 
 def do_ihdp_experiments(
@@ -39,13 +44,14 @@ def do_ihdp_experiments(
     if models is None:
         models = ALL_MODELS
 
-    if (setting == 'original') or (setting == 'C'):
-        setting = 'C'
-    elif (setting == 'modified') or (setting == 'D'):
-        setting = 'D'
+    if (setting == "original") or (setting == "C"):
+        setting = "C"
+    elif (setting == "modified") or (setting == "D"):
+        setting = "D"
     else:
-        raise ValueError('Setting should be one of original or modified. You passed {}.'.format(
-            setting))
+        raise ValueError(
+            f"Setting should be one of original or modified. You passed {setting}."
+        )
 
     # get file to write in
     if not os.path.isdir(RESULT_DIR):
@@ -53,9 +59,11 @@ def do_ihdp_experiments(
 
     out_file = open(RESULT_DIR / (file_name + SEP + setting + ".csv"), "w", buffering=1)
     writer = csv.writer(out_file)
-    header = ['exp', 'run', 'cate_var_in', 'cate_var_out', 'y_var_in'] + \
-             [name + "_in" for name in models.keys()] + \
-             [name + "_out" for name in models.keys()]
+    header = (
+        ["exp", "run", "cate_var_in", "cate_var_out", "y_var_in"]
+        + [name + "_in" for name in models.keys()]
+        + [name + "_out" for name in models.keys()]
+    )
     writer.writerow(header)
 
     # get data
@@ -102,6 +110,8 @@ def do_ihdp_experiments(
                 pehe_in.append(eval_root_mse(cate_pred_in, cate_true_in))
                 pehe_out.append(eval_root_mse(cate_pred_out, cate_true_out))
 
-            writer.writerow([i_exp, k,  cate_var_in, cate_var_out, y_var_in] + pehe_in + pehe_out)
+            writer.writerow(
+                [i_exp, k, cate_var_in, cate_var_out, y_var_in] + pehe_in + pehe_out
+            )
 
     out_file.close()

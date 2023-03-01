@@ -45,7 +45,7 @@ def benchmark(func: Callable) -> Callable:
         res = func(*args, **kwargs)
         end = time.time()
 
-        log.debug("{} took {} seconds".format(func.__qualname__, round(end - start, 4)))
+        log.debug(f"{func.__qualname__} took {round(end - start, 4)} seconds")
         return res
 
     return wrapper

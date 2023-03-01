@@ -88,33 +88,38 @@ ABLATIONS = {
 }
 
 # For results in Appendix B.3
-FLEX_LAMBDA = {'FlexTENet_001': FlexTENet(penalty_orthogonal=PENALTY_ORTHOGONAL,
-                                          penalty_l2_p=1 / 100,
-                                          **PARAMS_DEPTH),
-               'FlexTENet_01': FlexTENet(penalty_orthogonal=PENALTY_ORTHOGONAL,
-                                         penalty_l2_p=1 / 10,
-                                         **PARAMS_DEPTH),
-               'FlexTENet_0001': FlexTENet(penalty_orthogonal=PENALTY_ORTHOGONAL,
-                                           penalty_l2_p=1 / 1000,
-                                           **PARAMS_DEPTH),
-               'FlexTENet_00001': FlexTENet(penalty_orthogonal=PENALTY_ORTHOGONAL,
-                                            penalty_l2_p=1 / 10000,
-                                            **PARAMS_DEPTH)
-               }
+FLEX_LAMBDA = {
+    "FlexTENet_001": FlexTENet(
+        penalty_orthogonal=PENALTY_ORTHOGONAL, penalty_l2_p=1 / 100, **PARAMS_DEPTH
+    ),
+    "FlexTENet_01": FlexTENet(
+        penalty_orthogonal=PENALTY_ORTHOGONAL, penalty_l2_p=1 / 10, **PARAMS_DEPTH
+    ),
+    "FlexTENet_0001": FlexTENet(
+        penalty_orthogonal=PENALTY_ORTHOGONAL, penalty_l2_p=1 / 1000, **PARAMS_DEPTH
+    ),
+    "FlexTENet_00001": FlexTENet(
+        penalty_orthogonal=PENALTY_ORTHOGONAL, penalty_l2_p=1 / 10000, **PARAMS_DEPTH
+    ),
+}
 
-T_LAMBDA = {T_NAME: TNet(**PARAMS_DEPTH),
-            T_NAME + '_reg_01': TNet(train_separate=False, penalty_diff=1 / 10, **PARAMS_DEPTH),
-            T_NAME + '_reg_001': TNet(train_separate=False, penalty_diff=1 / 100, **PARAMS_DEPTH),
-            T_NAME + '_reg_0001': TNet(train_separate=False, penalty_diff=1 / 1000,
-                                       **PARAMS_DEPTH),
-            T_NAME + '_reg_00001': TNet(train_separate=False, penalty_diff=1 / 10000,
-                                        **PARAMS_DEPTH)}
+T_LAMBDA = {
+    T_NAME: TNet(**PARAMS_DEPTH),
+    T_NAME + "_reg_01": TNet(train_separate=False, penalty_diff=1 / 10, **PARAMS_DEPTH),
+    T_NAME
+    + "_reg_001": TNet(train_separate=False, penalty_diff=1 / 100, **PARAMS_DEPTH),
+    T_NAME
+    + "_reg_0001": TNet(train_separate=False, penalty_diff=1 / 1000, **PARAMS_DEPTH),
+    T_NAME
+    + "_reg_00001": TNet(train_separate=False, penalty_diff=1 / 10000, **PARAMS_DEPTH),
+}
 
-OFFSET_LAMBDA = {OFFSET_NAME + '_reg_01': OffsetNet(penalty_l2_p=1 / 10, **PARAMS_DEPTH),
-                 OFFSET_NAME + '_reg_001': OffsetNet(penalty_l2_p=1 / 100, **PARAMS_DEPTH),
-                 OFFSET_NAME + '_reg_0001': OffsetNet(penalty_l2_p=1 / 1000, **PARAMS_DEPTH),
-                 OFFSET_NAME + '_reg_00001': OffsetNet(penalty_l2_p=1 / 10000, **PARAMS_DEPTH),
-                 }
+OFFSET_LAMBDA = {
+    OFFSET_NAME + "_reg_01": OffsetNet(penalty_l2_p=1 / 10, **PARAMS_DEPTH),
+    OFFSET_NAME + "_reg_001": OffsetNet(penalty_l2_p=1 / 100, **PARAMS_DEPTH),
+    OFFSET_NAME + "_reg_0001": OffsetNet(penalty_l2_p=1 / 1000, **PARAMS_DEPTH),
+    OFFSET_NAME + "_reg_00001": OffsetNet(penalty_l2_p=1 / 10000, **PARAMS_DEPTH),
+}
 
 # For results in appendix D.1
 TWOSTEP_LEARNERS = {
@@ -199,15 +204,15 @@ X_VARIANTS = {
 
 
 def do_acic_simu_loops(
-        rho_loop: list = [0, 0.05, 0.1, 0.2, 0.5, 0.8],
-        n1_loop: list = [200, 2000, 500],
-        n_exp: int = 10,
-        file_name: str = "acic_simu",
-        models: Optional[dict] = None,
-        n_0: int = 2000,
-        n_test: int = 500,
-        setting: str = "A",
-        factual_eval: bool = False
+    rho_loop: list = [0, 0.05, 0.1, 0.2, 0.5, 0.8],
+    n1_loop: list = [200, 2000, 500],
+    n_exp: int = 10,
+    file_name: str = "acic_simu",
+    models: Optional[dict] = None,
+    n_0: int = 2000,
+    n_test: int = 500,
+    setting: str = "A",
+    factual_eval: bool = False,
 ) -> None:
     if models is None:
         models = ALL_MODELS
@@ -237,25 +242,25 @@ def do_acic_simu_loops(
                     n_test=n_test,
                     prop_gamma=0,
                     prop_omega=rho,
-                    factual_eval=factual_eval
+                    factual_eval=factual_eval,
                 )
 
 
 def do_acic_simu(
-        n_exp: Union[int, list] = 10,
-        file_name: str = "acic_simu",
-        models: Union[dict, str, None] = None,
-        n_0: int = 2000,
-        n_1: int = 200,
-        n_test: int = 500,
-        error_sd: float = 1,
-        sp_lin: float = 0.6,
-        sp_nonlin: float = 0.3,
-        prop_gamma: float = 0,
-        ate_goal: float = 0,
-        inter: bool = True,
-        prop_omega: float = 0,
-        factual_eval: bool = False,
+    n_exp: Union[int, list] = 10,
+    file_name: str = "acic_simu",
+    models: Union[dict, str, None] = None,
+    n_0: int = 2000,
+    n_1: int = 200,
+    n_test: int = 500,
+    error_sd: float = 1,
+    sp_lin: float = 0.6,
+    sp_nonlin: float = 0.3,
+    prop_gamma: float = 0,
+    ate_goal: float = 0,
+    inter: bool = True,
+    prop_omega: float = 0,
+    factual_eval: bool = False,
 ) -> None:
     if models is None:
         models = ALL_MODELS
@@ -264,11 +269,11 @@ def do_acic_simu(
             models = ALL_MODELS
         elif models == "ablations":
             models = ABLATIONS
-        elif models == 'flex_lambda':
+        elif models == "flex_lambda":
             models = FLEX_LAMBDA
-        elif models == 't_lambda':
+        elif models == "t_lambda":
             models = T_LAMBDA
-        elif models == 'offset_lambda':
+        elif models == "offset_lambda":
             models = OFFSET_LAMBDA
         elif models == "snet":
             models = SNET_VARIANTS
@@ -304,24 +309,25 @@ def do_acic_simu(
     )
     writer = csv.writer(out_file)
     header = (
-            ["y_var", "cate_var"]
-            + [name + "_cate" for name in models.keys()]
-            + [
-                name + "_mu0"
-                for name in models.keys()
-                if "R" not in name and "X" not in name
-            ]
-            + [
-                name + "_mu1"
-                for name in models.keys()
-                if "R" not in name and "X" not in name
-            ]
+        ["y_var", "cate_var"]
+        + [name + "_cate" for name in models.keys()]
+        + [
+            name + "_mu0"
+            for name in models.keys()
+            if "R" not in name and "X" not in name
+        ]
+        + [
+            name + "_mu1"
+            for name in models.keys()
+            if "R" not in name and "X" not in name
+        ]
     )
 
     if factual_eval:
         header = header + [
-            name + '_factual' for name in models.keys()
-            if 'R' not in name and 'X' not in name
+            name + "_factual"
+            for name in models.keys()
+            if "R" not in name and "X" not in name
         ]
 
     writer.writerow(header)
@@ -381,10 +387,7 @@ def do_acic_simu(
             # fit estimator
             estimator_temp.fit(X=X, y=y, w=w)
 
-            if (
-                    "R" not in model_name
-                    and "X" not in model_name
-            ):
+            if "R" not in model_name and "X" not in model_name:
                 cate_pred_out, mu0_pred, mu1_pred = estimator_temp.predict(
                     X_t, return_po=True
                 )
@@ -401,24 +404,26 @@ def do_acic_simu(
         if not factual_eval:
             writer.writerow([y_var, cate_var] + rmse_cate + rmse_mu0 + rmse_mu1)
         else:
-            writer.writerow([y_var, cate_var] + rmse_cate + rmse_mu0 + rmse_mu1 + rmse_factual)
+            writer.writerow(
+                [y_var, cate_var] + rmse_cate + rmse_mu0 + rmse_mu1 + rmse_factual
+            )
 
     out_file.close()
 
 
 def acic_simu(
-        i_exp: onp.ndarray,
-        n_0: int = 2000,
-        n_1: int = 200,
-        n_test: int = 500,
-        error_sd: float = 1,
-        sp_lin: float = 0.6,
-        sp_nonlin: float = 0.3,
-        prop_gamma: float = 0,
-        prop_omega: float = 0,
-        ate_goal: float = 0,
-        inter: bool = True,
-        return_ytest: bool = False,
+    i_exp: onp.ndarray,
+    n_0: int = 2000,
+    n_1: int = 200,
+    n_test: int = 500,
+    error_sd: float = 1,
+    sp_lin: float = 0.6,
+    sp_nonlin: float = 0.3,
+    prop_gamma: float = 0,
+    prop_omega: float = 0,
+    ate_goal: float = 0,
+    inter: bool = True,
+    return_ytest: bool = False,
 ) -> Tuple:
     X_train, w_train, y_train, _, X_test, w_test, y_test, po_test = load(
         "acic2016",

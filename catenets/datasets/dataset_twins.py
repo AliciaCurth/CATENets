@@ -18,7 +18,6 @@ import catenets.logger as log
 
 from .network import download_if_needed
 
-
 DATASET = "Twin_Data.csv.gz"
 URL = "https://bitbucket.org/mvdschaar/mlforhealthlabpub/raw/0b0190bcd38a76c405c805f1ca774971fcd85233/data/twins/Twin_Data.csv.gz"  # noqa: E501
 
@@ -60,7 +59,7 @@ def preprocess(
     """
     np.random.seed(seed)
     random.seed(seed)
-    
+
     # Load original data (11400 patients, 30 features, 2 dimensional potential outcomes)
     df = pd.read_csv(fn_csv)
 
@@ -188,7 +187,7 @@ def preprocess(
     if train_ratio < 1:
         idx = np.random.permutation(no)
         train_idx = idx[: int(train_ratio * no)]
-        test_idx = idx[int(train_ratio * no):]
+        test_idx = idx[int(train_ratio * no) :]
 
         train_x = x[train_idx, :]
         train_w = w[train_idx]

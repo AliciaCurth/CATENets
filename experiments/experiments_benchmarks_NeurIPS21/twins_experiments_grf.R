@@ -10,7 +10,7 @@ do_twins_exper <- function(
       # loop over seeds
       print(paste0('Iteration number ', k))
       set.seed(k)
-      
+
       # read data (need to run the catenets script first; that creates the preprocessed data)
       if (subset_train == 5700){
         df_train <- read.csv(paste0('experiments/experiments_benchmarks_NeurIPS21/twins_datasets/preprocessed_', treat_prop, '_None_', test_size, '_', k, '_train.csv'))
@@ -21,17 +21,17 @@ do_twins_exper <- function(
       }
       X_train <- data.matrix(df_train[,2:40])
       X_test <- data.matrix(df_test[,2:40])
-      
-      
+
+
       z_train = df_train$w
       y_train = df_train$y
       t_train = df_train$y1 - df_train$y0
-      
-      
+
+
       z_test = df_test$w
       y_test = df_test$y
       t_test = df_test$y1 - df_test$y0
-      
+
       # causal forest
       print('causal forest')
       cf <- causal_forest(X_train, y_train, z_train, seed = k)
@@ -40,7 +40,7 @@ do_twins_exper <- function(
       rmse_cf_in <- sqrt(mean((t_train - pred_cf_in) ^ 2))
       rmse_cf_out <- sqrt(mean((t_test - pred_cf_out) ^ 2))
 
-      
+
       # t-learner
       print('t learner')
       y0.forest <-
@@ -55,8 +55,8 @@ do_twins_exper <- function(
         predict(y1.forest, X_test)$predictions - predict(y0.forest, X_test)$predictions
       rmse_t_in <- sqrt(mean((t_train - pred_t_in) ^ 2))
       rmse_t_out <- sqrt(mean((t_test - pred_t_out) ^ 2))
-    
-      
+
+
       # s-learner
       print('s learner')
       s_forest <-
@@ -69,14 +69,14 @@ do_twins_exper <- function(
       test_control <- rep(0, n_test)
       pred_s_in <-
         predict(s_forest, cbind(X_train, train_treated))$predictions - predict(s_forest, cbind(X_train, train_control))$predictions
-      
+
       pred_s_out <-
         predict(s_forest, cbind(X_test, test_treated))$predictions - predict(s_forest, cbind(X_test, test_control))$predictions
       rmse_s_in <- sqrt(mean((t_train - pred_s_in) ^ 2))
       rmse_s_out <- sqrt(mean((t_test - pred_s_out) ^ 2))
-      
-      
-    
+
+
+
       df_res <-
           data.frame(
             run = k,
@@ -87,8 +87,8 @@ do_twins_exper <- function(
             t_out = rmse_t_out,
             s_out = rmse_s_out
           )
-      
-      
+
+
       if (k == 0) {
         write.table(
           df_res,
@@ -120,6 +120,6 @@ do_twins_exper <- function(
           append = T
         )
       }
-      
+
   }
 }

@@ -14,12 +14,13 @@
 # import sys
 # sys.path.insert(0, os.path.abspath('.'))
 
-import os
-import sys
-import shutil
-import sphinx_rtd_theme
-import subprocess
 import datetime
+import os
+import shutil
+import subprocess
+import sys
+
+import sphinx_rtd_theme
 
 sys.path.insert(0, os.path.abspath(".."))
 
