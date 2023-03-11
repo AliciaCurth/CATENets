@@ -12,7 +12,7 @@ Average Treatment Effect (CATE) Estimators, which were used in the AISTATS21 pap
 ['Nonparametric Estimation of Heterogeneous Treatment Effects: From Theory to Learning
 Algorithms']( https://arxiv.org/abs/2101.10943) (Curth & vd Schaar, 2021a) as well as the follow up
 NeurIPS21 paper ["On Inductive Biases for Heterogeneous Treatment Effect Estimation"](https://arxiv.org/abs/2106.03765) (Curth & vd
-Schaar, 2021b) and the NeurIPS21 Datasets & Benchmarks track paper ["Really Doing Great at Estimating CATE? A Critical Look at ML Benchmarking Practices in Treatment Effect Estimation"](https://openreview.net/forum?id=FQLzQqGEAH) (Curth et al, 2021). 
+Schaar, 2021b) and the NeurIPS21 Datasets & Benchmarks track paper ["Really Doing Great at Estimating CATE? A Critical Look at ML Benchmarking Practices in Treatment Effect Estimation"](https://openreview.net/forum?id=FQLzQqGEAH) (Curth et al, 2021).
 
 We implement the SNet-class we introduce in Curth & vd Schaar (2021a), as well as FlexTENet and
 OffsetNet as discussed in Curth & vd Schaar (2021b), and re-implement a number of
@@ -51,7 +51,11 @@ All experiments in Curth & vd Schaar (2021a) can be replicated using this reposi
 code is in ``experiments.experiments_AISTATS21``. To do so from shell, clone the repo, create a new
 virtual environment and run
 ```shell
-pip install -r requirements.txt #install requirements
+pip install catenets # install the library from PyPI
+# OR
+pip install . # install the library from the local repository
+
+# Run the experiments
 python run_experiments_AISTATS.py
 ```
 ```shell

@@ -3,7 +3,7 @@ Datasets
 
 Dataloaders for datasets used for experiments.
 
-.. toctree:: 
+.. toctree::
     :glob:
     :maxdepth: 2
 

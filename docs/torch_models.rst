@@ -3,7 +3,7 @@ PyTorch models
 
 PyTorch-based CATE estimators
 
-.. toctree:: 
+.. toctree::
     :glob:
     :maxdepth: 2
 
