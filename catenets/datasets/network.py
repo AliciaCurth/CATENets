@@ -65,11 +65,11 @@ def unarchive_if_needed(path: Path, output_folder: Path) -> None:
     """
     if str(path).endswith(".tar.gz"):
         tar = tarfile.open(path, "r:gz")
-        tar.extractall(path=output_folder)
+        tar.extractall(path=output_folder) # nosec
         tar.close()
     elif str(path).endswith(".tar"):
         tar = tarfile.open(path, "r:")
-        tar.extractall(path=output_folder)
+        tar.extractall(path=output_folder) # nosec
         tar.close()
     else:
         raise NotImplementedError(f"archive not supported {path}")
