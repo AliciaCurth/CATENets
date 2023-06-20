@@ -1,5 +1,5 @@
 name: CATENets Tests
-
+    
 on:
   push:
     branches: [main, release]
