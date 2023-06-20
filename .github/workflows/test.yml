@@ -4,7 +4,7 @@ on:
   push:
     branches: [main, release, fix_automated_testing]
   pull_request:
-    types: [opened, synchronize, reopened]
+    types: [opened, synchronize, reopened, edited]
   schedule:
     - cron:  '0 0 * * 0'
 
