@@ -2,7 +2,7 @@ name: CATENets Tests
 
 on:
   push:
-    branches: [main, release]
+    branches: [main, release, fix_automated_testing]
   pull_request:
     types: [opened, synchronize, reopened]
   schedule:
